@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Check, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { deleteWorkoutLog, saveWorkoutLog } from "@/lib/workout-logs/actions";
 import type { WorkoutLog } from "@/lib/workout-logs/types";
 import { WorkoutFormDrawer } from "./workout-form-drawer";
@@ -46,10 +47,7 @@ export function WorkoutCard({ initialLog }: WorkoutCardProps) {
   }
 
   return (
-    <Card
-      className="animate-fade-up bg-primary text-primary-foreground ring-0 shadow-[0_16px_36px_-16px_var(--primary)]"
-      style={{ animationDelay: "240ms" }}
-    >
+    <Card className="animate-fade-up" style={{ animationDelay: "240ms" }}>
       <CardContent>
         <WorkoutFormDrawer
           initialLog={log}
@@ -61,22 +59,29 @@ export function WorkoutCard({ initialLog }: WorkoutCardProps) {
               className="flex w-full items-center justify-between gap-3 py-1 text-left transition-transform duration-150 active:scale-[0.98]"
             >
               <span className="min-w-0 flex-1">
-                <span className="block text-base font-semibold text-primary-foreground">
+                <span className="block text-base font-semibold text-foreground">
                   Workout
                 </span>
                 {log ? (
-                  <span className="mt-0.5 line-clamp-2 block whitespace-pre-line text-sm text-primary-foreground/70">
+                  <span className="mt-0.5 line-clamp-2 block whitespace-pre-line text-sm text-muted-foreground">
                     {preview}
                   </span>
                 ) : (
-                  <span className="mt-0.5 block text-sm text-primary-foreground/70">
+                  <span className="mt-0.5 block text-sm text-muted-foreground">
                     How did training go today?
                   </span>
                 )}
               </span>
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background text-primary">
+              <span
+                className={cn(
+                  "flex size-10 shrink-0 items-center justify-center rounded-full transition-colors duration-200",
+                  log
+                    ? "animate-check-pop bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground",
+                )}
+              >
                 {log ? (
-                  <Check className="size-4" strokeWidth={3} />
+                  <Check className="size-4" strokeWidth={2.5} />
                 ) : (
                   <Plus className="size-4" strokeWidth={2.5} />
                 )}

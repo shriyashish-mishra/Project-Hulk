@@ -70,7 +70,7 @@ export function MealCard({
                 )}
               >
                 {log ? (
-                  <Check className="size-4" strokeWidth={3} />
+                  <Check className="size-4" strokeWidth={2.5} />
                 ) : (
                   <Plus className="size-4" strokeWidth={2.5} />
                 )}

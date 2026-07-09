@@ -50,8 +50,8 @@
   --radius-4xl: calc(var(--radius) * 2.4);
   --animate-fade-up: fade-up var(--duration-base) var(--ease-out-expo) both;
   --animate-fade-in: fade-in var(--duration-base) var(--ease-out-expo) both;
-  --animate-success-pulse: success-pulse 550ms var(--ease-spring);
-  --animate-check-pop: check-pop 450ms var(--ease-spring);
+  --animate-success-pulse: success-pulse 320ms var(--ease-out-expo);
+  --animate-check-pop: check-pop 220ms var(--ease-out-expo);
 }
 
 /*
@@ -61,17 +61,17 @@
  * — the same technique Linear/Vercel/Whoop use for dark UI.
  */
 :root {
-  --background: oklch(0.09 0 0);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.19 0 0);
-  --popover-foreground: oklch(0.98 0 0);
+  --background: oklch(0.12 0 0);
+  --foreground: oklch(0.97 0 0);
+  --card: oklch(0.17 0 0);
+  --card-foreground: oklch(0.97 0 0);
+  --popover: oklch(0.21 0 0);
+  --popover-foreground: oklch(0.97 0 0);
   --primary: oklch(0.83 0.15 162);
   --primary-foreground: oklch(0.09 0 0);
-  --secondary: oklch(0.19 0 0);
-  --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(0.17 0 0);
+  --secondary: oklch(0.21 0 0);
+  --secondary-foreground: oklch(0.97 0 0);
+  --muted: oklch(0.19 0 0);
   --muted-foreground: oklch(0.63 0 0);
   --accent: oklch(0.83 0.15 162);
   --accent-foreground: oklch(0.09 0 0);
@@ -84,22 +84,22 @@
   --chart-1: oklch(0.83 0.15 162);
   --chart-2: oklch(0.7 0 0);
   --chart-3: oklch(0.55 0 0);
-  --chart-4: oklch(0.4 0 0);
-  --chart-5: oklch(0.28 0 0);
-  --radius: 1.25rem;
-  --sidebar: oklch(0.145 0 0);
-  --sidebar-foreground: oklch(0.98 0 0);
+  --chart-4: oklch(0.42 0 0);
+  --chart-5: oklch(0.3 0 0);
+  --radius: 1rem;
+  --sidebar: oklch(0.17 0 0);
+  --sidebar-foreground: oklch(0.97 0 0);
   --sidebar-primary: oklch(0.83 0.15 162);
   --sidebar-primary-foreground: oklch(0.09 0 0);
-  --sidebar-accent: oklch(0.19 0 0);
-  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.21 0 0);
+  --sidebar-accent-foreground: oklch(0.97 0 0);
   --sidebar-border: oklch(1 0 0 / 8%);
   --sidebar-ring: oklch(0.83 0.15 162 / 55%);
 
-  /* Motion */
+  /* Motion — kept short and non-bouncy; see the "almost invisible" rule. */
   --duration-fast: 150ms;
-  --duration-base: 250ms;
-  --duration-slow: 450ms;
+  --duration-base: 220ms;
+  --duration-slow: 400ms;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -107,17 +107,17 @@
 /* Single-theme product for now — .dark mirrors :root so nothing regresses
    if a class toggle is ever added before a real light mode exists. */
 .dark {
-  --background: oklch(0.09 0 0);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.19 0 0);
-  --popover-foreground: oklch(0.98 0 0);
+  --background: oklch(0.12 0 0);
+  --foreground: oklch(0.97 0 0);
+  --card: oklch(0.17 0 0);
+  --card-foreground: oklch(0.97 0 0);
+  --popover: oklch(0.21 0 0);
+  --popover-foreground: oklch(0.97 0 0);
   --primary: oklch(0.83 0.15 162);
   --primary-foreground: oklch(0.09 0 0);
-  --secondary: oklch(0.19 0 0);
-  --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(0.17 0 0);
+  --secondary: oklch(0.21 0 0);
+  --secondary-foreground: oklch(0.97 0 0);
+  --muted: oklch(0.19 0 0);
   --muted-foreground: oklch(0.63 0 0);
   --accent: oklch(0.83 0.15 162);
   --accent-foreground: oklch(0.09 0 0);
@@ -130,14 +130,14 @@
   --chart-1: oklch(0.83 0.15 162);
   --chart-2: oklch(0.7 0 0);
   --chart-3: oklch(0.55 0 0);
-  --chart-4: oklch(0.4 0 0);
-  --chart-5: oklch(0.28 0 0);
-  --sidebar: oklch(0.145 0 0);
-  --sidebar-foreground: oklch(0.98 0 0);
+  --chart-4: oklch(0.42 0 0);
+  --chart-5: oklch(0.3 0 0);
+  --sidebar: oklch(0.17 0 0);
+  --sidebar-foreground: oklch(0.97 0 0);
   --sidebar-primary: oklch(0.83 0.15 162);
   --sidebar-primary-foreground: oklch(0.09 0 0);
-  --sidebar-accent: oklch(0.19 0 0);
-  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.21 0 0);
+  --sidebar-accent-foreground: oklch(0.97 0 0);
   --sidebar-border: oklch(1 0 0 / 8%);
   --sidebar-ring: oklch(0.83 0.15 162 / 55%);
 }
@@ -145,7 +145,7 @@
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -166,8 +166,8 @@
   0% {
     transform: scale(1);
   }
-  45% {
-    transform: scale(1.15);
+  50% {
+    transform: scale(1.04);
   }
   100% {
     transform: scale(1);
@@ -175,17 +175,13 @@
 }
 
 @keyframes check-pop {
-  0% {
+  from {
     opacity: 0;
-    transform: scale(0.5) rotate(-8deg);
+    transform: scale(0.92);
   }
-  60% {
+  to {
     opacity: 1;
-    transform: scale(1.12) rotate(2deg);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) rotate(0deg);
+    transform: scale(1);
   }
 }
 

@@ -11,3 +11,9 @@ export const SEVERITY_LABEL: Record<Severity, string> = {
   warning: "Good",
   destructive: "Needs work",
 };
+
+export const SEVERITY_STROKE: Record<Severity, string> = {
+  success: "var(--success)",
+  warning: "var(--warning)",
+  destructive: "var(--destructive)",
+};
