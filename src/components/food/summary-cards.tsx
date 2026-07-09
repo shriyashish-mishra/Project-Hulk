@@ -1,22 +1,20 @@
+import { Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
+import type { MealType } from "@/lib/food-logs/types";
 
 interface SummaryCardsProps {
-  caloriesConsumed: number;
-  proteinConsumed: number;
-  remainingCalories: number;
-  remainingProtein: number;
-  caloriesProgress: number;
-  proteinProgress: number;
+  mealsLoggedToday: number;
+  completedMeals: ReadonlyArray<{
+    type: MealType;
+    label: string;
+    done: boolean;
+  }>;
 }
 
 export function SummaryCards({
-  caloriesConsumed,
-  proteinConsumed,
-  remainingCalories,
-  remainingProtein,
-  caloriesProgress,
-  proteinProgress,
+  mealsLoggedToday,
+  completedMeals,
 }: SummaryCardsProps) {
   return (
     <Card>
@@ -24,35 +22,34 @@ export function SummaryCards({
         <CardTitle>Today</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-baseline justify-between text-sm">
-            <span className="font-medium">Calories</span>
-            <span className="text-muted-foreground">
-              {caloriesConsumed} kcal ·{" "}
-              <span className={remainingCalories < 0 ? "text-destructive" : ""}>
-                {remainingCalories >= 0
-                  ? `${remainingCalories} left`
-                  : `${Math.abs(remainingCalories)} over`}
-              </span>
-            </span>
-          </div>
-          <Progress value={caloriesProgress} />
-        </div>
+        <p className="text-sm text-muted-foreground">
+          {mealsLoggedToday === 0
+            ? "No meals logged yet."
+            : `${mealsLoggedToday} ${mealsLoggedToday === 1 ? "entry" : "entries"} logged today.`}
+        </p>
 
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-baseline justify-between text-sm">
-            <span className="font-medium">Protein</span>
-            <span className="text-muted-foreground">
-              {proteinConsumed.toFixed(0)}g ·{" "}
-              <span className={remainingProtein < 0 ? "text-destructive" : ""}>
-                {remainingProtein >= 0
-                  ? `${remainingProtein.toFixed(0)}g left`
-                  : `${Math.abs(remainingProtein).toFixed(0)}g over`}
+        <ul className="grid grid-cols-4 gap-2">
+          {completedMeals.map((meal) => (
+            <li
+              key={meal.type}
+              className="flex flex-col items-center gap-1.5 rounded-lg border border-border py-2.5"
+            >
+              <span
+                className={cn(
+                  "flex size-6 items-center justify-center rounded-full border",
+                  meal.done
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border text-muted-foreground",
+                )}
+              >
+                {meal.done && <Check className="size-3.5" />}
               </span>
-            </span>
-          </div>
-          <Progress value={proteinProgress} />
-        </div>
+              <span className="text-xs text-muted-foreground">
+                {meal.label}
+              </span>
+            </li>
+          ))}
+        </ul>
       </CardContent>
     </Card>
   );

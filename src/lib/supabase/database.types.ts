@@ -7,33 +7,21 @@ export type Database = {
         Row: {
           id: string;
           meal_type: MealTypeEnum;
-          name: string;
-          quantity: number;
-          unit: string;
-          calories: number;
-          protein_grams: number;
+          raw_text: string;
           logged_on: string;
           created_at: string;
         };
         Insert: {
           id?: string;
           meal_type: MealTypeEnum;
-          name: string;
-          quantity: number;
-          unit: string;
-          calories: number;
-          protein_grams: number;
+          raw_text: string;
           logged_on: string;
           created_at?: string;
         };
         Update: {
           id?: string;
           meal_type?: MealTypeEnum;
-          name?: string;
-          quantity?: number;
-          unit?: string;
-          calories?: number;
-          protein_grams?: number;
+          raw_text?: string;
           logged_on?: string;
           created_at?: string;
         };

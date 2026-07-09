@@ -8,11 +8,7 @@ import {
   updateFoodLog,
   type FoodLogFormInput,
 } from "@/lib/food-logs/actions";
-import {
-  DEFAULT_DAILY_CALORIE_TARGET,
-  DEFAULT_DAILY_PROTEIN_TARGET_G,
-  MEAL_SECTIONS,
-} from "@/lib/food-logs/constants";
+import { MEAL_SECTIONS } from "@/lib/food-logs/constants";
 import type { FoodLog, MealType } from "@/lib/food-logs/types";
 import { MealSection } from "./meal-section";
 import { SummaryCards } from "./summary-cards";
@@ -50,27 +46,14 @@ export function FoodDashboard({ initialLogs }: FoodDashboardProps) {
     return map;
   }, [optimisticLogs]);
 
-  const totals = useMemo(
+  const completedMeals = useMemo(
     () =>
-      optimisticLogs.reduce(
-        (acc, log) => ({
-          calories: acc.calories + log.calories,
-          protein: acc.protein + log.protein_grams,
-        }),
-        { calories: 0, protein: 0 },
-      ),
-    [optimisticLogs],
-  );
-
-  const remainingCalories = DEFAULT_DAILY_CALORIE_TARGET - totals.calories;
-  const remainingProtein = DEFAULT_DAILY_PROTEIN_TARGET_G - totals.protein;
-  const caloriesProgress = Math.min(
-    100,
-    (totals.calories / DEFAULT_DAILY_CALORIE_TARGET) * 100,
-  );
-  const proteinProgress = Math.min(
-    100,
-    (totals.protein / DEFAULT_DAILY_PROTEIN_TARGET_G) * 100,
+      MEAL_SECTIONS.map((section) => ({
+        type: section.type,
+        label: section.label,
+        done: (logsByMeal.get(section.type)?.length ?? 0) > 0,
+      })),
+    [logsByMeal],
   );
 
   function handleAdd(input: FoodLogFormInput) {
@@ -78,11 +61,7 @@ export function FoodDashboard({ initialLogs }: FoodDashboardProps) {
       const optimisticEntry: FoodLog = {
         id: `optimistic-${crypto.randomUUID()}`,
         meal_type: input.mealType,
-        name: input.name.trim(),
-        quantity: input.quantity,
-        unit: input.unit.trim(),
-        calories: Math.round(input.calories),
-        protein_grams: input.proteinGrams,
+        raw_text: input.rawText.trim(),
         logged_on: loggedOn,
         created_at: new Date().toISOString(),
       };
@@ -105,11 +84,7 @@ export function FoodDashboard({ initialLogs }: FoodDashboardProps) {
       const optimisticEntry: FoodLog = {
         id,
         meal_type: input.mealType,
-        name: input.name.trim(),
-        quantity: input.quantity,
-        unit: input.unit.trim(),
-        calories: Math.round(input.calories),
-        protein_grams: input.proteinGrams,
+        raw_text: input.rawText.trim(),
         logged_on: existing?.logged_on ?? loggedOn,
         created_at: existing?.created_at ?? new Date().toISOString(),
       };
@@ -144,12 +119,8 @@ export function FoodDashboard({ initialLogs }: FoodDashboardProps) {
   return (
     <div className="flex flex-col gap-4">
       <SummaryCards
-        caloriesConsumed={totals.calories}
-        proteinConsumed={totals.protein}
-        remainingCalories={remainingCalories}
-        remainingProtein={remainingProtein}
-        caloriesProgress={caloriesProgress}
-        proteinProgress={proteinProgress}
+        mealsLoggedToday={optimisticLogs.length}
+        completedMeals={completedMeals}
       />
 
       <div className="flex flex-col gap-3">

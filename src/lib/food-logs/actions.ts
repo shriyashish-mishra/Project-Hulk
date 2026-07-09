@@ -8,11 +8,7 @@ import type { FoodLog, MealType } from "./types";
 
 export interface FoodLogFormInput {
   mealType: MealType;
-  name: string;
-  quantity: number;
-  unit: string;
-  calories: number;
-  proteinGrams: number;
+  rawText: string;
 }
 
 const VALID_MEAL_TYPES = new Set<MealType>(
@@ -23,26 +19,12 @@ function assertValidInput(input: FoodLogFormInput) {
   if (!VALID_MEAL_TYPES.has(input.mealType)) {
     throw new Error("Invalid meal type.");
   }
-  if (!input.name.trim()) {
-    throw new Error("Food name is required.");
-  }
-  if (!input.unit.trim()) {
-    throw new Error("Unit is required.");
-  }
-  if (!Number.isFinite(input.quantity) || input.quantity <= 0) {
-    throw new Error("Quantity must be greater than 0.");
-  }
-  if (!Number.isFinite(input.calories) || input.calories < 0) {
-    throw new Error("Calories must be 0 or greater.");
-  }
-  if (!Number.isFinite(input.proteinGrams) || input.proteinGrams < 0) {
-    throw new Error("Protein must be 0 or greater.");
+  if (!input.rawText.trim()) {
+    throw new Error("Describe what you ate.");
   }
 }
 
-export async function addFoodLog(
-  input: FoodLogFormInput,
-): Promise<FoodLog> {
+export async function addFoodLog(input: FoodLogFormInput): Promise<FoodLog> {
   assertValidInput(input);
 
   const supabase = await createClient();
@@ -50,11 +32,7 @@ export async function addFoodLog(
     .from("food_logs")
     .insert({
       meal_type: input.mealType,
-      name: input.name.trim(),
-      quantity: input.quantity,
-      unit: input.unit.trim(),
-      calories: Math.round(input.calories),
-      protein_grams: input.proteinGrams,
+      raw_text: input.rawText.trim(),
       logged_on: getLocalDateString(),
     })
     .select()
@@ -77,11 +55,7 @@ export async function updateFoodLog(
     .from("food_logs")
     .update({
       meal_type: input.mealType,
-      name: input.name.trim(),
-      quantity: input.quantity,
-      unit: input.unit.trim(),
-      calories: Math.round(input.calories),
-      protein_grams: input.proteinGrams,
+      raw_text: input.rawText.trim(),
     })
     .eq("id", id)
     .select()
