@@ -6,12 +6,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { FoodDashboard } from "@/components/food/food-dashboard";
+import { WorkoutCard } from "@/components/workout/workout-card";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
 import { getFoodLogsForDate } from "@/lib/food-logs/queries";
+import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 
 export default async function DashboardPage() {
   const loggedOn = getLocalDateString();
-  const logs = await getFoodLogsForDate(loggedOn);
+  const [logs, workoutLog] = await Promise.all([
+    getFoodLogsForDate(loggedOn),
+    getWorkoutLogForDate(loggedOn),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -20,7 +25,10 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
       </div>
 
-      <FoodDashboard initialLogs={logs} />
+      <div className="flex flex-col gap-3">
+        <FoodDashboard initialLogs={logs} />
+        <WorkoutCard initialLog={workoutLog} />
+      </div>
 
       <Card>
         <CardHeader>

@@ -27,6 +27,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      workout_logs: {
+        Row: {
+          id: string;
+          raw_text: string;
+          logged_on: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          raw_text: string;
+          logged_on: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          raw_text?: string;
+          logged_on?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
