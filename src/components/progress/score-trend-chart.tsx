@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   CartesianGrid,
   Legend,
@@ -9,6 +10,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  type MouseHandlerDataParam,
 } from "recharts";
 import { formatWeekdayShort } from "@/lib/date";
 import type { DailyTrendPoint } from "@/lib/progress/types";
@@ -19,9 +21,12 @@ interface ScoreTrendChartProps {
 }
 
 export function ScoreTrendChart({ days, pointsByDate }: ScoreTrendChartProps) {
+  const router = useRouter();
+
   const data = days.map((date) => {
     const point = pointsByDate.get(date);
     return {
+      date,
       label: formatWeekdayShort(new Date(`${date}T00:00:00`)),
       Overall: point?.overallScore ?? null,
       Nutrition: point?.nutritionScore ?? null,
@@ -29,10 +34,22 @@ export function ScoreTrendChart({ days, pointsByDate }: ScoreTrendChartProps) {
     };
   });
 
+  function handleClick(state: MouseHandlerDataParam) {
+    const index = state.activeIndex;
+    if (typeof index !== "number") return;
+    const clickedDate = days[index];
+    if (clickedDate) router.push(`/report/${clickedDate}`);
+  }
+
   return (
     <div className="h-52 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+        <LineChart
+          data={data}
+          onClick={handleClick}
+          className="cursor-pointer"
+          margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+        >
           <CartesianGrid vertical={false} stroke="var(--border)" />
           <XAxis
             dataKey="label"
@@ -54,10 +71,11 @@ export function ScoreTrendChart({ days, pointsByDate }: ScoreTrendChartProps) {
             contentStyle={{
               background: "var(--popover)",
               borderColor: "var(--border)",
-              borderRadius: 8,
+              borderRadius: 12,
               fontSize: 12,
             }}
             labelStyle={{ color: "var(--foreground)" }}
+            cursor={{ stroke: "var(--border)", strokeWidth: 1 }}
           />
           <Legend wrapperStyle={{ fontSize: 12 }} iconType="plainline" iconSize={14} />
           <Line
@@ -65,21 +83,30 @@ export function ScoreTrendChart({ days, pointsByDate }: ScoreTrendChartProps) {
             dataKey="Overall"
             stroke="var(--foreground)"
             strokeWidth={2}
-            dot={{ r: 3 }}
+            dot={{ r: 4, strokeWidth: 0 }}
+            activeDot={{ r: 6 }}
+            animationDuration={450}
+            animationEasing="ease-out"
           />
           <Line
             type="monotone"
             dataKey="Nutrition"
             stroke="var(--success)"
             strokeWidth={2}
-            dot={{ r: 3 }}
+            dot={{ r: 4, strokeWidth: 0 }}
+            activeDot={{ r: 6 }}
+            animationDuration={450}
+            animationEasing="ease-out"
           />
           <Line
             type="monotone"
             dataKey="Workout"
             stroke="var(--warning)"
             strokeWidth={2}
-            dot={{ r: 3 }}
+            dot={{ r: 4, strokeWidth: 0 }}
+            activeDot={{ r: 6 }}
+            animationDuration={450}
+            animationEasing="ease-out"
           />
         </LineChart>
       </ResponsiveContainer>

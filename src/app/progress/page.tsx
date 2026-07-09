@@ -1,3 +1,12 @@
+import {
+  CalendarCheck2,
+  Dumbbell,
+  Flame,
+  History,
+  ListChecks,
+  Sparkle,
+  TrendingUp,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CoachMemoryCard } from "@/components/progress/coach-memory-card";
 import { MuscleGroupsCard } from "@/components/progress/muscle-groups-card";
@@ -39,36 +48,22 @@ export default async function ProgressPage() {
     value: pointsByDate.get(date)?.estimatedCalories ?? null,
   }));
 
-  return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <p className="text-sm text-muted-foreground">Last 7 days</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Progress</h1>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Weekly summary</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <WeeklySummaryTiles summary={weeklySummary} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Score trends</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScoreTrendChart days={last7Days} pointsByDate={pointsByDate} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Nutrition trends</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-3">
+  const sections = [
+    {
+      title: "Weekly summary",
+      icon: ListChecks,
+      content: <WeeklySummaryTiles summary={weeklySummary} />,
+    },
+    {
+      title: "Score trends",
+      icon: TrendingUp,
+      content: <ScoreTrendChart days={last7Days} pointsByDate={pointsByDate} />,
+    },
+    {
+      title: "Nutrition trends",
+      icon: Flame,
+      content: (
+        <div className="grid grid-cols-2 gap-3">
           <SparklineTile
             label="Protein"
             value={weeklySummary.avgProteinG}
@@ -83,44 +78,61 @@ export default async function ProgressPage() {
             data={calorieSparkline}
             color="var(--warning)"
           />
-        </CardContent>
-      </Card>
+        </div>
+      ),
+    },
+    {
+      title: "Workout consistency",
+      icon: CalendarCheck2,
+      content: (
+        <WorkoutConsistencyStrip days={last7Days} pointsByDate={pointsByDate} />
+      ),
+    },
+    {
+      title: "Muscle groups trained this week",
+      icon: Dumbbell,
+      content: <MuscleGroupsCard counts={muscleGroupCounts} />,
+    },
+    {
+      title: "Coach memory",
+      icon: Sparkle,
+      content: <CoachMemoryCard insights={coachInsights} />,
+    },
+    {
+      title: "AI coaching history",
+      icon: History,
+      content: <ReportHistoryList reports={reports} />,
+    },
+  ];
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Workout consistency</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <WorkoutConsistencyStrip days={last7Days} pointsByDate={pointsByDate} />
-        </CardContent>
-      </Card>
+  return (
+    <div className="flex flex-col gap-7">
+      <header>
+        <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">
+          Last 7 days
+        </p>
+        <h1 className="mt-1 text-4xl font-black tracking-tight text-foreground">
+          Progress
+        </h1>
+      </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Muscle groups trained this week</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <MuscleGroupsCard counts={muscleGroupCounts} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Coach memory</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CoachMemoryCard insights={coachInsights} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>AI coaching history</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ReportHistoryList reports={reports} />
-        </CardContent>
-      </Card>
+      <div className="flex flex-col gap-3">
+        {sections.map(({ title, icon: Icon, content }, index) => (
+          <Card
+            key={title}
+            className="animate-fade-up"
+            style={{ animationDelay: `${index * 60}ms` }}
+          >
+            <CardHeader>
+              <CardTitle className="flex items-center gap-1.5">
+                <Icon className="size-4 text-primary" />
+                {title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>{content}</CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

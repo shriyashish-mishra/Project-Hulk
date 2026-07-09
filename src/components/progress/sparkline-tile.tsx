@@ -18,7 +18,7 @@ export function SparklineTile({
   color = "var(--foreground)",
 }: SparklineTileProps) {
   return (
-    <div className="flex flex-col gap-1 rounded-lg border border-border p-3">
+    <div className="flex flex-col gap-1 rounded-2xl bg-muted p-3.5">
       <span className="text-xs text-muted-foreground">{label}</span>
       <span className="text-lg font-semibold">
         {value ?? "—"}
