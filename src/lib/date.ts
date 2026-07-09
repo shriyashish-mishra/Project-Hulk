@@ -31,3 +31,10 @@ export function formatShortDate(date: Date = new Date()): string {
     day: "numeric",
   }).format(date);
 }
+
+export function formatWeekdayShort(date: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: APP_TIME_ZONE,
+    weekday: "short",
+  }).format(date);
+}
