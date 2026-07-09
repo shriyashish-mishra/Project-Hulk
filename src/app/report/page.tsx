@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DailyReportView } from "@/components/nightly-report/daily-report-view";
+import { ReportDayView } from "@/components/nightly-report/report-day-view";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
 import { getAiReportForDate } from "@/lib/nightly-report/queries";
 
@@ -21,32 +19,7 @@ export default async function ReportPage() {
         <p className="text-sm text-muted-foreground">{formatDateHeading()}</p>
       </div>
 
-      {report ? (
-        <DailyReportView report={report.parsed_json} />
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>No report yet</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            <p className="text-sm text-muted-foreground">
-              Generate tonight&rsquo;s prompt, paste it into Claude, then import
-              the response to see your coaching report here.
-            </p>
-            <Button nativeButton={false} render={<Link href="/report/generate" />}>
-              Generate Nightly Report
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              nativeButton={false}
-              render={<Link href="/report/import" />}
-            >
-              Already have a response? Import it
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      <ReportDayView report={report} isToday />
     </div>
   );
 }

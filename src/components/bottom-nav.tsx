@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, enabled: true },
   { href: "/workouts", label: "Workouts", icon: Dumbbell, enabled: false },
-  { href: "/progress", label: "Progress", icon: TrendingUp, enabled: false },
+  { href: "/progress", label: "Progress", icon: TrendingUp, enabled: true },
 ] as const;
 
 export function BottomNav() {
