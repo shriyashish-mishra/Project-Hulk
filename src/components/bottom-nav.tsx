@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Dumbbell, LayoutDashboard, TrendingUp, UtensilsCrossed } from "lucide-react";
+import { Dumbbell, LayoutDashboard, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, enabled: true },
-  { href: "/meals", label: "Meals", icon: UtensilsCrossed, enabled: false },
   { href: "/workouts", label: "Workouts", icon: Dumbbell, enabled: false },
   { href: "/progress", label: "Progress", icon: TrendingUp, enabled: false },
 ] as const;
