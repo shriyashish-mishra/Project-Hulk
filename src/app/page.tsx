@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
 import { FoodDashboard } from "@/components/food/food-dashboard";
 import { WorkoutCard } from "@/components/workout/workout-card";
 import { NightlyReportCard } from "@/components/nightly-report/nightly-report-card";
@@ -38,10 +39,12 @@ export default async function TodayPage() {
 
       <StreakPills streaks={streaks} />
 
-      <div className="flex flex-col gap-3">
-        <FoodDashboard initialLogs={logs} />
-        <WorkoutCard initialLog={workoutLog} />
-      </div>
+      <Card className="animate-fade-up">
+        <CardContent className="divide-y divide-border">
+          <FoodDashboard initialLogs={logs} />
+          <WorkoutCard initialLog={workoutLog} />
+        </CardContent>
+      </Card>
 
       <NightlyReportCard />
     </div>

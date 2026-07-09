@@ -31,14 +31,11 @@ export function StreakPills({ streaks }: StreakPillsProps) {
   if (pills.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2 animate-fade-up">
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
       {pills.map(({ key, icon: Icon, label }) => (
-        <div
-          key={key}
-          className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-2 text-xs font-semibold text-foreground"
-        >
-          <Icon className="size-3.5 text-primary" />
-          {label}
+        <div key={key} className="flex items-center gap-1.5">
+          <Icon className="size-3.5 text-primary" strokeWidth={2.5} />
+          <span className="text-sm text-muted-foreground">{label}</span>
         </div>
       ))}
     </div>

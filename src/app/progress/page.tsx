@@ -1,12 +1,3 @@
-import {
-  CalendarCheck2,
-  Dumbbell,
-  Flame,
-  History,
-  ListChecks,
-  Sparkle,
-  TrendingUp,
-} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CoachMemoryCard } from "@/components/progress/coach-memory-card";
 import { MuscleGroupsCard } from "@/components/progress/muscle-groups-card";
@@ -51,17 +42,14 @@ export default async function ProgressPage() {
   const sections = [
     {
       title: "Weekly summary",
-      icon: ListChecks,
       content: <WeeklySummaryTiles summary={weeklySummary} />,
     },
     {
       title: "Score trends",
-      icon: TrendingUp,
       content: <ScoreTrendChart days={last7Days} pointsByDate={pointsByDate} />,
     },
     {
       title: "Nutrition trends",
-      icon: Flame,
       content: (
         <div className="grid grid-cols-2 gap-3">
           <SparklineTile
@@ -83,24 +71,20 @@ export default async function ProgressPage() {
     },
     {
       title: "Workout consistency",
-      icon: CalendarCheck2,
       content: (
         <WorkoutConsistencyStrip days={last7Days} pointsByDate={pointsByDate} />
       ),
     },
     {
       title: "Muscle groups trained this week",
-      icon: Dumbbell,
       content: <MuscleGroupsCard counts={muscleGroupCounts} />,
     },
     {
       title: "Coach memory",
-      icon: Sparkle,
       content: <CoachMemoryCard insights={coachInsights} />,
     },
     {
       title: "AI coaching history",
-      icon: History,
       content: <ReportHistoryList reports={reports} />,
     },
   ];
@@ -117,17 +101,14 @@ export default async function ProgressPage() {
       </header>
 
       <div className="flex flex-col gap-3">
-        {sections.map(({ title, icon: Icon, content }, index) => (
+        {sections.map(({ title, content }, index) => (
           <Card
             key={title}
             className="animate-fade-up"
             style={{ animationDelay: `${index * 60}ms` }}
           >
             <CardHeader>
-              <CardTitle className="flex items-center gap-1.5">
-                <Icon className="size-4 text-primary" />
-                {title}
-              </CardTitle>
+              <CardTitle>{title}</CardTitle>
             </CardHeader>
             <CardContent>{content}</CardContent>
           </Card>

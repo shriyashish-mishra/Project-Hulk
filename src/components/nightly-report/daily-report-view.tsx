@@ -1,13 +1,4 @@
-import {
-  Check,
-  Dumbbell,
-  Flame,
-  Smile,
-  TriangleAlert,
-  Trophy,
-  UtensilsCrossed,
-  Zap,
-} from "lucide-react";
+import { Check, TriangleAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -48,31 +39,21 @@ export function DailyReportView({ report }: DailyReportViewProps) {
   return (
     <div className="flex flex-col gap-3">
       <Card className="animate-fade-up">
-        <CardContent className="flex items-center gap-4">
-          <ScoreBadge score={report.overall_score} size="lg" />
-          <div className="flex min-w-0 flex-col gap-2">
-            <p className="flex items-center gap-1.5 text-sm font-semibold">
-              <Trophy className="size-4 text-primary" />
-              Overall Score
-            </p>
+        <CardContent className="flex flex-col gap-5">
+          <div className="flex items-center gap-4">
+            <ScoreBadge score={report.overall_score} size="lg" />
             <p className="text-sm text-muted-foreground">{report.coach_summary}</p>
+          </div>
+          <div className="flex flex-col gap-4">
+            <ScoreMeter label="Nutrition" score={report.nutrition_score} />
+            <ScoreMeter label="Workout" score={report.workout_score} />
           </div>
         </CardContent>
       </Card>
 
       <Card className="animate-fade-up" style={{ animationDelay: "60ms" }}>
-        <CardContent className="flex flex-col gap-4">
-          <ScoreMeter label="Nutrition" score={report.nutrition_score} />
-          <ScoreMeter label="Workout" score={report.workout_score} />
-        </CardContent>
-      </Card>
-
-      <Card className="animate-fade-up" style={{ animationDelay: "120ms" }}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-1.5">
-            <Flame className="size-4 text-primary" />
-            Nutrition Breakdown
-          </CardTitle>
+          <CardTitle>Nutrition Breakdown</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <div className="flex items-baseline justify-between">
@@ -121,14 +102,11 @@ export function DailyReportView({ report }: DailyReportViewProps) {
         </CardContent>
       </Card>
 
-      <Card className="animate-fade-up" style={{ animationDelay: "180ms" }}>
+      <Card className="animate-fade-up" style={{ animationDelay: "120ms" }}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-1.5">
-            <Dumbbell className="size-4 text-primary" />
-            Workout Analysis
-          </CardTitle>
+          <CardTitle>Workout Analysis</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3">
+        <CardContent>
           {report.muscles_trained.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
               {report.muscles_trained.map((muscle) => (
@@ -143,12 +121,9 @@ export function DailyReportView({ report }: DailyReportViewProps) {
         </CardContent>
       </Card>
 
-      <Card className="animate-fade-up" style={{ animationDelay: "240ms" }}>
+      <Card className="animate-fade-up" style={{ animationDelay: "180ms" }}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-1.5">
-            <Smile className="size-4 text-primary" />
-            What Went Well
-          </CardTitle>
+          <CardTitle>What Went Well</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="flex flex-col gap-2">
@@ -162,12 +137,9 @@ export function DailyReportView({ report }: DailyReportViewProps) {
         </CardContent>
       </Card>
 
-      <Card className="animate-fade-up" style={{ animationDelay: "300ms" }}>
+      <Card className="animate-fade-up" style={{ animationDelay: "240ms" }}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-1.5">
-            <TriangleAlert className="size-4 text-warning" />
-            What Could Improve
-          </CardTitle>
+          <CardTitle>What Could Improve</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="flex flex-col gap-2">
@@ -181,12 +153,9 @@ export function DailyReportView({ report }: DailyReportViewProps) {
         </CardContent>
       </Card>
 
-      <Card className="animate-fade-up" style={{ animationDelay: "360ms" }}>
+      <Card className="animate-fade-up" style={{ animationDelay: "300ms" }}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-1.5">
-            <UtensilsCrossed className="size-4 text-primary" />
-            Tomorrow&rsquo;s Nutrition Plan
-          </CardTitle>
+          <CardTitle>Tomorrow&rsquo;s Nutrition Plan</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="flex flex-col divide-y divide-border">
@@ -202,12 +171,9 @@ export function DailyReportView({ report }: DailyReportViewProps) {
         </CardContent>
       </Card>
 
-      <Card className="animate-fade-up" style={{ animationDelay: "420ms" }}>
+      <Card className="animate-fade-up" style={{ animationDelay: "360ms" }}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-1.5">
-            <Zap className="size-4 text-primary" />
-            Tomorrow&rsquo;s Workout Suggestion
-          </CardTitle>
+          <CardTitle>Tomorrow&rsquo;s Workout Suggestion</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="whitespace-pre-line text-sm text-muted-foreground">

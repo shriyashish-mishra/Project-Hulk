@@ -85,8 +85,8 @@ export function FoodDashboard({ initialLogs }: FoodDashboardProps) {
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      {MEAL_SECTIONS.map((section, index) => (
+    <>
+      {MEAL_SECTIONS.map((section) => (
         <MealCard
           key={section.type}
           mealType={section.type}
@@ -94,9 +94,8 @@ export function FoodDashboard({ initialLogs }: FoodDashboardProps) {
           log={logByMeal.get(section.type)}
           onSave={handleSave}
           onClear={handleClear}
-          style={{ animationDelay: `${index * 60}ms` }}
         />
       ))}
-    </div>
+    </>
   );
 }
