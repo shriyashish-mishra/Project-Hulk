@@ -3,33 +3,31 @@
 import { useMemo, useOptimistic, useState, useTransition } from "react";
 import { getLocalDateString } from "@/lib/date";
 import {
-  addFoodLog,
-  deleteFoodLog,
-  updateFoodLog,
-  type FoodLogFormInput,
+  deleteMealLog,
+  saveMealLog,
+  type MealLogInput,
 } from "@/lib/food-logs/actions";
 import { MEAL_SECTIONS } from "@/lib/food-logs/constants";
 import type { FoodLog, MealType } from "@/lib/food-logs/types";
-import { MealSection } from "./meal-section";
-import { SummaryCards } from "./summary-cards";
+import { MealCard } from "./meal-card";
 
 interface FoodDashboardProps {
   initialLogs: FoodLog[];
 }
 
 type OptimisticAction =
-  | { type: "add"; log: FoodLog }
-  | { type: "update"; log: FoodLog }
-  | { type: "delete"; id: string };
+  | { type: "save"; log: FoodLog }
+  | { type: "clear"; mealType: MealType };
 
 function reduceLogs(state: FoodLog[], action: OptimisticAction): FoodLog[] {
   switch (action.type) {
-    case "add":
-      return [...state, action.log];
-    case "update":
-      return state.map((log) => (log.id === action.log.id ? action.log : log));
-    case "delete":
-      return state.filter((log) => log.id !== action.id);
+    case "save":
+      return [
+        ...state.filter((log) => log.meal_type !== action.log.meal_type),
+        action.log,
+      ];
+    case "clear":
+      return state.filter((log) => log.meal_type !== action.mealType);
   }
 }
 
@@ -39,60 +37,30 @@ export function FoodDashboard({ initialLogs }: FoodDashboardProps) {
   const [, startTransition] = useTransition();
   const loggedOn = useMemo(() => getLocalDateString(), []);
 
-  const logsByMeal = useMemo(() => {
-    const map = new Map<MealType, FoodLog[]>();
-    for (const section of MEAL_SECTIONS) map.set(section.type, []);
-    for (const log of optimisticLogs) map.get(log.meal_type)?.push(log);
+  const logByMeal = useMemo(() => {
+    const map = new Map<MealType, FoodLog>();
+    for (const log of optimisticLogs) map.set(log.meal_type, log);
     return map;
   }, [optimisticLogs]);
 
-  const completedMeals = useMemo(
-    () =>
-      MEAL_SECTIONS.map((section) => ({
-        type: section.type,
-        label: section.label,
-        done: (logsByMeal.get(section.type)?.length ?? 0) > 0,
-      })),
-    [logsByMeal],
-  );
-
-  function handleAdd(input: FoodLogFormInput) {
+  function handleSave(input: MealLogInput) {
     return new Promise<void>((resolve, reject) => {
+      const existing = logByMeal.get(input.mealType);
       const optimisticEntry: FoodLog = {
-        id: `optimistic-${crypto.randomUUID()}`,
+        id: existing?.id ?? `optimistic-${crypto.randomUUID()}`,
         meal_type: input.mealType,
         raw_text: input.rawText.trim(),
         logged_on: loggedOn,
-        created_at: new Date().toISOString(),
-      };
-      startTransition(async () => {
-        applyOptimistic({ type: "add", log: optimisticEntry });
-        try {
-          const saved = await addFoodLog(input);
-          setLogs((prev) => [...prev, saved]);
-          resolve();
-        } catch (err) {
-          reject(err);
-        }
-      });
-    });
-  }
-
-  function handleUpdate(id: string, input: FoodLogFormInput) {
-    return new Promise<void>((resolve, reject) => {
-      const existing = logs.find((log) => log.id === id);
-      const optimisticEntry: FoodLog = {
-        id,
-        meal_type: input.mealType,
-        raw_text: input.rawText.trim(),
-        logged_on: existing?.logged_on ?? loggedOn,
         created_at: existing?.created_at ?? new Date().toISOString(),
       };
       startTransition(async () => {
-        applyOptimistic({ type: "update", log: optimisticEntry });
+        applyOptimistic({ type: "save", log: optimisticEntry });
         try {
-          const saved = await updateFoodLog(id, input);
-          setLogs((prev) => prev.map((log) => (log.id === id ? saved : log)));
+          const saved = await saveMealLog(input);
+          setLogs((prev) => [
+            ...prev.filter((log) => log.meal_type !== input.mealType),
+            saved,
+          ]);
           resolve();
         } catch (err) {
           reject(err);
@@ -101,13 +69,13 @@ export function FoodDashboard({ initialLogs }: FoodDashboardProps) {
     });
   }
 
-  function handleDelete(id: string) {
+  function handleClear(mealType: MealType) {
     return new Promise<void>((resolve, reject) => {
       startTransition(async () => {
-        applyOptimistic({ type: "delete", id });
+        applyOptimistic({ type: "clear", mealType });
         try {
-          await deleteFoodLog(id);
-          setLogs((prev) => prev.filter((log) => log.id !== id));
+          await deleteMealLog(mealType);
+          setLogs((prev) => prev.filter((log) => log.meal_type !== mealType));
           resolve();
         } catch (err) {
           reject(err);
@@ -117,25 +85,17 @@ export function FoodDashboard({ initialLogs }: FoodDashboardProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <SummaryCards
-        mealsLoggedToday={optimisticLogs.length}
-        completedMeals={completedMeals}
-      />
-
-      <div className="flex flex-col gap-3">
-        {MEAL_SECTIONS.map((section) => (
-          <MealSection
-            key={section.type}
-            mealType={section.type}
-            label={section.label}
-            logs={logsByMeal.get(section.type) ?? []}
-            onAdd={handleAdd}
-            onUpdate={handleUpdate}
-            onDelete={handleDelete}
-          />
-        ))}
-      </div>
+    <div className="flex flex-col gap-3">
+      {MEAL_SECTIONS.map((section) => (
+        <MealCard
+          key={section.type}
+          mealType={section.type}
+          label={section.label}
+          log={logByMeal.get(section.type)}
+          onSave={handleSave}
+          onClear={handleClear}
+        />
+      ))}
     </div>
   );
 }

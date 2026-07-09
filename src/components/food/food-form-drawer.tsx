@@ -3,9 +3,7 @@
 import { useState, useTransition, type ReactElement } from "react";
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
-  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
@@ -13,15 +11,18 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import type { FoodLogFormInput } from "@/lib/food-logs/actions";
+import type { MealLogInput } from "@/lib/food-logs/actions";
 import type { FoodLog, MealType } from "@/lib/food-logs/types";
+
+const PLACEHOLDER =
+  "2 egg omelette\nCoffee\n\nor\n\n1 bowl upma\n1 bowl watermelon";
 
 interface FoodFormDrawerProps {
   trigger: ReactElement;
   mealType: MealType;
   mealLabel: string;
   initialLog?: FoodLog;
-  onSubmit: (input: FoodLogFormInput) => Promise<void>;
+  onSubmit: (input: MealLogInput) => Promise<void>;
   onDelete?: () => Promise<void>;
 }
 
@@ -67,7 +68,7 @@ interface FoodFormBodyProps {
   mealType: MealType;
   mealLabel: string;
   initialLog?: FoodLog;
-  onSubmit: (input: FoodLogFormInput) => Promise<void>;
+  onSubmit: (input: MealLogInput) => Promise<void>;
   onDelete?: () => Promise<void>;
   onDone: () => void;
 }
@@ -80,7 +81,6 @@ function FoodFormBody({
   onDelete,
   onDone,
 }: FoodFormBodyProps) {
-  const isEdit = Boolean(initialLog);
   const [rawText, setRawText] = useState(initialLog?.raw_text ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -89,7 +89,7 @@ function FoodFormBody({
     event.preventDefault();
 
     if (!rawText.trim()) {
-      setError("Describe what you ate.");
+      setError("Write what you ate.");
       return;
     }
 
@@ -104,7 +104,7 @@ function FoodFormBody({
     });
   }
 
-  function handleDelete() {
+  function handleClear() {
     if (!onDelete) return;
     setError(null);
     startTransition(async () => {
@@ -112,7 +112,7 @@ function FoodFormBody({
         await onDelete();
         onDone();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to delete.");
+        setError(err instanceof Error ? err.message : "Failed to clear.");
       }
     });
   }
@@ -120,44 +120,37 @@ function FoodFormBody({
   return (
     <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
       <DrawerHeader>
-        <DrawerTitle>{isEdit ? `Edit ${mealLabel}` : mealLabel}</DrawerTitle>
-        <DrawerDescription>
-          Write what you ate, in your own words.
-        </DrawerDescription>
+        <DrawerTitle>{mealLabel}</DrawerTitle>
       </DrawerHeader>
 
       <div className="flex flex-col gap-2 overflow-y-auto px-4 py-4">
         <Textarea
           autoFocus
-          rows={6}
+          rows={8}
           value={rawText}
           onChange={(e) => setRawText(e.target.value)}
-          placeholder={"1 bowl upma\n1 bowl watermelon"}
+          placeholder={PLACEHOLDER}
+          className="min-h-56 resize-none"
         />
         {error && <p className="text-sm text-destructive">{error}</p>}
       </div>
 
       <DrawerFooter>
         <Button type="submit" disabled={isPending}>
-          {isEdit ? "Save changes" : "Add entry"}
+          Save
         </Button>
-        {isEdit && onDelete && (
+        {initialLog && onDelete && (
           <Button
             type="button"
-            variant="destructive"
+            variant="ghost"
+            size="sm"
+            className="text-destructive hover:text-destructive"
             disabled={isPending}
-            onClick={handleDelete}
+            onClick={handleClear}
           >
-            Delete
+            Clear entry
           </Button>
         )}
-        <DrawerClose
-          render={
-            <Button type="button" variant="ghost" disabled={isPending}>
-              Cancel
-            </Button>
-          }
-        />
       </DrawerFooter>
     </form>
   );

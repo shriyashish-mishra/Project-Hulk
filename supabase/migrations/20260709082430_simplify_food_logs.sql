@@ -3,6 +3,9 @@
 -- day — it only records the meal type and exactly what the user typed.
 -- Claude derives structured nutrition data from raw_text in a later
 -- milestone (nightly report import), so raw_text is the source of truth.
+--
+-- One entry per meal type per day: tapping a meal always edits that
+-- day's single note for it (upsert), rather than appending a new row.
 drop table if exists food_logs;
 
 create table food_logs (
@@ -10,7 +13,8 @@ create table food_logs (
   meal_type meal_type not null,
   raw_text text not null check (btrim(raw_text) <> ''),
   logged_on date not null,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  unique (meal_type, logged_on)
 );
 
 create index food_logs_logged_on_idx on food_logs (logged_on);
