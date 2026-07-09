@@ -22,6 +22,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  themeColor: "#0a0a0a",
 };
 
 export default function RootLayout({
@@ -34,15 +35,8 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground">
-        <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
-          <div className="mx-auto flex h-14 max-w-md items-center px-4">
-            <span className="text-base font-semibold tracking-tight">
-              Project Hulk
-            </span>
-          </div>
-        </header>
-        <main className="mx-auto w-full max-w-md flex-1 px-4 pb-24 pt-4">
+      <body className="flex min-h-full flex-col bg-background text-foreground">
+        <main className="mx-auto w-full max-w-md flex-1 px-5 pt-8 pb-28">
           {children}
         </main>
         <BottomNav />
