@@ -1,12 +1,6 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { FoodDashboard } from "@/components/food/food-dashboard";
 import { WorkoutCard } from "@/components/workout/workout-card";
+import { NightlyReportCard } from "@/components/nightly-report/nightly-report-card";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
 import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
@@ -30,20 +24,7 @@ export default async function DashboardPage() {
         <WorkoutCard initialLog={workoutLog} />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Nightly report</CardTitle>
-          <CardDescription>
-            Generate a report to analyze in Claude, then import the results
-            back once ready.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Not available yet — arrives in a future milestone.
-          </p>
-        </CardContent>
-      </Card>
+      <NightlyReportCard />
     </div>
   );
 }
