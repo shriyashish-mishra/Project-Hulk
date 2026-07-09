@@ -42,7 +42,7 @@ export function WorkoutFormDrawer({
   }
 
   return (
-    <Drawer open={open} onOpenChange={handleOpenChange}>
+    <Drawer open={open} onOpenChange={handleOpenChange} showSwipeHandle>
       <DrawerTrigger render={trigger} />
       <DrawerContent>
         <WorkoutFormBody
@@ -108,11 +108,13 @@ function WorkoutFormBody({
 
   return (
     <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-      <DrawerHeader>
-        <DrawerTitle>Workout</DrawerTitle>
+      <DrawerHeader className="pt-2">
+        <DrawerTitle className="text-2xl font-bold tracking-tight">
+          Workout
+        </DrawerTitle>
       </DrawerHeader>
 
-      <div className="flex flex-col gap-2 overflow-y-auto px-4 py-4">
+      <div className="flex flex-col gap-2 overflow-y-auto px-5 py-5">
         <Textarea
           autoFocus
           rows={8}
@@ -124,7 +126,7 @@ function WorkoutFormBody({
         {error && <p className="text-sm text-destructive">{error}</p>}
       </div>
 
-      <DrawerFooter>
+      <DrawerFooter className="px-5 pb-6">
         <Button type="submit" disabled={isPending}>
           Save
         </Button>

@@ -10,14 +10,14 @@ export async function NightlyReportCard() {
   const report = await getAiReportForDate(loggedOn);
 
   return (
-    <Card>
+    <Card className="animate-fade-up" style={{ animationDelay: "300ms" }}>
       <CardHeader>
-        <CardTitle>Nightly report</CardTitle>
+        <CardTitle>Coach report</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {report ? (
           <>
-            <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
+            <div className="flex items-center gap-3 rounded-2xl bg-muted/60 p-3.5">
               <ScoreBadge score={report.overall_score} />
               <p className="line-clamp-2 text-sm text-muted-foreground">
                 {report.coach_summary}
