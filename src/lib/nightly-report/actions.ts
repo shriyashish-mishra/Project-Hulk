@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getLocalDateString } from "@/lib/date";
 import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import type { Json } from "@/lib/supabase/database.types";
@@ -10,14 +9,21 @@ import { buildNightlyReportPrompt } from "./prompt";
 import { parseAiReportResponse } from "./parse";
 import type { AiDailyReport, AiReportJson } from "./types";
 
-/** Parses, validates, and stores today's AI report from a pasted Claude response. */
-export async function importAiReport(rawResponse: string): Promise<AiDailyReport> {
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Parses, validates, and stores `reportDate`'s AI report from a pasted Claude response. */
+export async function importAiReport(
+  rawResponse: string,
+  reportDate: string,
+): Promise<AiDailyReport> {
   if (!rawResponse.trim()) {
     throw new Error("Paste the response from Claude first.");
   }
+  if (!DATE_PATTERN.test(reportDate)) {
+    throw new Error("Invalid date.");
+  }
 
   const parsed = parseAiReportResponse(rawResponse);
-  const reportDate = getLocalDateString();
 
   const [foodLogs, workoutLog] = await Promise.all([
     getFoodLogsForDate(reportDate),
@@ -52,6 +58,8 @@ export async function importAiReport(rawResponse: string): Promise<AiDailyReport
 
   revalidatePath("/");
   revalidatePath("/report");
+  revalidatePath(`/report/${reportDate}`);
+  revalidatePath("/progress");
 
   return { ...data, parsed_json: parsed as AiReportJson };
 }

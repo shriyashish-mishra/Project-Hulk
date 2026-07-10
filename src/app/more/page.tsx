@@ -1,4 +1,14 @@
-import { Camera, Scale, Moon, Droplet, MessageCircle, Bell } from "lucide-react";
+import Link from "next/link";
+import {
+  Camera,
+  Scale,
+  Moon,
+  Droplet,
+  MessageCircle,
+  Bell,
+  CalendarClock,
+  ChevronRight,
+} from "lucide-react";
 import { BackLink } from "@/components/ui/back-link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -59,6 +69,28 @@ export default function MorePage() {
               Your personal fitness journal
             </p>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="animate-fade-up" style={{ animationDelay: "50ms" }}>
+        <CardContent>
+          <Link
+            href="/log"
+            className="flex items-center gap-3.5 active:opacity-60"
+          >
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-muted text-primary">
+              <CalendarClock className="size-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-foreground">
+                Log a past day
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Add or edit meals and workout for any date.
+              </p>
+            </div>
+            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+          </Link>
         </CardContent>
       </Card>
 

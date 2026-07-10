@@ -17,7 +17,7 @@ export default async function ReportPage() {
         <p className="text-sm text-muted-foreground">{formatDateHeading()}</p>
       </div>
 
-      <ReportDayView report={report} isToday />
+      <ReportDayView report={report} isToday date={loggedOn} />
     </div>
   );
 }

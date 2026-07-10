@@ -30,7 +30,7 @@ export default async function ReportDatePage({ params }: ReportDatePageProps) {
         </p>
       </div>
 
-      <ReportDayView report={report} isToday={isToday} />
+      <ReportDayView report={report} isToday={isToday} date={date} />
     </div>
   );
 }

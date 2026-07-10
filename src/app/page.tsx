@@ -41,8 +41,8 @@ export default async function TodayPage() {
 
       <Card className="animate-fade-up">
         <CardContent className="divide-y divide-border">
-          <FoodDashboard initialLogs={logs} />
-          <WorkoutCard initialLog={workoutLog} />
+          <FoodDashboard loggedOn={loggedOn} initialLogs={logs} />
+          <WorkoutCard loggedOn={loggedOn} initialLog={workoutLog} />
         </CardContent>
       </Card>
 

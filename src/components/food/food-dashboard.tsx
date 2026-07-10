@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useOptimistic, useState, useTransition } from "react";
-import { getLocalDateString } from "@/lib/date";
 import {
   deleteMealLog,
   saveMealLog,
@@ -12,6 +11,7 @@ import type { FoodLog, MealType } from "@/lib/food-logs/types";
 import { MealCard } from "./meal-card";
 
 interface FoodDashboardProps {
+  loggedOn: string;
   initialLogs: FoodLog[];
 }
 
@@ -31,11 +31,10 @@ function reduceLogs(state: FoodLog[], action: OptimisticAction): FoodLog[] {
   }
 }
 
-export function FoodDashboard({ initialLogs }: FoodDashboardProps) {
+export function FoodDashboard({ loggedOn, initialLogs }: FoodDashboardProps) {
   const [logs, setLogs] = useState(initialLogs);
   const [optimisticLogs, applyOptimistic] = useOptimistic(logs, reduceLogs);
   const [, startTransition] = useTransition();
-  const loggedOn = useMemo(() => getLocalDateString(), []);
 
   const logByMeal = useMemo(() => {
     const map = new Map<MealType, FoodLog>();
@@ -56,7 +55,7 @@ export function FoodDashboard({ initialLogs }: FoodDashboardProps) {
       startTransition(async () => {
         applyOptimistic({ type: "save", log: optimisticEntry });
         try {
-          const saved = await saveMealLog(input);
+          const saved = await saveMealLog(input, loggedOn);
           setLogs((prev) => [
             ...prev.filter((log) => log.meal_type !== input.mealType),
             saved,
@@ -74,7 +73,7 @@ export function FoodDashboard({ initialLogs }: FoodDashboardProps) {
       startTransition(async () => {
         applyOptimistic({ type: "clear", mealType });
         try {
-          await deleteMealLog(mealType);
+          await deleteMealLog(mealType, loggedOn);
           setLogs((prev) => prev.filter((log) => log.meal_type !== mealType));
           resolve();
         } catch (err) {

@@ -7,10 +7,11 @@ import type { WorkoutLog } from "@/lib/workout-logs/types";
 import { WorkoutFormDrawer } from "./workout-form-drawer";
 
 interface WorkoutCardProps {
+  loggedOn: string;
   initialLog: WorkoutLog | null;
 }
 
-export function WorkoutCard({ initialLog }: WorkoutCardProps) {
+export function WorkoutCard({ loggedOn, initialLog }: WorkoutCardProps) {
   const [log, setLog] = useState(initialLog);
   const [, startTransition] = useTransition();
 
@@ -20,7 +21,7 @@ export function WorkoutCard({ initialLog }: WorkoutCardProps) {
     return new Promise<void>((resolve, reject) => {
       startTransition(async () => {
         try {
-          const saved = await saveWorkoutLog(rawText);
+          const saved = await saveWorkoutLog(rawText, loggedOn);
           setLog(saved);
           resolve();
         } catch (err) {
@@ -34,7 +35,7 @@ export function WorkoutCard({ initialLog }: WorkoutCardProps) {
     return new Promise<void>((resolve, reject) => {
       startTransition(async () => {
         try {
-          await deleteWorkoutLog();
+          await deleteWorkoutLog(loggedOn);
           setLog(null);
           resolve();
         } catch (err) {
@@ -64,7 +65,7 @@ export function WorkoutCard({ initialLog }: WorkoutCardProps) {
               </span>
             ) : (
               <span className="mt-0.5 block text-sm text-muted-foreground">
-                How did training go today?
+                How did training go?
               </span>
             )}
           </span>

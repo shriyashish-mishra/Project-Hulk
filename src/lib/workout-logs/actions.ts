@@ -2,13 +2,20 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getLocalDateString } from "@/lib/date";
 import type { WorkoutLog } from "./types";
 
-/** Upserts today's workout note — one entry per day. */
-export async function saveWorkoutLog(rawText: string): Promise<WorkoutLog> {
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Upserts the workout note for `loggedOn` — one entry per day. */
+export async function saveWorkoutLog(
+  rawText: string,
+  loggedOn: string,
+): Promise<WorkoutLog> {
   if (!rawText.trim()) {
     throw new Error("Write your workout.");
+  }
+  if (!DATE_PATTERN.test(loggedOn)) {
+    throw new Error("Invalid date.");
   }
 
   const supabase = await createClient();
@@ -17,7 +24,7 @@ export async function saveWorkoutLog(rawText: string): Promise<WorkoutLog> {
     .upsert(
       {
         raw_text: rawText.trim(),
-        logged_on: getLocalDateString(),
+        logged_on: loggedOn,
       },
       { onConflict: "logged_on" },
     )
@@ -27,17 +34,19 @@ export async function saveWorkoutLog(rawText: string): Promise<WorkoutLog> {
   if (error) throw new Error(error.message);
 
   revalidatePath("/");
+  revalidatePath(`/log/${loggedOn}`);
   return data;
 }
 
-export async function deleteWorkoutLog(): Promise<void> {
+export async function deleteWorkoutLog(loggedOn: string): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase
     .from("workout_logs")
     .delete()
-    .eq("logged_on", getLocalDateString());
+    .eq("logged_on", loggedOn);
 
   if (error) throw new Error(error.message);
 
   revalidatePath("/");
+  revalidatePath(`/log/${loggedOn}`);
 }
