@@ -6,6 +6,7 @@ import { WorkoutCard } from "@/components/workout/workout-card";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
 import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
+import { requireUser } from "@/lib/supabase/auth";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -17,6 +18,7 @@ export default async function LogDatePage({ params }: LogDatePageProps) {
   const { date } = await params;
   if (!DATE_PATTERN.test(date)) notFound();
 
+  const { user } = await requireUser();
   const today = getLocalDateString();
   const isToday = date === today;
 
@@ -39,7 +41,7 @@ export default async function LogDatePage({ params }: LogDatePageProps) {
 
       <Card>
         <CardContent className="divide-y divide-border">
-          <FoodDashboard loggedOn={date} initialLogs={logs} />
+          <FoodDashboard loggedOn={date} initialLogs={logs} userId={user.id} />
           <WorkoutCard loggedOn={date} initialLog={workoutLog} />
         </CardContent>
       </Card>

@@ -13,6 +13,7 @@ import { MealCard } from "./meal-card";
 interface FoodDashboardProps {
   loggedOn: string;
   initialLogs: FoodLog[];
+  userId: string;
 }
 
 type OptimisticAction =
@@ -31,7 +32,11 @@ function reduceLogs(state: FoodLog[], action: OptimisticAction): FoodLog[] {
   }
 }
 
-export function FoodDashboard({ loggedOn, initialLogs }: FoodDashboardProps) {
+export function FoodDashboard({
+  loggedOn,
+  initialLogs,
+  userId,
+}: FoodDashboardProps) {
   const [logs, setLogs] = useState(initialLogs);
   const [optimisticLogs, applyOptimistic] = useOptimistic(logs, reduceLogs);
   const [, startTransition] = useTransition();
@@ -47,7 +52,7 @@ export function FoodDashboard({ loggedOn, initialLogs }: FoodDashboardProps) {
       const existing = logByMeal.get(input.mealType);
       const optimisticEntry: FoodLog = {
         id: existing?.id ?? `optimistic-${crypto.randomUUID()}`,
-        user_id: existing?.user_id ?? null,
+        user_id: userId,
         meal_type: input.mealType,
         raw_text: input.rawText.trim(),
         logged_on: loggedOn,

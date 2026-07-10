@@ -9,8 +9,10 @@ import { formatDateHeading, getLocalDateString } from "@/lib/date";
 import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import { getStreakSummary } from "@/lib/streaks/queries";
+import { requireUser } from "@/lib/supabase/auth";
 
 export default async function TodayPage() {
+  const { user } = await requireUser();
   const loggedOn = getLocalDateString();
   const [logs, workoutLog, streaks] = await Promise.all([
     getFoodLogsForDate(loggedOn),
@@ -47,7 +49,11 @@ export default async function TodayPage() {
 
       <Card className="animate-fade-up">
         <CardContent className="divide-y divide-border">
-          <FoodDashboard loggedOn={loggedOn} initialLogs={logs} />
+          <FoodDashboard
+            loggedOn={loggedOn}
+            initialLogs={logs}
+            userId={user.id}
+          />
           <WorkoutCard loggedOn={loggedOn} initialLog={workoutLog} />
         </CardContent>
       </Card>
