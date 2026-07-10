@@ -24,13 +24,6 @@ export function computeConsecutiveStreak(
   return streak;
 }
 
-export function computeWorkoutsThisWeek(
-  workoutDates: Set<string>,
-  last7Days: string[],
-): number {
-  return last7Days.filter((date) => workoutDates.has(date)).length;
-}
-
 /** Same grace-period logic as computeConsecutiveStreak, scored by threshold. */
 export function computeNutritionStreak(
   nutritionScoreByDate: Map<string, number>,

@@ -2,11 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getDaysAgoDateString } from "@/lib/date";
 import { getReportsInRange } from "@/lib/progress/queries";
 import type { StreakSummary } from "./types";
-import {
-  computeConsecutiveStreak,
-  computeNutritionStreak,
-  computeWorkoutsThisWeek,
-} from "./stats";
+import { computeConsecutiveStreak, computeNutritionStreak } from "./stats";
 
 const NUTRITION_STREAK_THRESHOLD = 75;
 const LOOKBACK_DAYS = 60;
@@ -74,11 +70,15 @@ export async function getStreakSummary(today: string): Promise<StreakSummary> {
 
   return {
     loggingStreakDays: computeConsecutiveStreak(loggedDates, today),
-    workoutsThisWeek: computeWorkoutsThisWeek(workoutDates, last7Days),
+    workoutStreakDays: computeConsecutiveStreak(workoutDates, today),
     nutritionStreakDays: computeNutritionStreak(
       nutritionScoreByDate,
       today,
       NUTRITION_STREAK_THRESHOLD,
     ),
+    recentWorkoutDays: last7Days.map((date) => ({
+      date,
+      trained: workoutDates.has(date),
+    })),
   };
 }

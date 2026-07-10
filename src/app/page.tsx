@@ -4,6 +4,7 @@ import { FoodDashboard } from "@/components/food/food-dashboard";
 import { WorkoutCard } from "@/components/workout/workout-card";
 import { NightlyReportCard } from "@/components/nightly-report/nightly-report-card";
 import { StreakPills } from "@/components/today/streak-pills";
+import { WorkoutStreakCard } from "@/components/today/workout-streak-card";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
 import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
@@ -38,6 +39,11 @@ export default async function TodayPage() {
       </header>
 
       <StreakPills streaks={streaks} />
+
+      <WorkoutStreakCard
+        workoutStreakDays={streaks.workoutStreakDays}
+        recentWorkoutDays={streaks.recentWorkoutDays}
+      />
 
       <Card className="animate-fade-up">
         <CardContent className="divide-y divide-border">

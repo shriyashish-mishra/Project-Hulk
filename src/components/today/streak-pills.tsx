@@ -1,4 +1,4 @@
-import { Dumbbell, Flame, Sparkle } from "lucide-react";
+import { CircleCheck, Sparkle } from "lucide-react";
 import type { StreakSummary } from "@/lib/streaks/types";
 
 interface StreakPillsProps {
@@ -9,13 +9,8 @@ export function StreakPills({ streaks }: StreakPillsProps) {
   const pills = [
     streaks.loggingStreakDays > 0 && {
       key: "logging",
-      icon: Flame,
+      icon: CircleCheck,
       label: `${streaks.loggingStreakDays} day streak`,
-    },
-    streaks.workoutsThisWeek > 0 && {
-      key: "workouts",
-      icon: Dumbbell,
-      label: `${streaks.workoutsThisWeek} workout${streaks.workoutsThisWeek === 1 ? "" : "s"} this week`,
     },
     streaks.nutritionStreakDays > 1 && {
       key: "nutrition",
@@ -24,7 +19,7 @@ export function StreakPills({ streaks }: StreakPillsProps) {
     },
   ].filter(Boolean) as Array<{
     key: string;
-    icon: typeof Flame;
+    icon: typeof Sparkle;
     label: string;
   }>;
 
