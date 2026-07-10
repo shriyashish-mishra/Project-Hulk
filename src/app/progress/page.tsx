@@ -7,6 +7,7 @@ import { DailyScoreCard } from "@/components/progress/daily-score-card";
 import { NutrientBar } from "@/components/progress/nutrient-bar";
 import { DailyWorkoutSummary } from "@/components/progress/daily-workout-summary";
 import { CoachFeedbackList } from "@/components/progress/coach-feedback-list";
+import { NextDayPlanCard } from "@/components/progress/next-day-plan-card";
 import { addDays, formatShortDate, getLocalDateString } from "@/lib/date";
 import { getAiReportForDate } from "@/lib/nightly-report/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
@@ -67,12 +68,17 @@ export default async function ProgressDailyPage({
               <CardTitle>Today&rsquo;s Nutrition</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-              <NutrientBar
-                label="Calories"
-                value={report.parsed_json.estimated_calories}
-                unit=" kcal"
-                avg={trailingSummary.avgCalories}
-              />
+              <div className="flex flex-col gap-1.5">
+                <NutrientBar
+                  label="Calories"
+                  value={report.parsed_json.estimated_calories}
+                  unit=" kcal"
+                  avg={trailingSummary.avgCalories}
+                />
+                <span className="text-xs text-muted-foreground">
+                  {report.parsed_json.calorie_balance}
+                </span>
+              </div>
               <NutrientBar
                 label="Protein"
                 value={report.parsed_json.protein_g}
@@ -108,6 +114,9 @@ export default async function ProgressDailyPage({
               <DailyWorkoutSummary
                 musclesTrained={report.parsed_json.muscles_trained}
                 workoutNote={workoutLog?.raw_text ?? null}
+                durationMin={report.parsed_json.workout_duration_min}
+                caloriesBurned={report.parsed_json.workout_calories_burned}
+                exercises={report.parsed_json.workout_exercises}
               />
             </CardContent>
           </Card>
@@ -118,9 +127,20 @@ export default async function ProgressDailyPage({
             </CardHeader>
             <CardContent>
               <CoachFeedbackList
-                biggestWin={report.parsed_json.strengths[0] ?? null}
-                needsImprovement={report.parsed_json.improvements[0] ?? null}
-                tomorrowFocus={report.parsed_json.tomorrow_workout}
+                strengths={report.parsed_json.strengths}
+                improvements={report.parsed_json.improvements}
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="animate-fade-up" style={{ animationDelay: "240ms" }}>
+            <CardHeader>
+              <CardTitle>Next Day Workout Plan</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <NextDayPlanCard
+                tomorrowWorkout={report.parsed_json.tomorrow_workout}
+                exercises={report.parsed_json.tomorrow_workout_exercises}
               />
             </CardContent>
           </Card>

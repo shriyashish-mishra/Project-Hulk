@@ -20,7 +20,10 @@ export function buildTrendPoints(reports: AiDailyReport[]): DailyTrendPoint[] {
     workoutScore: report.workout_score,
     overallScore: report.overall_score,
     proteinG: report.parsed_json.protein_g,
+    carbsG: report.parsed_json.carbs_g,
+    fatG: report.parsed_json.fat_g,
     estimatedCalories: report.parsed_json.estimated_calories,
+    calorieBalanceKcal: report.parsed_json.calorie_balance_kcal ?? null,
     musclesTrained: report.parsed_json.muscles_trained,
     coachSummary: report.coach_summary,
   }));
@@ -207,7 +210,7 @@ export function computeBestWeek(
 export interface MonthlyReflection {
   achievements: string[];
   areasToImprove: string[];
-  priorities: string[];
+  milestones: string[];
 }
 
 const CONSISTENCY_ACHIEVEMENT_THRESHOLD = 80;
@@ -224,7 +227,7 @@ export function computeMonthlyReflection(
 ): MonthlyReflection {
   const achievements: string[] = [];
   const areasToImprove: string[] = [];
-  const priorities: string[] = [];
+  const milestones: string[] = [];
 
   const currentSummary = computePeriodSummary(current);
   const previousSummary = computePeriodSummary(previous);
@@ -261,7 +264,6 @@ export function computeMonthlyReflection(
 
   if (neglectedRegions.length > 0) {
     areasToImprove.push(`${neglectedRegions.join(" and ")} saw no direct work`);
-    priorities.push(`Add dedicated ${neglectedRegions[0]} volume next month`);
   }
   if (currentSummary.avgWorkoutScore !== null && currentSummary.avgWorkoutScore < LOW_SCORE_THRESHOLD) {
     areasToImprove.push("Workout consistency dipped below target");
@@ -270,13 +272,26 @@ export function computeMonthlyReflection(
     areasToImprove.push("Nutrition consistency dipped below target");
   }
 
+  // Concrete, numeric targets for next month — each one a stretch, not a guess.
   const proteinGoal = computeProteinGoal(currentSummary.avgProteinG);
-  if (currentSummary.avgProteinG === null || currentSummary.avgProteinG < proteinGoal) {
-    priorities.push(`Push average protein toward ${proteinGoal}g/day`);
-  }
-  priorities.push("Maintain consistency and stay injury-free");
+  milestones.push(`Push average protein to ${proteinGoal}g/day`);
 
-  return { achievements, areasToImprove, priorities };
+  const workoutTarget = currentSummary.workoutsCompleted + Math.max(2, Math.round(currentSummary.workoutsCompleted * 0.1));
+  milestones.push(`Complete ${workoutTarget} workouts`);
+
+  const streakTarget = longestStreakDays >= 7 ? longestStreakDays + 3 : 7;
+  milestones.push(`Extend your streak past ${streakTarget} days`);
+
+  const consistencyTarget = Math.min(95, Math.ceil((consistencyPct + 10) / 5) * 5);
+  if (consistencyPct < consistencyTarget) {
+    milestones.push(`Reach ${consistencyTarget}% consistency`);
+  }
+
+  if (neglectedRegions.length > 0) {
+    milestones.push(`Bring ${neglectedRegions[0]} into rotation`);
+  }
+
+  return { achievements, areasToImprove, milestones };
 }
 
 /** A short deterministic reflection paragraph — no AI, just stitched-together stats. */

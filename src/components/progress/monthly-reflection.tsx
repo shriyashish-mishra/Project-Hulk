@@ -1,4 +1,4 @@
-import { ArrowRight, Check, TriangleAlert } from "lucide-react";
+import { Check, TriangleAlert } from "lucide-react";
 import type { MonthlyReflection as MonthlyReflectionData } from "@/lib/progress/stats";
 
 function Subsection({
@@ -55,17 +55,6 @@ export function MonthlyReflectionLists({ reflection }: MonthlyReflectionListsPro
         ) : (
           <p className="text-sm text-muted-foreground">Nothing flagged — solid month.</p>
         )}
-      </Subsection>
-
-      <Subsection label="Next Month Priorities">
-        <ul className="flex flex-col gap-2">
-          {reflection.priorities.map((item, index) => (
-            <li key={index} className="flex items-start gap-2 text-sm">
-              <ArrowRight className="mt-0.5 size-4 shrink-0 text-primary" />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
       </Subsection>
     </div>
   );

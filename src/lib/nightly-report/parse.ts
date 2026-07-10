@@ -1,5 +1,10 @@
 import { CURRENT_SCHEMA_VERSION } from "./constants";
-import type { AiReportJson, MicronutrientNote, TomorrowMeal } from "./types";
+import type {
+  AiReportJson,
+  MicronutrientNote,
+  TomorrowMeal,
+  WorkoutExercise,
+} from "./types";
 
 const MEAL_TYPES = new Set(["breakfast", "lunch", "snacks", "dinner"]);
 const MICRONUTRIENT_STATUSES = new Set(["low", "adequate", "high"]);
@@ -54,6 +59,47 @@ function expectScore(obj: Record<string, unknown>, key: string): number {
     throw new ReportParseError(`"${key}" must be between 0 and 100.`);
   }
   return Math.round(value);
+}
+
+/** Non-throwing — new-in-schema-v2 fields degrade gracefully instead of failing the whole import. */
+function optionalNumber(obj: Record<string, unknown>, key: string): number | undefined {
+  const value = field(obj, key);
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function optionalScore(obj: Record<string, unknown>, key: string): number | undefined {
+  const value = optionalNumber(obj, key);
+  return value === undefined ? undefined : Math.round(Math.min(100, Math.max(0, value)));
+}
+
+function optionalString(obj: Record<string, unknown>, key: string): string | undefined {
+  const value = field(obj, key);
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function optionalExercises(
+  obj: Record<string, unknown>,
+  key: string,
+): WorkoutExercise[] | undefined {
+  const value = field(obj, key);
+  if (!Array.isArray(value)) return undefined;
+  const exercises = value
+    .map((item): WorkoutExercise | null => {
+      if (typeof item === "string" && item.trim()) return { name: item.trim() };
+      if (typeof item === "object" && item !== null) {
+        const record = item as Record<string, unknown>;
+        const name = field(record, "name");
+        if (typeof name !== "string" || !name.trim()) return null;
+        const detail = field(record, "detail");
+        return {
+          name: name.trim(),
+          ...(typeof detail === "string" && detail.trim() ? { detail: detail.trim() } : {}),
+        };
+      }
+      return null;
+    })
+    .filter((item): item is WorkoutExercise => item !== null);
+  return exercises.length > 0 ? exercises : undefined;
 }
 
 function expectMicronutrients(
@@ -143,14 +189,21 @@ export function parseAiReportResponse(rawResponse: string): AiReportJson {
     fiber_g: expectNumber(obj, "fiber_g"),
     micronutrients: expectMicronutrients(obj, "micronutrients"),
     calorie_balance: expectString(obj, "calorie_balance"),
+    calorie_balance_kcal: optionalNumber(obj, "calorie_balance_kcal"),
     nutrition_score: expectScore(obj, "nutrition_score"),
     workout_score: expectScore(obj, "workout_score"),
     overall_score: expectScore(obj, "overall_score"),
+    recovery_score: optionalScore(obj, "recovery_score"),
+    recovery_note: optionalString(obj, "recovery_note"),
     muscles_trained: expectStringArray(obj, "muscles_trained"),
+    workout_duration_min: optionalNumber(obj, "workout_duration_min"),
+    workout_calories_burned: optionalNumber(obj, "workout_calories_burned"),
+    workout_exercises: optionalExercises(obj, "workout_exercises"),
     strengths: expectStringArray(obj, "strengths"),
     improvements: expectStringArray(obj, "improvements"),
     tomorrow_meals: expectTomorrowMeals(obj, "tomorrow_meals"),
     tomorrow_workout: expectString(obj, "tomorrow_workout"),
+    tomorrow_workout_exercises: optionalExercises(obj, "tomorrow_workout_exercises"),
     coach_summary: expectString(obj, "coach_summary"),
   };
 }

@@ -24,14 +24,24 @@ export interface AiReportJson {
   fiber_g: number;
   micronutrients: MicronutrientNote[];
   calorie_balance: string;
+  /** Signed kcal vs. maintenance — negative is a deficit, positive a surplus. Optional: absent on reports imported before schema v2. */
+  calorie_balance_kcal?: number;
   nutrition_score: number;
   workout_score: number;
   overall_score: number;
+  /** AI's qualitative recovery assessment (0-100) from training load + rest described in the logs — not a biometric reading. Optional: absent on reports imported before schema v2. */
+  recovery_score?: number;
+  recovery_note?: string;
   muscles_trained: string[];
+  /** AI-estimated from the free-text workout log. Optional: absent on reports imported before schema v2. */
+  workout_duration_min?: number;
+  workout_calories_burned?: number;
+  workout_exercises?: WorkoutExercise[];
   strengths: string[];
   improvements: string[];
   tomorrow_meals: TomorrowMeal[];
   tomorrow_workout: string;
+  tomorrow_workout_exercises?: WorkoutExercise[];
   coach_summary: string;
 }
 
@@ -44,4 +54,9 @@ export interface MicronutrientNote {
 export interface TomorrowMeal {
   meal_type: MealType;
   suggestion: string;
+}
+
+export interface WorkoutExercise {
+  name: string;
+  detail?: string;
 }

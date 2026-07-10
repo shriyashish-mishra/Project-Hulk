@@ -4,6 +4,7 @@ import { DateNav } from "@/components/progress/date-nav";
 import { PeriodSummaryTiles } from "@/components/progress/period-summary-tiles";
 import { ScoreTrendChart } from "@/components/progress/score-trend-chart";
 import { NutritionTrendChart } from "@/components/progress/nutrition-trend-chart";
+import { CalorieBalanceChart } from "@/components/progress/calorie-balance-chart";
 import { ConsistencyTimeline } from "@/components/progress/consistency-timeline";
 import { MuscleBalanceSection } from "@/components/progress/muscle-balance-section";
 import { CoachMemoryCard } from "@/components/progress/coach-memory-card";
@@ -74,6 +75,10 @@ export default async function ProgressWeeklyPage({
       content: <NutritionTrendChart days={days} pointsByDate={pointsByDate} />,
     },
     {
+      title: "Calorie Balance",
+      content: <CalorieBalanceChart days={days} pointsByDate={pointsByDate} />,
+    },
+    {
       title: "Consistency",
       content: <ConsistencyTimeline days={days} pointsByDate={pointsByDate} />,
     },
@@ -91,7 +96,7 @@ export default async function ProgressWeeklyPage({
       content: <CoachMemoryCard insights={coachInsights} />,
     },
     {
-      title: "Next Week Roadmap",
+      title: "Next Week Workout Plan",
       content: <RoadmapCard roadmap={roadmap} />,
     },
   ];

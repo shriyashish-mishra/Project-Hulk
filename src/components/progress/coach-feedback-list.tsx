@@ -1,41 +1,54 @@
-import { Star, TrendingUp, Target } from "lucide-react";
+import { Check, TriangleAlert } from "lucide-react";
 
 interface CoachFeedbackListProps {
-  biggestWin: string | null;
-  needsImprovement: string | null;
-  tomorrowFocus: string;
+  strengths: string[];
+  improvements: string[];
 }
 
-export function CoachFeedbackList({
-  biggestWin,
-  needsImprovement,
-  tomorrowFocus,
-}: CoachFeedbackListProps) {
-  const rows = [
-    biggestWin && { icon: Star, label: "Biggest Win", text: biggestWin },
-    needsImprovement && {
-      icon: TrendingUp,
-      label: "Needs Improvement",
-      text: needsImprovement,
-    },
-    { icon: Target, label: "Tomorrow's Focus", text: tomorrowFocus },
-  ].filter(Boolean) as Array<{ icon: typeof Star; label: string; text: string }>;
-
+function FeedbackSection({
+  label,
+  items,
+  icon: Icon,
+  iconClass,
+}: {
+  label: string;
+  items: string[];
+  icon: typeof Check;
+  iconClass: string;
+}) {
+  if (items.length === 0) return null;
   return (
-    <ul className="flex flex-col divide-y divide-border">
-      {rows.map((row) => (
-        <li key={row.label} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
-          <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-primary">
-            <row.icon className="size-4" />
-          </span>
-          <div className="flex flex-col gap-0.5">
-            <span className="text-xs font-semibold text-muted-foreground">
-              {row.label}
-            </span>
-            <span className="text-sm text-foreground">{row.text}</span>
-          </div>
-        </li>
-      ))}
-    </ul>
+    <div className="flex flex-col gap-2">
+      <span className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+        {label}
+      </span>
+      <ul className="flex flex-col gap-2">
+        {items.map((item, index) => (
+          <li key={index} className="flex items-start gap-2 text-sm">
+            <Icon className={`mt-0.5 size-4 shrink-0 ${iconClass}`} />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export function CoachFeedbackList({ strengths, improvements }: CoachFeedbackListProps) {
+  return (
+    <div className="flex flex-col gap-5">
+      <FeedbackSection
+        label="What Went Well"
+        items={strengths}
+        icon={Check}
+        iconClass="text-success"
+      />
+      <FeedbackSection
+        label="What Could Improve"
+        items={improvements}
+        icon={TriangleAlert}
+        iconClass="text-warning"
+      />
+    </div>
   );
 }

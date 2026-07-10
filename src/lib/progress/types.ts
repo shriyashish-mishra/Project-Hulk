@@ -4,7 +4,10 @@ export interface DailyTrendPoint {
   workoutScore: number;
   overallScore: number;
   proteinG: number;
+  carbsG: number;
+  fatG: number;
   estimatedCalories: number;
+  calorieBalanceKcal: number | null;
   musclesTrained: string[];
   coachSummary: string;
 }

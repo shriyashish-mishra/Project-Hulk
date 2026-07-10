@@ -4,6 +4,7 @@ import { DateNav } from "@/components/progress/date-nav";
 import { MonthlyHighlightTiles } from "@/components/progress/monthly-highlight-tiles";
 import { MuscleBalanceSection } from "@/components/progress/muscle-balance-section";
 import { MonthlyReflectionLists } from "@/components/progress/monthly-reflection";
+import { NextMonthMilestones } from "@/components/progress/next-month-milestones";
 import {
   formatMonthLabel,
   getCurrentMonthString,
@@ -97,11 +98,16 @@ export default async function ProgressMonthlyPage({
     },
     {
       title: "Coach Reflection",
-      content: <p className="text-sm text-muted-foreground">{coachReflection}</p>,
+      content: (
+        <div className="flex flex-col gap-5">
+          <p className="text-sm text-muted-foreground">{coachReflection}</p>
+          <MonthlyReflectionLists reflection={reflection} />
+        </div>
+      ),
     },
     {
-      title: "Looking Ahead",
-      content: <MonthlyReflectionLists reflection={reflection} />,
+      title: "Next Month Milestones",
+      content: <NextMonthMilestones milestones={reflection.milestones} />,
     },
   ];
 

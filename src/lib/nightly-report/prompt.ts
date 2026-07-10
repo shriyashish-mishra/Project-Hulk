@@ -51,18 +51,19 @@ Please estimate:
 - Carbohydrates
 - Fibre
 - Micronutrients
-- Estimated calorie deficit
+- Estimated calorie deficit/surplus, as both a sentence and a signed kcal number (negative = deficit)
+- From the workout log: duration in minutes, calories burned, and the individual exercises with sets/reps if mentioned (best-effort — leave an exercise out if the log genuinely doesn't support a guess)
 
 Then analyse:
 
 - Nutrition quality
 - Workout quality
-- Recovery
+- Recovery — a 0-100 assessment of how well-recovered I likely am, judged from training load, rest patterns, and anything I mentioned (not a biometric reading, a coaching judgment)
 - Muscle groups trained
-- What I did well
-- What I could improve
+- What I did well (as many points as are genuinely worth noting)
+- What I could improve (as many points as are genuinely worth noting)
 - Suggested meals tomorrow
-- Suggested workout tomorrow
+- Suggested workout tomorrow, both as a sentence and as a specific exercise list with sets/reps
 
 Return TWO outputs:
 

@@ -18,7 +18,13 @@ export function DailyScoreCard({ report }: DailyScoreCardProps) {
         <div className="flex flex-col gap-4">
           <ScoreMeter label="Nutrition" score={report.nutrition_score} />
           <ScoreMeter label="Workout" score={report.workout_score} />
+          {report.recovery_score !== undefined && (
+            <ScoreMeter label="Recovery" score={report.recovery_score} />
+          )}
         </div>
+        {report.recovery_note && (
+          <p className="text-xs text-muted-foreground">{report.recovery_note}</p>
+        )}
       </CardContent>
     </Card>
   );

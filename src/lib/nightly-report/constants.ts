@@ -1,4 +1,4 @@
-export const CURRENT_SCHEMA_VERSION = 1;
+export const CURRENT_SCHEMA_VERSION = 2;
 
 // Placeholder until Settings (goals) ships and this becomes configurable.
 export const USER_GOAL_TEXT = `Lose fat while preserving muscle.
@@ -23,10 +23,20 @@ export const AI_REPORT_JSON_EXAMPLE = {
     { name: "Iron", status: "low", note: "consider leafy greens or red meat" },
   ],
   calorie_balance: "-320 kcal (deficit)",
+  calorie_balance_kcal: -320,
   nutrition_score: 78,
   workout_score: 85,
   overall_score: 80,
+  recovery_score: 82,
+  recovery_note: "Training load was moderate and well spaced — recovery looks on track.",
   muscles_trained: ["chest", "shoulders", "triceps"],
+  workout_duration_min: 55,
+  workout_calories_burned: 420,
+  workout_exercises: [
+    { name: "Incline Dumbbell Press", detail: "4x10" },
+    { name: "Lateral Raises", detail: "4x12" },
+    { name: "Overhead Tricep Extension", detail: "3x12" },
+  ],
   strengths: ["High protein intake", "Consistent meal timing"],
   improvements: ["Low fiber", "Add more vegetables at dinner"],
   tomorrow_meals: [
@@ -36,5 +46,11 @@ export const AI_REPORT_JSON_EXAMPLE = {
     { meal_type: "dinner", suggestion: "Lean protein with a fiber-rich side" },
   ],
   tomorrow_workout: "Leg day: squats, lunges, leg press, calf raises",
+  tomorrow_workout_exercises: [
+    { name: "Back Squats", detail: "4x8" },
+    { name: "Walking Lunges", detail: "3x12 each leg" },
+    { name: "Leg Press", detail: "3x12" },
+    { name: "Calf Raises", detail: "3x15" },
+  ],
   coach_summary: "Solid day overall — great protein intake, just watch fiber.",
 } as const;

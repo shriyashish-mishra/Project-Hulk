@@ -1,15 +1,31 @@
 import { Dumbbell } from "lucide-react";
 import { MuscleMapFigure } from "./muscle-map-figure";
 import { computeRegionCounts } from "@/lib/progress/muscle-map";
+import type { WorkoutExercise } from "@/lib/nightly-report/types";
 
 interface DailyWorkoutSummaryProps {
   musclesTrained: string[];
   workoutNote: string | null;
+  durationMin?: number;
+  caloriesBurned?: number;
+  exercises?: WorkoutExercise[];
+}
+
+function StatTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-lg font-semibold text-foreground tabular-nums">{value}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
+    </div>
+  );
 }
 
 export function DailyWorkoutSummary({
   musclesTrained,
   workoutNote,
+  durationMin,
+  caloriesBurned,
+  exercises,
 }: DailyWorkoutSummaryProps) {
   if (musclesTrained.length === 0) {
     return (
@@ -21,6 +37,8 @@ export function DailyWorkoutSummary({
   }
 
   const regionCounts = computeRegionCounts([musclesTrained]);
+  const hasExercises = (exercises?.length ?? 0) > 0;
+  const hasStats = durationMin !== undefined || caloriesBurned !== undefined || hasExercises;
 
   return (
     <div className="flex flex-col gap-4">
@@ -30,11 +48,41 @@ export function DailyWorkoutSummary({
         </span>
         <p className="text-sm font-medium text-foreground">Workout completed</p>
       </div>
+
+      {hasStats && (
+        <div className="flex gap-6 rounded-2xl bg-muted p-3.5">
+          {durationMin !== undefined && (
+            <StatTile label="Duration" value={`${durationMin} min`} />
+          )}
+          {caloriesBurned !== undefined && (
+            <StatTile label="Calories burned" value={`${caloriesBurned} kcal`} />
+          )}
+          {hasExercises && <StatTile label="Exercises" value={`${exercises!.length}`} />}
+        </div>
+      )}
+
       <MuscleMapFigure regionCounts={regionCounts} />
+
+      {hasExercises && (
+        <ul className="flex flex-col divide-y divide-border">
+          {exercises!.map((exercise, index) => (
+            <li
+              key={index}
+              className="flex items-baseline justify-between gap-3 py-2 text-sm"
+            >
+              <span className="text-foreground">{exercise.name}</span>
+              {exercise.detail && (
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {exercise.detail}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
       {workoutNote && (
-        <p className="whitespace-pre-line text-sm text-muted-foreground">
-          {workoutNote}
-        </p>
+        <p className="whitespace-pre-line text-sm text-muted-foreground">{workoutNote}</p>
       )}
     </div>
   );
