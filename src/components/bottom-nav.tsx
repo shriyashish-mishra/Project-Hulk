@@ -18,7 +18,8 @@ export function BottomNav() {
     <nav className="fixed inset-x-0 bottom-0 z-50 flex justify-center px-5 pb-5">
       <ul className="flex w-full max-w-xs items-stretch justify-around rounded-full border border-border bg-popover/90 px-2 py-2 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.7)] backdrop-blur-xl supports-backdrop-filter:bg-popover/75">
         {NAV_ITEMS.map(({ href, label, icon: Icon, enabled }) => {
-          const isActive = pathname === href;
+          const isActive =
+            href === "/" ? pathname === "/" : pathname.startsWith(href);
 
           if (!enabled) {
             return (

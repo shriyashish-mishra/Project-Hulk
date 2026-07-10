@@ -9,12 +9,13 @@ export interface DailyTrendPoint {
   coachSummary: string;
 }
 
-export interface WeeklySummary {
+export interface PeriodSummary {
   daysWithReports: number;
   avgProteinG: number | null;
   avgCalories: number | null;
   avgNutritionScore: number | null;
   avgWorkoutScore: number | null;
+  avgOverallScore: number | null;
   workoutsCompleted: number;
   restDays: number;
 }

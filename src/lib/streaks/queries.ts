@@ -7,7 +7,7 @@ import { computeConsecutiveStreak, computeNutritionStreak } from "./stats";
 const NUTRITION_STREAK_THRESHOLD = 75;
 const LOOKBACK_DAYS = 60;
 
-async function getLoggedDatesInRange(
+export async function getLoggedDatesInRange(
   startDate: string,
   endDate: string,
 ): Promise<Set<string>> {
