@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/auth";
 import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import type { Json } from "@/lib/supabase/database.types";
@@ -25,6 +25,8 @@ export async function importAiReport(
 
   const parsed = parseAiReportResponse(rawResponse);
 
+  const { supabase, user } = await requireUser();
+
   const [foodLogs, workoutLog] = await Promise.all([
     getFoodLogsForDate(reportDate),
     getWorkoutLogForDate(reportDate),
@@ -35,11 +37,11 @@ export async function importAiReport(
     workoutLog,
   });
 
-  const supabase = await createClient();
   const { data, error } = await supabase
     .from("daily_ai_reports")
     .upsert(
       {
+        user_id: user.id,
         report_date: reportDate,
         prompt_markdown: promptMarkdown,
         raw_response: rawResponse,
@@ -49,7 +51,7 @@ export async function importAiReport(
         overall_score: parsed.overall_score,
         coach_summary: parsed.coach_summary,
       },
-      { onConflict: "report_date" },
+      { onConflict: "user_id,report_date" },
     )
     .select()
     .single();

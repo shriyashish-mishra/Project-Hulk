@@ -14,6 +14,7 @@ export type Database = {
       food_logs: {
         Row: {
           id: string;
+          user_id: string | null;
           meal_type: MealTypeEnum;
           raw_text: string;
           logged_on: string;
@@ -21,6 +22,7 @@ export type Database = {
         };
         Insert: {
           id?: string;
+          user_id: string;
           meal_type: MealTypeEnum;
           raw_text: string;
           logged_on: string;
@@ -28,6 +30,7 @@ export type Database = {
         };
         Update: {
           id?: string;
+          user_id?: string;
           meal_type?: MealTypeEnum;
           raw_text?: string;
           logged_on?: string;
@@ -38,18 +41,21 @@ export type Database = {
       workout_logs: {
         Row: {
           id: string;
+          user_id: string | null;
           raw_text: string;
           logged_on: string;
           created_at: string;
         };
         Insert: {
           id?: string;
+          user_id: string;
           raw_text: string;
           logged_on: string;
           created_at?: string;
         };
         Update: {
           id?: string;
+          user_id?: string;
           raw_text?: string;
           logged_on?: string;
           created_at?: string;
@@ -59,6 +65,7 @@ export type Database = {
       daily_ai_reports: {
         Row: {
           id: string;
+          user_id: string | null;
           report_date: string;
           prompt_markdown: string;
           raw_response: string;
@@ -71,6 +78,7 @@ export type Database = {
         };
         Insert: {
           id?: string;
+          user_id: string;
           report_date: string;
           prompt_markdown: string;
           raw_response: string;
@@ -83,6 +91,7 @@ export type Database = {
         };
         Update: {
           id?: string;
+          user_id?: string;
           report_date?: string;
           prompt_markdown?: string;
           raw_response?: string;

@@ -47,6 +47,7 @@ export function FoodDashboard({ loggedOn, initialLogs }: FoodDashboardProps) {
       const existing = logByMeal.get(input.mealType);
       const optimisticEntry: FoodLog = {
         id: existing?.id ?? `optimistic-${crypto.randomUUID()}`,
+        user_id: existing?.user_id ?? null,
         meal_type: input.mealType,
         raw_text: input.rawText.trim(),
         logged_on: loggedOn,

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/auth";
 import type { WorkoutLog } from "./types";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -18,15 +18,16 @@ export async function saveWorkoutLog(
     throw new Error("Invalid date.");
   }
 
-  const supabase = await createClient();
+  const { supabase, user } = await requireUser();
   const { data, error } = await supabase
     .from("workout_logs")
     .upsert(
       {
+        user_id: user.id,
         raw_text: rawText.trim(),
         logged_on: loggedOn,
       },
-      { onConflict: "logged_on" },
+      { onConflict: "user_id,logged_on" },
     )
     .select()
     .single();
@@ -39,10 +40,11 @@ export async function saveWorkoutLog(
 }
 
 export async function deleteWorkoutLog(loggedOn: string): Promise<void> {
-  const supabase = await createClient();
+  const { supabase, user } = await requireUser();
   const { error } = await supabase
     .from("workout_logs")
     .delete()
+    .eq("user_id", user.id)
     .eq("logged_on", loggedOn);
 
   if (error) throw new Error(error.message);

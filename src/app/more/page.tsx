@@ -8,10 +8,13 @@ import {
   Bell,
   CalendarClock,
   ChevronRight,
+  LogOut,
 } from "lucide-react";
 import { BackLink } from "@/components/ui/back-link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { logOut } from "@/lib/auth/actions";
+import { requireUser } from "@/lib/supabase/auth";
 
 const COMING_SOON = [
   {
@@ -46,7 +49,9 @@ const COMING_SOON = [
   },
 ] as const;
 
-export default function MorePage() {
+export default async function MorePage() {
+  const { user } = await requireUser();
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -61,12 +66,12 @@ export default function MorePage() {
           <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-muted text-lg font-bold text-primary">
             PH
           </span>
-          <div>
+          <div className="min-w-0">
             <p className="text-base font-semibold text-foreground">
               Project Hulk
             </p>
-            <p className="text-sm text-muted-foreground">
-              Your personal fitness journal
+            <p className="truncate text-sm text-muted-foreground">
+              {user.email}
             </p>
           </div>
         </CardContent>
@@ -123,6 +128,24 @@ export default function MorePage() {
           ))}
         </div>
       </div>
+
+      <Card className="animate-fade-up">
+        <CardContent>
+          <form action={logOut}>
+            <button
+              type="submit"
+              className="flex w-full items-center gap-3.5 text-left active:opacity-60"
+            >
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-muted text-destructive">
+                <LogOut className="size-5" />
+              </span>
+              <span className="text-sm font-semibold text-destructive">
+                Log out
+              </span>
+            </button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

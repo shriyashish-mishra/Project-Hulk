@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/auth";
 import { getDaysAgoDateString } from "@/lib/date";
 import { getReportsInRange } from "@/lib/progress/queries";
 import type { StreakSummary } from "./types";
@@ -11,16 +11,18 @@ async function getLoggedDatesInRange(
   startDate: string,
   endDate: string,
 ): Promise<Set<string>> {
-  const supabase = await createClient();
+  const { supabase, user } = await requireUser();
   const [foodResult, workoutResult] = await Promise.all([
     supabase
       .from("food_logs")
       .select("logged_on")
+      .eq("user_id", user.id)
       .gte("logged_on", startDate)
       .lte("logged_on", endDate),
     supabase
       .from("workout_logs")
       .select("logged_on")
+      .eq("user_id", user.id)
       .gte("logged_on", startDate)
       .lte("logged_on", endDate),
   ]);
@@ -38,10 +40,11 @@ async function getWorkoutDatesInRange(
   startDate: string,
   endDate: string,
 ): Promise<Set<string>> {
-  const supabase = await createClient();
+  const { supabase, user } = await requireUser();
   const { data, error } = await supabase
     .from("workout_logs")
     .select("logged_on")
+    .eq("user_id", user.id)
     .gte("logged_on", startDate)
     .lte("logged_on", endDate);
 

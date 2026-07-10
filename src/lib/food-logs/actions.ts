@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/supabase/auth";
 import { MEAL_SECTIONS } from "./constants";
 import type { FoodLog, MealType } from "./types";
 
@@ -35,16 +35,17 @@ export async function saveMealLog(
 ): Promise<FoodLog> {
   assertValidInput(input, loggedOn);
 
-  const supabase = await createClient();
+  const { supabase, user } = await requireUser();
   const { data, error } = await supabase
     .from("food_logs")
     .upsert(
       {
+        user_id: user.id,
         meal_type: input.mealType,
         raw_text: input.rawText.trim(),
         logged_on: loggedOn,
       },
-      { onConflict: "meal_type,logged_on" },
+      { onConflict: "user_id,meal_type,logged_on" },
     )
     .select()
     .single();
@@ -60,10 +61,11 @@ export async function deleteMealLog(
   mealType: MealType,
   loggedOn: string,
 ): Promise<void> {
-  const supabase = await createClient();
+  const { supabase, user } = await requireUser();
   const { error } = await supabase
     .from("food_logs")
     .delete()
+    .eq("user_id", user.id)
     .eq("meal_type", mealType)
     .eq("logged_on", loggedOn);
 
