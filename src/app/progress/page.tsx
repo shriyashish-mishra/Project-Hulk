@@ -8,11 +8,16 @@ import { NutrientBar } from "@/components/progress/nutrient-bar";
 import { DailyWorkoutSummary } from "@/components/progress/daily-workout-summary";
 import { CoachFeedbackList } from "@/components/progress/coach-feedback-list";
 import { NextDayPlanCard } from "@/components/progress/next-day-plan-card";
+import { CalorieBalanceBadge } from "@/components/progress/calorie-balance-badge";
 import { addDays, formatShortDate, getLocalDateString } from "@/lib/date";
 import { getAiReportForDate } from "@/lib/nightly-report/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import { getReportsInRange } from "@/lib/progress/queries";
-import { buildTrendPoints, computePeriodSummary } from "@/lib/progress/stats";
+import {
+  buildTrendPoints,
+  computePeriodSummary,
+  parseCalorieBalanceFallback,
+} from "@/lib/progress/stats";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -75,9 +80,13 @@ export default async function ProgressDailyPage({
                   unit=" kcal"
                   avg={trailingSummary.avgCalories}
                 />
-                <span className="text-xs text-muted-foreground">
-                  {report.parsed_json.calorie_balance}
-                </span>
+                <CalorieBalanceBadge
+                  balanceKcal={
+                    report.parsed_json.calorie_balance_kcal ??
+                    parseCalorieBalanceFallback(report.parsed_json.calorie_balance)
+                  }
+                  balanceText={report.parsed_json.calorie_balance}
+                />
               </div>
               <NutrientBar
                 label="Protein"

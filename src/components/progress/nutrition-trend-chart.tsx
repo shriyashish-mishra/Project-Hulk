@@ -1,7 +1,6 @@
 "use client";
 
-import { Bar, BarChart, Line, LineChart, ResponsiveContainer } from "recharts";
-import { formatWeekdayShort } from "@/lib/date";
+import { Line, LineChart, ResponsiveContainer } from "recharts";
 import type { DailyTrendPoint } from "@/lib/progress/types";
 
 interface NutritionTrendChartProps {
@@ -9,28 +8,50 @@ interface NutritionTrendChartProps {
   pointsByDate: Map<string, DailyTrendPoint>;
 }
 
-interface Row {
-  label: string;
-  calories: number | null;
-  protein: number | null;
-  carbs: number | null;
-  fat: number | null;
+function average(values: Array<number | null>): number | null {
+  const valid = values.filter((v): v is number => v !== null);
+  if (valid.length === 0) return null;
+  return Math.round(valid.reduce((sum, v) => sum + v, 0) / valid.length);
 }
 
-function MiniBarRow({ label, dataKey, data, color }: {
+function NutrientTile({
+  label,
+  unit,
+  values,
+  color,
+}: {
   label: string;
-  dataKey: keyof Row;
-  data: Row[];
+  unit: string;
+  values: Array<number | null>;
   color: string;
 }) {
+  const avg = average(values);
+  const data = values.map((value) => ({ value }));
+
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1 rounded-2xl bg-muted p-3.5">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <div className="h-14 w-full">
+      <span className="text-lg font-semibold text-foreground">
+        {avg !== null ? avg : "—"}
+        {avg !== null && (
+          <span className="ml-1 text-xs font-normal text-muted-foreground">
+            {unit} avg
+          </span>
+        )}
+      </span>
+      <div className="h-8 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-            <Bar dataKey={dataKey} fill={color} radius={[3, 3, 0, 0]} isAnimationActive={false} />
-          </BarChart>
+          <LineChart data={data}>
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke={color}
+              strokeWidth={2}
+              dot={false}
+              isAnimationActive={false}
+              connectNulls
+            />
+          </LineChart>
         </ResponsiveContainer>
       </div>
     </div>
@@ -38,65 +59,38 @@ function MiniBarRow({ label, dataKey, data, color }: {
 }
 
 /**
- * Small multiples, not one dual-axis chart — calories, protein, carbs, and
- * fat all live on different scales, and a shared y-axis would flatten the
- * smaller ones to near-straight lines.
+ * A stat-first tile per nutrient (the period average, big and readable) with
+ * a small trend line for context — not a bare unlabeled chart. Four separate
+ * tiles rather than one dual-axis chart, since calories/protein/carbs/fat
+ * live on very different scales.
  */
 export function NutritionTrendChart({ days, pointsByDate }: NutritionTrendChartProps) {
-  const data: Row[] = days.map((date) => {
-    const point = pointsByDate.get(date);
-    return {
-      label: formatWeekdayShort(new Date(`${date}T00:00:00`)),
-      calories: point?.estimatedCalories ?? null,
-      protein: point?.proteinG ?? null,
-      carbs: point?.carbsG ?? null,
-      fat: point?.fatG ?? null,
-    };
-  });
+  const caloriesValues = days.map((d) => pointsByDate.get(d)?.estimatedCalories ?? null);
+  const proteinValues = days.map((d) => pointsByDate.get(d)?.proteinG ?? null);
+  const carbsValues = days.map((d) => pointsByDate.get(d)?.carbsG ?? null);
+  const fatValues = days.map((d) => pointsByDate.get(d)?.fatG ?? null);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground">Calories</span>
-        <div className="h-14 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-              <Bar
-                dataKey="calories"
-                fill="var(--muted-foreground)"
-                radius={[3, 3, 0, 0]}
-                isAnimationActive={false}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-      <div className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground">Protein</span>
-        <div className="h-14 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
-              <Line
-                type="monotone"
-                dataKey="protein"
-                stroke="var(--success)"
-                strokeWidth={2}
-                dot={{ r: 3, strokeWidth: 0, fill: "var(--success)" }}
-                isAnimationActive={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-      <MiniBarRow label="Carbs" dataKey="carbs" data={data} color="var(--muted-foreground)" />
-      <MiniBarRow label="Fat" dataKey="fat" data={data} color="var(--muted-foreground)" />
-      <div className="flex justify-between px-1">
-        {data.map((d, index) => (
-          <span key={index} className="text-[10px] text-muted-foreground">
-            {d.label}
-          </span>
-        ))}
-      </div>
+    <div className="grid grid-cols-2 gap-3">
+      <NutrientTile
+        label="Calories"
+        unit="kcal"
+        values={caloriesValues}
+        color="var(--muted-foreground)"
+      />
+      <NutrientTile
+        label="Protein"
+        unit="g"
+        values={proteinValues}
+        color="var(--success)"
+      />
+      <NutrientTile
+        label="Carbs"
+        unit="g"
+        values={carbsValues}
+        color="var(--muted-foreground)"
+      />
+      <NutrientTile label="Fat" unit="g" values={fatValues} color="var(--muted-foreground)" />
     </div>
   );
 }

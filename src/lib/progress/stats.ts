@@ -13,6 +13,20 @@ import type {
   PeriodSummary,
 } from "./types";
 
+/**
+ * Reports imported before schema v2 have no `calorie_balance_kcal`, only
+ * the free-text `calorie_balance` (e.g. "-395 kcal (deficit)"). Extracts a
+ * signed number from that text so older reports still chart correctly.
+ */
+export function parseCalorieBalanceFallback(text: string): number | null {
+  const match = text.match(/([+-]?\d+)/);
+  if (!match) return null;
+  const value = parseInt(match[1], 10);
+  const isExplicitlySigned = match[1].startsWith("+") || match[1].startsWith("-");
+  if (isExplicitlySigned) return value;
+  return /surplus|excess/i.test(text) ? value : -value;
+}
+
 export function buildTrendPoints(reports: AiDailyReport[]): DailyTrendPoint[] {
   return reports.map((report) => ({
     date: report.report_date,
@@ -23,7 +37,9 @@ export function buildTrendPoints(reports: AiDailyReport[]): DailyTrendPoint[] {
     carbsG: report.parsed_json.carbs_g,
     fatG: report.parsed_json.fat_g,
     estimatedCalories: report.parsed_json.estimated_calories,
-    calorieBalanceKcal: report.parsed_json.calorie_balance_kcal ?? null,
+    calorieBalanceKcal:
+      report.parsed_json.calorie_balance_kcal ??
+      parseCalorieBalanceFallback(report.parsed_json.calorie_balance),
     musclesTrained: report.parsed_json.muscles_trained,
     coachSummary: report.coach_summary,
   }));

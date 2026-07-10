@@ -18,8 +18,8 @@ export function CalorieBalanceChart({ days, pointsByDate }: CalorieBalanceChartP
     };
   });
 
-  const hasData = data.some((d) => d.balance !== null);
-  if (!hasData) {
+  const values = data.map((d) => d.balance).filter((v): v is number => v !== null);
+  if (values.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
         No calorie balance data yet — re-import a report to see this.
@@ -27,8 +27,18 @@ export function CalorieBalanceChart({ days, pointsByDate }: CalorieBalanceChartP
     );
   }
 
+  const avgBalance = Math.round(values.reduce((sum, v) => sum + v, 0) / values.length);
+  const isDeficit = avgBalance <= 0;
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
+      <p className="text-sm text-foreground">
+        Averaging a{" "}
+        <span className={isDeficit ? "font-semibold text-success" : "font-semibold text-warning"}>
+          {Math.abs(avgBalance)} kcal {isDeficit ? "deficit" : "surplus"}
+        </span>{" "}
+        per day this week
+      </p>
       <div className="h-28 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>

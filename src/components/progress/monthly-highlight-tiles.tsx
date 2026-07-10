@@ -41,7 +41,10 @@ export function MonthlyHighlightTiles({
         <Tile
           label="Average score"
           value={current.avgOverallScore !== null ? `${current.avgOverallScore}` : "—"}
-          hint={formatDelta(current.avgOverallScore, previous.avgOverallScore, "", "last month")}
+          hint={
+            formatDelta(current.avgOverallScore, previous.avgOverallScore, "", "last month") ??
+            "Nutrition + workout + recovery"
+          }
         />
         <Tile
           label="Workouts"
@@ -60,7 +63,7 @@ export function MonthlyHighlightTiles({
         />
         <Tile
           label="Avg calories"
-          value={current.avgCalories !== null ? `${current.avgCalories}` : "—"}
+          value={current.avgCalories !== null ? `${current.avgCalories} kcal` : "—"}
           hint={formatDelta(current.avgCalories, previous.avgCalories, "", "last month")}
         />
         <Tile label="Consistency" value={`${Math.round(consistencyPct)}%`} />

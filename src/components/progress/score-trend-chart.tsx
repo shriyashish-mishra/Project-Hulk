@@ -42,7 +42,12 @@ export function ScoreTrendChart({ days, pointsByDate }: ScoreTrendChartProps) {
   }
 
   return (
-    <div className="h-52 w-full">
+    <div className="flex flex-col gap-2">
+      <p className="text-xs text-muted-foreground">
+        Overall blends Nutrition and Workout into one daily score. Tap a point to open
+        that day&rsquo;s report.
+      </p>
+      <div className="h-52 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={data}
@@ -110,6 +115,7 @@ export function ScoreTrendChart({ days, pointsByDate }: ScoreTrendChartProps) {
           />
         </LineChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 }
