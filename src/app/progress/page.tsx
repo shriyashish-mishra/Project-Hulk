@@ -1,12 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CoachMemoryCard } from "@/components/progress/coach-memory-card";
 import { MuscleGroupsCard } from "@/components/progress/muscle-groups-card";
+import { MuscleMapFigure } from "@/components/progress/muscle-map-figure";
 import { ReportHistoryList } from "@/components/progress/report-history-list";
 import { ScoreTrendChart } from "@/components/progress/score-trend-chart";
 import { SparklineTile } from "@/components/progress/sparkline-tile";
+import { WeeklyPlanCard } from "@/components/progress/weekly-plan-card";
 import { WeeklySummaryTiles } from "@/components/progress/weekly-summary-tiles";
 import { WorkoutConsistencyStrip } from "@/components/progress/workout-consistency-strip";
 import { getDaysAgoDateString, getLocalDateString } from "@/lib/date";
+import { computeRegionCounts } from "@/lib/progress/muscle-map";
 import { getReportsInRange } from "@/lib/progress/queries";
 import {
   buildTrendPoints,
@@ -14,6 +17,7 @@ import {
   computeMuscleGroupCounts,
   computeWeeklySummary,
 } from "@/lib/progress/stats";
+import { generateWeeklyPlan } from "@/lib/progress/weekly-plan";
 
 export default async function ProgressPage() {
   const today = getLocalDateString();
@@ -30,7 +34,11 @@ export default async function ProgressPage() {
 
   const weeklySummary = computeWeeklySummary(thisWeekPoints);
   const muscleGroupCounts = computeMuscleGroupCounts(thisWeekPoints);
+  const regionCounts = computeRegionCounts(
+    thisWeekPoints.map((p) => p.musclesTrained),
+  );
   const coachInsights = computeCoachInsights(thisWeekPoints, lastWeekPoints);
+  const weeklyPlan = generateWeeklyPlan(regionCounts, weeklySummary.avgProteinG);
 
   const proteinSparkline = last7Days.map((date) => ({
     value: pointsByDate.get(date)?.proteinG ?? null,
@@ -77,11 +85,20 @@ export default async function ProgressPage() {
     },
     {
       title: "Muscle groups trained this week",
-      content: <MuscleGroupsCard counts={muscleGroupCounts} />,
+      content: (
+        <div className="flex flex-col gap-4">
+          <MuscleMapFigure regionCounts={regionCounts} />
+          <MuscleGroupsCard counts={muscleGroupCounts} />
+        </div>
+      ),
     },
     {
       title: "Coach memory",
       content: <CoachMemoryCard insights={coachInsights} />,
+    },
+    {
+      title: "Next Week's Plan",
+      content: <WeeklyPlanCard plan={weeklyPlan} />,
     },
     {
       title: "AI coaching history",
