@@ -6,6 +6,7 @@ import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import type { Json } from "@/lib/supabase/database.types";
 import { buildNightlyReportPrompt } from "./prompt";
+import { getRecoveryPromptContext } from "./context";
 import { parseAiReportResponse } from "./parse";
 import type { AiDailyReport, AiReportJson } from "./types";
 
@@ -27,14 +28,16 @@ export async function importAiReport(
 
   const { supabase, user } = await requireUser();
 
-  const [foodLogs, workoutLog] = await Promise.all([
+  const [foodLogs, workoutLog, recoveryContext] = await Promise.all([
     getFoodLogsForDate(reportDate),
     getWorkoutLogForDate(reportDate),
+    getRecoveryPromptContext(reportDate),
   ]);
   const promptMarkdown = buildNightlyReportPrompt({
     date: reportDate,
     foodLogs,
     workoutLog,
+    ...recoveryContext,
   });
 
   const { data, error } = await supabase

@@ -35,6 +35,20 @@ export async function getPhotosForDate(capturedOn: string): Promise<ProgressPhot
   return attachSignedUrls(supabase, data);
 }
 
+/** View types captured on `capturedOn`, with no signed URLs — for contexts (like the nightly report prompt) that must never touch photo bytes. */
+export async function getPhotoViewsForDate(capturedOn: string): Promise<PhotoViewType[]> {
+  const { supabase, user } = await requireUser();
+  const { data, error } = await supabase
+    .from("progress_photos")
+    .select("view_type")
+    .eq("user_id", user.id)
+    .eq("captured_on", capturedOn)
+    .order("view_type");
+
+  if (error) throw new Error(error.message);
+  return data.map((row) => row.view_type as PhotoViewType);
+}
+
 /** Every photo captured within the range, oldest first — powers the Monthly visual timeline. */
 export async function getPhotosInRange(
   startDate: string,

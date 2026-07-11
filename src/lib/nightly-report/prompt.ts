@@ -1,18 +1,75 @@
 import { MEAL_SECTIONS } from "@/lib/food-logs/constants";
 import type { FoodLog, MealType } from "@/lib/food-logs/types";
 import type { WorkoutLog } from "@/lib/workout-logs/types";
+import type { SleepLog } from "@/lib/sleep/types";
+import type { WaterLog } from "@/lib/water/types";
+import type { WeightLog } from "@/lib/weight/types";
+import type { PhotoViewType } from "@/lib/photos/types";
+import { formatDuration } from "@/lib/date";
 import { AI_REPORT_JSON_EXAMPLE, USER_GOAL_TEXT } from "./constants";
+
+interface PriorWeightContext {
+  log: WeightLog;
+  daysAgo: number;
+}
 
 interface BuildPromptInput {
   date: string;
   foodLogs: FoodLog[];
   workoutLog: WorkoutLog | null;
+  waterLog: WaterLog | null;
+  sleepLog: SleepLog | null;
+  weightLog: WeightLog | null;
+  priorWeight: PriorWeightContext | null;
+  photoViewsCaptured: PhotoViewType[];
+}
+
+function buildRecoveryContextMarkdown({
+  waterLog,
+  sleepLog,
+  weightLog,
+  priorWeight,
+  photoViewsCaptured,
+}: Pick<
+  BuildPromptInput,
+  "waterLog" | "sleepLog" | "weightLog" | "priorWeight" | "photoViewsCaptured"
+>): string {
+  const waterLine = waterLog
+    ? `Water: ${waterLog.glass_count} of ${waterLog.target_glasses} glasses (${((waterLog.glass_count * waterLog.glass_size_ml) / 1000).toFixed(1)} L)`
+    : "Water: Not logged";
+
+  const sleepLine = sleepLog
+    ? `Sleep: ${formatDuration(sleepLog.duration_minutes)}`
+    : "Sleep: Not logged";
+
+  let weightLine: string;
+  if (weightLog) {
+    weightLine = `Weight: ${Number(weightLog.weight_kg)} kg (logged today)`;
+  } else if (priorWeight) {
+    const label =
+      priorWeight.daysAgo === 1 ? "1 day ago" : `${priorWeight.daysAgo} days ago`;
+    weightLine = `Weight: ${Number(priorWeight.log.weight_kg)} kg (most recent, logged ${label} on ${priorWeight.log.measured_on})`;
+  } else {
+    weightLine = "Weight: Not logged recently";
+  }
+
+  const photosLine =
+    photoViewsCaptured.length > 0
+      ? `Progress photos: captured today (${photoViewsCaptured.join(", ")}) — for my own tracking, not for you to view`
+      : "Progress photos: Not captured today";
+
+  return [waterLine, sleepLine, weightLine, photosLine].join("\n");
 }
 
 export function buildNightlyReportPrompt({
   date,
   foodLogs,
   workoutLog,
+  waterLog,
+  sleepLog,
+  weightLog,
+  priorWeight,
+  photoViewsCaptured,
 }: BuildPromptInput): string {
   const foodByMeal = new Map<MealType, string>();
   for (const log of foodLogs) foodByMeal.set(log.meal_type, log.raw_text);
@@ -23,6 +80,14 @@ export function buildNightlyReportPrompt({
   ).join("\n\n");
 
   const workoutMarkdown = workoutLog?.raw_text ?? "Not logged";
+
+  const recoveryContextMarkdown = buildRecoveryContextMarkdown({
+    waterLog,
+    sleepLog,
+    weightLog,
+    priorWeight,
+    photoViewsCaptured,
+  });
 
   return `# Project Hulk
 
@@ -36,6 +101,10 @@ ${mealsMarkdown}
 ## Today's Workout
 
 ${workoutMarkdown}
+
+## Hydration, Sleep & Weight
+
+${recoveryContextMarkdown}
 
 ## My Goal
 
@@ -58,7 +127,7 @@ Then analyse:
 
 - Nutrition quality
 - Workout quality
-- Recovery — a 0-100 assessment of how well-recovered I likely am, judged from training load, rest patterns, and anything I mentioned (not a biometric reading, a coaching judgment)
+- Recovery — a 0-100 assessment of how well-recovered I likely am, judged from training load, rest patterns, the hydration/sleep/weight logged above, and anything I mentioned (not a biometric reading, a coaching judgment). Only factor weight in if a trend is visible — a single reading is not a trend.
 - Muscle groups trained
 - What I did well (as many points as are genuinely worth noting)
 - What I could improve (as many points as are genuinely worth noting)

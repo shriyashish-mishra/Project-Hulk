@@ -5,15 +5,22 @@ import { formatDateHeading, getLocalDateString } from "@/lib/date";
 import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import { buildNightlyReportPrompt } from "@/lib/nightly-report/prompt";
+import { getRecoveryPromptContext } from "@/lib/nightly-report/context";
 
 export default async function GenerateReportPage() {
   const loggedOn = getLocalDateString();
-  const [foodLogs, workoutLog] = await Promise.all([
+  const [foodLogs, workoutLog, recoveryContext] = await Promise.all([
     getFoodLogsForDate(loggedOn),
     getWorkoutLogForDate(loggedOn),
+    getRecoveryPromptContext(loggedOn),
   ]);
 
-  const prompt = buildNightlyReportPrompt({ date: loggedOn, foodLogs, workoutLog });
+  const prompt = buildNightlyReportPrompt({
+    date: loggedOn,
+    foodLogs,
+    workoutLog,
+    ...recoveryContext,
+  });
 
   return (
     <div className="flex flex-col gap-6">
