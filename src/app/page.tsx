@@ -5,19 +5,22 @@ import { WorkoutCard } from "@/components/workout/workout-card";
 import { NightlyReportCard } from "@/components/nightly-report/nightly-report-card";
 import { StreakPills } from "@/components/today/streak-pills";
 import { WorkoutStreakCard } from "@/components/today/workout-streak-card";
+import { WaterRow } from "@/components/water/water-row";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
 import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import { getStreakSummary } from "@/lib/streaks/queries";
+import { getWaterLogForDate } from "@/lib/water/queries";
 import { requireUser } from "@/lib/supabase/auth";
 
 export default async function TodayPage() {
   const { user } = await requireUser();
   const loggedOn = getLocalDateString();
-  const [logs, workoutLog, streaks] = await Promise.all([
+  const [logs, workoutLog, streaks, waterLog] = await Promise.all([
     getFoodLogsForDate(loggedOn),
     getWorkoutLogForDate(loggedOn),
     getStreakSummary(loggedOn),
+    getWaterLogForDate(loggedOn),
   ]);
 
   return (
@@ -55,6 +58,12 @@ export default async function TodayPage() {
             userId={user.id}
           />
           <WorkoutCard loggedOn={loggedOn} initialLog={workoutLog} />
+        </CardContent>
+      </Card>
+
+      <Card className="animate-fade-up" style={{ animationDelay: "60ms" }}>
+        <CardContent>
+          <WaterRow loggedOn={loggedOn} initialLog={waterLog} />
         </CardContent>
       </Card>
 
