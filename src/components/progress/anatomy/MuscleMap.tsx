@@ -19,8 +19,8 @@ export interface MuscleMapProps {
 }
 
 const SIZE_CLASSES = {
-  sm: "h-56",
-  lg: "h-80",
+  sm: "max-w-[220px]",
+  lg: "max-w-[300px]",
 } as const;
 
 /** 0 → fully transparent (no highlight). Otherwise a 0.3-1.0 band so even "low" reads as mint, not noise. */
@@ -57,18 +57,18 @@ function BodyView({
   regions,
   intensity,
   label,
-  heightClass,
+  maxWidthClass,
 }: {
   regions: RegionPath[];
   intensity: Partial<Record<MuscleGroupId, number>>;
   label: string;
-  heightClass: string;
+  maxWidthClass: string;
 }) {
   const clipId = useId();
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <svg viewBox={BODY_VIEWBOX} className={cn(heightClass, "w-auto")}>
+    <div className={cn("flex w-full flex-1 flex-col items-center gap-2", maxWidthClass)}>
+      <svg viewBox={BODY_VIEWBOX} className="h-auto w-full">
         <defs>
           <clipPath id={clipId}>
             {SILHOUETTE_PIECES.map((d, index) => (
@@ -89,12 +89,22 @@ function BodyView({
 }
 
 export function MuscleMap({ intensity, className, size = "sm" }: MuscleMapProps) {
-  const heightClass = SIZE_CLASSES[size];
+  const maxWidthClass = SIZE_CLASSES[size];
 
   return (
-    <div className={cn("flex items-center justify-center gap-10", className)}>
-      <BodyView regions={FRONT_REGION_PATHS} intensity={intensity} label="Front" heightClass={heightClass} />
-      <BodyView regions={BACK_REGION_PATHS} intensity={intensity} label="Back" heightClass={heightClass} />
+    <div className={cn("flex items-start justify-center gap-6", className)}>
+      <BodyView
+        regions={FRONT_REGION_PATHS}
+        intensity={intensity}
+        label="Front"
+        maxWidthClass={maxWidthClass}
+      />
+      <BodyView
+        regions={BACK_REGION_PATHS}
+        intensity={intensity}
+        label="Back"
+        maxWidthClass={maxWidthClass}
+      />
     </div>
   );
 }
