@@ -1,6 +1,7 @@
 "use client";
 
 import { Line, LineChart, ResponsiveContainer } from "recharts";
+import { CalorieBalanceChart } from "./calorie-balance-chart";
 import type { DailyTrendPoint } from "@/lib/progress/types";
 
 interface NutritionTrendChartProps {
@@ -34,9 +35,7 @@ function NutrientTile({
       <span className="text-lg font-semibold text-foreground">
         {avg !== null ? avg : "—"}
         {avg !== null && (
-          <span className="ml-1 text-xs font-normal text-muted-foreground">
-            {unit} avg
-          </span>
+          <span className="text-xs font-normal text-muted-foreground"> {unit} avg</span>
         )}
       </span>
       <div className="h-8 w-full">
@@ -71,26 +70,35 @@ export function NutritionTrendChart({ days, pointsByDate }: NutritionTrendChartP
   const fatValues = days.map((d) => pointsByDate.get(d)?.fatG ?? null);
 
   return (
-    <div className="grid grid-cols-2 gap-3">
-      <NutrientTile
-        label="Calories"
-        unit="kcal"
-        values={caloriesValues}
-        color="var(--muted-foreground)"
-      />
-      <NutrientTile
-        label="Protein"
-        unit="g"
-        values={proteinValues}
-        color="var(--success)"
-      />
-      <NutrientTile
-        label="Carbs"
-        unit="g"
-        values={carbsValues}
-        color="var(--muted-foreground)"
-      />
-      <NutrientTile label="Fat" unit="g" values={fatValues} color="var(--muted-foreground)" />
+    <div className="flex flex-col gap-5">
+      <div className="grid grid-cols-2 gap-3">
+        <NutrientTile
+          label="Calories"
+          unit="kcal"
+          values={caloriesValues}
+          color="var(--muted-foreground)"
+        />
+        <NutrientTile
+          label="Protein"
+          unit="g"
+          values={proteinValues}
+          color="var(--success)"
+        />
+        <NutrientTile
+          label="Carbs"
+          unit="g"
+          values={carbsValues}
+          color="var(--muted-foreground)"
+        />
+        <NutrientTile label="Fat" unit="g" values={fatValues} color="var(--muted-foreground)" />
+      </div>
+
+      <div className="flex flex-col gap-2 border-t border-border pt-4">
+        <span className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+          Calorie Balance
+        </span>
+        <CalorieBalanceChart days={days} pointsByDate={pointsByDate} />
+      </div>
     </div>
   );
 }

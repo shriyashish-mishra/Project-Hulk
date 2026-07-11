@@ -92,6 +92,7 @@ export default async function ProgressMonthlyPage({
       content: (
         <MuscleBalanceSection
           regionCounts={regionCounts}
+          musclesTrainedByDay={currentPoints.map((p) => p.musclesTrained)}
           distributionLabel="Monthly Distribution"
         />
       ),

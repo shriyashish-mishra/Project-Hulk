@@ -1,9 +1,10 @@
-import { MuscleMapFigure } from "./muscle-map-figure";
+import { MuscleMap } from "./anatomy/MuscleMap";
 import {
   ALL_MUSCLE_REGIONS,
   MUSCLE_REGION_LABEL,
   type MuscleRegion,
 } from "@/lib/progress/muscle-map";
+import { computeMuscleGroupIntensity } from "@/lib/progress/muscle-groups";
 
 function DistributionRow({
   label,
@@ -39,13 +40,16 @@ function InsightRow({ label, value }: { label: string; value: string }) {
 
 interface MuscleBalanceSectionProps {
   regionCounts: Map<MuscleRegion, number>;
+  musclesTrainedByDay: string[][];
   distributionLabel: string;
 }
 
 export function MuscleBalanceSection({
   regionCounts,
+  musclesTrainedByDay,
   distributionLabel,
 }: MuscleBalanceSectionProps) {
+  const intensity = computeMuscleGroupIntensity(musclesTrainedByDay);
   const ranked = [...ALL_MUSCLE_REGIONS].sort(
     (a, b) => (regionCounts.get(b) ?? 0) - (regionCounts.get(a) ?? 0),
   );
@@ -66,7 +70,7 @@ export function MuscleBalanceSection({
 
   return (
     <div className="flex flex-col gap-6">
-      <MuscleMapFigure regionCounts={regionCounts} size="lg" className="py-2" />
+      <MuscleMap intensity={intensity} size="lg" className="py-2" />
 
       <div className="flex flex-col gap-2">
         <span className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">

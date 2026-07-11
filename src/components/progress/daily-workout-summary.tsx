@@ -1,6 +1,6 @@
 import { Dumbbell } from "lucide-react";
-import { MuscleMapFigure } from "./muscle-map-figure";
-import { computeRegionCounts } from "@/lib/progress/muscle-map";
+import { MuscleMap } from "./anatomy/MuscleMap";
+import { computeMuscleGroupIntensity } from "@/lib/progress/muscle-groups";
 import type { WorkoutExercise } from "@/lib/nightly-report/types";
 
 interface DailyWorkoutSummaryProps {
@@ -36,7 +36,7 @@ export function DailyWorkoutSummary({
     );
   }
 
-  const regionCounts = computeRegionCounts([musclesTrained]);
+  const intensity = computeMuscleGroupIntensity([musclesTrained]);
   const hasExercises = (exercises?.length ?? 0) > 0;
   const hasStats = durationMin !== undefined || caloriesBurned !== undefined || hasExercises;
 
@@ -61,7 +61,7 @@ export function DailyWorkoutSummary({
         </div>
       )}
 
-      <MuscleMapFigure regionCounts={regionCounts} />
+      <MuscleMap intensity={intensity} />
 
       {hasExercises && (
         <ul className="flex flex-col divide-y divide-border">
