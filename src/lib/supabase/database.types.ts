@@ -22,6 +22,7 @@ export type Database = {
           nutrition_score: number
           overall_score: number
           parsed_json: Json
+          profile_snapshot: Json | null
           prompt_markdown: string
           raw_response: string
           report_date: string
@@ -35,6 +36,7 @@ export type Database = {
           nutrition_score: number
           overall_score: number
           parsed_json: Json
+          profile_snapshot?: Json | null
           prompt_markdown: string
           raw_response: string
           report_date: string
@@ -48,6 +50,7 @@ export type Database = {
           nutrition_score?: number
           overall_score?: number
           parsed_json?: Json
+          profile_snapshot?: Json | null
           prompt_markdown?: string
           raw_response?: string
           report_date?: string
@@ -80,6 +83,60 @@ export type Database = {
           meal_type?: Database["public"]["Enums"]["meal_type"]
           raw_text?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          activity_level: string | null
+          biological_sex: string | null
+          created_at: string
+          date_of_birth: string | null
+          display_name: string | null
+          height_cm: number | null
+          id: string
+          muscle_map_model: string
+          onboarding_completed_at: string | null
+          primary_goal: string | null
+          protein_target_g: number | null
+          target_weight_kg: number | null
+          training_frequency: string | null
+          units_preference: string
+          updated_at: string
+        }
+        Insert: {
+          activity_level?: string | null
+          biological_sex?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          display_name?: string | null
+          height_cm?: number | null
+          id: string
+          muscle_map_model?: string
+          onboarding_completed_at?: string | null
+          primary_goal?: string | null
+          protein_target_g?: number | null
+          target_weight_kg?: number | null
+          training_frequency?: string | null
+          units_preference?: string
+          updated_at?: string
+        }
+        Update: {
+          activity_level?: string | null
+          biological_sex?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          display_name?: string | null
+          height_cm?: number | null
+          id?: string
+          muscle_map_model?: string
+          onboarding_completed_at?: string | null
+          primary_goal?: string | null
+          protein_target_g?: number | null
+          target_weight_kg?: number | null
+          training_frequency?: string | null
+          units_preference?: string
+          updated_at?: string
         }
         Relationships: []
       }
