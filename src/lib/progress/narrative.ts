@@ -1,6 +1,27 @@
 import { formatDuration } from "@/lib/date";
+import type { PrimaryGoal } from "@/lib/profile/types";
 
 /** Short, deterministic scene-setters — one line, not a paragraph. The fuller synthesis lives in the Coach sections below. */
+
+/**
+ * One line naming what actually matters for this user's goal — operationalizes
+ * the brief's per-goal emphasis list without rewriting every section's wording.
+ * Returns null with no goal set yet, so the caller can simply omit the line.
+ */
+export function buildGoalContextSentence(goal: PrimaryGoal | null): string | null {
+  switch (goal) {
+    case "lose_fat":
+      return "For fat loss, the story worth watching is protein, training consistency, and the longer-term weight trend — not any single day.";
+    case "build_muscle":
+      return "For building muscle, training consistency and recovery matter more than the scale — progression is the real signal.";
+    case "recomposition":
+      return "For recomposition, expect the scale to stay quiet while training quality and photos tell the real story.";
+    case "maintain":
+      return "For maintaining, consistency itself is the win — steady habits matter more than any single number.";
+    default:
+      return null;
+  }
+}
 
 export function buildWeeklyHeadline(workoutsCompleted: number, recoveryGood: boolean): string {
   if (workoutsCompleted >= 5 && recoveryGood) return "A strong, well-recovered week.";

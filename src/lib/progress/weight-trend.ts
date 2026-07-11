@@ -1,4 +1,5 @@
 import type { WeightLog } from "@/lib/weight/types";
+import type { PrimaryGoal } from "@/lib/profile/types";
 
 /** Postgres `numeric` comes back from PostgREST as a string — always coerce before doing math on it. */
 function toKg(log: WeightLog): number {
@@ -17,6 +18,24 @@ export interface WeightTrend {
 const SMOOTHING_WINDOW = 5;
 const FLAT_THRESHOLD_KG = 0.3;
 
+/** "Up"/"down" isn't good or bad on its own — what it means depends on the user's own goal. Recomposition is handled separately by the caller (a full replacement sentence, not an appended clause). */
+function describeWeightChangeForGoal(direction: "up" | "down", goal: PrimaryGoal | null): string | null {
+  switch (goal) {
+    case "lose_fat":
+      return direction === "down"
+        ? "in line with your fat-loss goal"
+        : "not a concern on its own, but worth watching if it continues";
+    case "build_muscle":
+      return direction === "up"
+        ? "consistent with building, as long as training is progressing alongside it"
+        : "worth checking you're eating enough to support training";
+    case "maintain":
+      return "worth keeping an eye on if it continues, since staying steady is the goal";
+    default:
+      return null;
+  }
+}
+
 /**
  * Deliberately conservative: a rolling average rather than the raw latest
  * reading, and language that never celebrates a single drop or flags a
@@ -26,6 +45,7 @@ export function computeWeightTrend(
   logsAscending: WeightLog[],
   baselineLog: WeightLog | null,
   periodLabel: string,
+  primaryGoal: PrimaryGoal | null = null,
 ): WeightTrend {
   if (logsAscending.length === 0) {
     return {
@@ -67,10 +87,20 @@ export function computeWeightTrend(
         ? `Logged at ${latestKg}kg, unchanged from your last reading.`
         : `Logged at ${latestKg}kg, ${changeKg > 0 ? "up" : "down"} ${Math.abs(changeKg)}kg from your last reading.`;
   } else if (Math.abs(changeKg) < FLAT_THRESHOLD_KG) {
-    sentence = `Scale weight is largely unchanged this ${periodLabel} (around ${smoothedKg}kg). Short-term fluctuation is normal — the trend matters more than any single reading.`;
+    const flatNote =
+      primaryGoal === "recomposition"
+        ? " That's a normal, even encouraging pattern during recomposition — the shape of change matters more than the number."
+        : "";
+    sentence = `Scale weight is largely unchanged this ${periodLabel} (around ${smoothedKg}kg). Short-term fluctuation is normal — the trend matters more than any single reading.${flatNote}`;
   } else {
     const direction = changeKg < 0 ? "down" : "up";
-    sentence = `Scale weight trended ${direction} ${Math.abs(changeKg)}kg this ${periodLabel}, now averaging around ${smoothedKg}kg.`;
+    const base = `Scale weight trended ${direction} ${Math.abs(changeKg)}kg this ${periodLabel}, now averaging around ${smoothedKg}kg`;
+    if (primaryGoal === "recomposition") {
+      sentence = `${base}. Scale weight isn't the main signal to watch here — training quality and photos tell more of the story.`;
+    } else {
+      const goalClause = describeWeightChangeForGoal(direction, primaryGoal);
+      sentence = `${base}${goalClause ? ` — ${goalClause}` : ""}.`;
+    }
   }
 
   return { hasData: true, latestKg, latestDate: latest.measured_on, smoothedKg, changeKg, sentence };

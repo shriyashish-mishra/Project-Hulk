@@ -1,10 +1,5 @@
 export const CURRENT_SCHEMA_VERSION = 2;
 
-// Placeholder until Settings (goals) ships and this becomes configurable.
-export const USER_GOAL_TEXT = `Lose fat while preserving muscle.
-Maintain high protein.
-Strength train 4-5x/week.`;
-
 /**
  * Shown inside the generated prompt so Claude returns JSON in exactly
  * the shape `parseAiReportResponse` expects — field names, types, and

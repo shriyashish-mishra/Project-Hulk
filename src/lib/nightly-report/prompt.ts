@@ -5,8 +5,14 @@ import type { SleepLog } from "@/lib/sleep/types";
 import type { WaterLog } from "@/lib/water/types";
 import type { WeightLog } from "@/lib/weight/types";
 import type { PhotoViewType } from "@/lib/photos/types";
+import type { UserContext } from "@/lib/profile/context";
+import {
+  ACTIVITY_LEVEL_LABEL,
+  PRIMARY_GOAL_LABEL,
+  TRAINING_FREQUENCY_LABEL,
+} from "@/lib/profile/types";
 import { formatDuration } from "@/lib/date";
-import { AI_REPORT_JSON_EXAMPLE, USER_GOAL_TEXT } from "./constants";
+import { AI_REPORT_JSON_EXAMPLE } from "./constants";
 
 interface PriorWeightContext {
   log: WeightLog;
@@ -22,6 +28,27 @@ interface BuildPromptInput {
   weightLog: WeightLog | null;
   priorWeight: PriorWeightContext | null;
   photoViewsCaptured: PhotoViewType[];
+  userContext: UserContext;
+}
+
+/** Structured facts about who's asking — the AI interprets them, it never has to guess or ask what the user's goal is. */
+function buildAboutMeMarkdown(userContext: UserContext): string {
+  const { profile, proteinTargetG, calorieRangeKcal } = userContext;
+  if (!profile) return "Not provided yet.";
+
+  const lines: string[] = [];
+  if (profile.primary_goal) lines.push(`Goal: ${PRIMARY_GOAL_LABEL[profile.primary_goal]}`);
+  if (profile.training_frequency) {
+    lines.push(`Usual training frequency: ${TRAINING_FREQUENCY_LABEL[profile.training_frequency]}`);
+  }
+  if (profile.activity_level) {
+    lines.push(`Activity level outside training: ${ACTIVITY_LEVEL_LABEL[profile.activity_level]}`);
+  }
+  if (proteinTargetG) lines.push(`Protein target: ${proteinTargetG}g/day`);
+  if (calorieRangeKcal) lines.push(`Calorie range: ${calorieRangeKcal.min}–${calorieRangeKcal.max} kcal/day`);
+  if (profile.target_weight_kg) lines.push(`Target weight: ${profile.target_weight_kg} kg`);
+
+  return lines.length > 0 ? lines.join("\n") : "Not provided yet.";
 }
 
 function buildRecoveryContextMarkdown({
@@ -70,6 +97,7 @@ export function buildNightlyReportPrompt({
   weightLog,
   priorWeight,
   photoViewsCaptured,
+  userContext,
 }: BuildPromptInput): string {
   const foodByMeal = new Map<MealType, string>();
   for (const log of foodLogs) foodByMeal.set(log.meal_type, log.raw_text);
@@ -106,9 +134,9 @@ ${workoutMarkdown}
 
 ${recoveryContextMarkdown}
 
-## My Goal
+## About Me
 
-${USER_GOAL_TEXT}
+${buildAboutMeMarkdown(userContext)}
 
 ---
 
@@ -123,7 +151,8 @@ Please estimate:
 - Estimated calorie deficit/surplus, as both a sentence and a signed kcal number (negative = deficit)
 - From the workout log: duration in minutes, calories burned, and the individual exercises with sets/reps if mentioned (best-effort — leave an exercise out if the log genuinely doesn't support a guess)
 
-Then analyse:
+Then analyse — weighed against my goal, targets, and training frequency
+under "About Me" above, not generic advice:
 
 - Nutrition quality
 - Workout quality

@@ -24,10 +24,10 @@ import { getSleepLogForDate, getSleepLogsInRange } from "@/lib/sleep/queries";
 import { getWeightLogForDate } from "@/lib/weight/queries";
 import { getPhotosForDate } from "@/lib/photos/queries";
 import { buildDailyRecoverySentence, computeRecoverySummary } from "@/lib/progress/recovery";
+import { getUserContext } from "@/lib/profile/context";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-const DEFAULT_WATER_TARGET = 8;
 
 interface ProgressDailyPageProps {
   searchParams: Promise<{ date?: string }>;
@@ -45,7 +45,7 @@ export default async function ProgressDailyPage({
       : today;
   const isToday = date === today;
 
-  const [report, workoutLog, trailingReports, waterLog, sleepLog, trailingSleepLogs, weightLog, photos] =
+  const [report, workoutLog, trailingReports, waterLog, sleepLog, trailingSleepLogs, weightLog, photos, userContext] =
     await Promise.all([
       getAiReportForDate(date),
       getWorkoutLogForDate(date),
@@ -55,6 +55,7 @@ export default async function ProgressDailyPage({
       getSleepLogsInRange(addDays(date, -7), addDays(date, -1)),
       getWeightLogForDate(date),
       getPhotosForDate(date),
+      getUserContext(),
     ]);
 
   const trailingSummary = computePeriodSummary(buildTrendPoints(trailingReports));
@@ -88,7 +89,7 @@ export default async function ProgressDailyPage({
     sleepMinutes: sleepLog?.duration_minutes ?? null,
     avgSleepMinutes,
     waterGlasses: waterLog?.glass_count ?? null,
-    waterTarget: waterLog?.target_glasses ?? DEFAULT_WATER_TARGET,
+    waterTarget: waterLog?.target_glasses ?? userContext.hydrationTargetGlasses ?? 8,
   });
 
   return (

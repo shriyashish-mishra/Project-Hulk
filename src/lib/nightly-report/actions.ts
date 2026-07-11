@@ -7,6 +7,7 @@ import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import type { Json } from "@/lib/supabase/database.types";
 import { buildNightlyReportPrompt } from "./prompt";
 import { getRecoveryPromptContext } from "./context";
+import { getUserContext } from "@/lib/profile/context";
 import { parseAiReportResponse } from "./parse";
 import type { AiDailyReport, AiReportJson } from "./types";
 
@@ -28,17 +29,31 @@ export async function importAiReport(
 
   const { supabase, user } = await requireUser();
 
-  const [foodLogs, workoutLog, recoveryContext] = await Promise.all([
+  const [foodLogs, workoutLog, recoveryContext, userContext] = await Promise.all([
     getFoodLogsForDate(reportDate),
     getWorkoutLogForDate(reportDate),
     getRecoveryPromptContext(reportDate),
+    getUserContext(),
   ]);
   const promptMarkdown = buildNightlyReportPrompt({
     date: reportDate,
     foodLogs,
     workoutLog,
     ...recoveryContext,
+    userContext,
   });
+
+  // What mattered, as of today — so a later goal change never silently
+  // reinterprets this already-generated report (see plan doc section 7).
+  const profileSnapshot = userContext.profile
+    ? {
+        primary_goal: userContext.profile.primary_goal,
+        protein_target_g: userContext.proteinTargetG,
+        calorie_range_kcal: userContext.calorieRangeKcal,
+        training_frequency: userContext.profile.training_frequency,
+        muscle_map_model: userContext.profile.muscle_map_model,
+      }
+    : null;
 
   const { data, error } = await supabase
     .from("daily_ai_reports")
@@ -53,6 +68,7 @@ export async function importAiReport(
         workout_score: parsed.workout_score,
         overall_score: parsed.overall_score,
         coach_summary: parsed.coach_summary,
+        profile_snapshot: profileSnapshot as unknown as Json,
       },
       { onConflict: "user_id,report_date" },
     )

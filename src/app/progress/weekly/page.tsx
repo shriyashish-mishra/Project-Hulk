@@ -30,7 +30,8 @@ import { getWeightLogsInRange, getLatestWeightLogBefore } from "@/lib/weight/que
 import { getPhotosInRange } from "@/lib/photos/queries";
 import { computeRecoveryInsights, computeRecoverySummary } from "@/lib/progress/recovery";
 import { computeWeightTrend } from "@/lib/progress/weight-trend";
-import { buildWeeklyHeadline, buildWeeklyStorySentence } from "@/lib/progress/narrative";
+import { buildGoalContextSentence, buildWeeklyHeadline, buildWeeklyStorySentence } from "@/lib/progress/narrative";
+import { getUserContext } from "@/lib/profile/context";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -66,6 +67,7 @@ export default async function ProgressWeeklyPage({
     weightLogs,
     weightBaseline,
     photos,
+    userContext,
   ] = await Promise.all([
     getReportsInRange(previousStart, end),
     getSleepLogsInRange(start, end),
@@ -75,7 +77,9 @@ export default async function ProgressWeeklyPage({
     getWeightLogsInRange(start, end),
     getLatestWeightLogBefore(start),
     getPhotosInRange(start, end),
+    getUserContext(),
   ]);
+  const primaryGoal = userContext.profile?.primary_goal ?? null;
 
   const allPoints = buildTrendPoints(reports);
   const thisWeekPoints = allPoints.filter((p) => p.date >= start);
@@ -94,7 +98,7 @@ export default async function ProgressWeeklyPage({
     { sleepLogs, waterLogs },
     { sleepLogs: previousSleepLogs, waterLogs: previousWaterLogs },
   );
-  const weightTrend = computeWeightTrend(weightLogs, weightBaseline, "week");
+  const weightTrend = computeWeightTrend(weightLogs, weightBaseline, "week", primaryGoal);
 
   const headline = buildWeeklyHeadline(
     current.workoutsCompleted,
@@ -105,6 +109,7 @@ export default async function ProgressWeeklyPage({
     previous.workoutsCompleted,
     recoveryInsights,
   );
+  const goalContextSentence = buildGoalContextSentence(primaryGoal);
 
   const sections = [
     {
@@ -189,6 +194,9 @@ export default async function ProgressWeeklyPage({
       <div className="flex flex-col gap-1">
         <p className="text-lg font-bold text-foreground">{headline}</p>
         <p className="text-sm text-muted-foreground">{storySentence}</p>
+        {goalContextSentence && (
+          <p className="text-sm text-muted-foreground">{goalContextSentence}</p>
+        )}
       </div>
 
       <div className="flex flex-col gap-3">

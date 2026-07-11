@@ -32,8 +32,9 @@ import { getWeightLogsInRange, getLatestWeightLogBefore } from "@/lib/weight/que
 import { getPhotosInRange } from "@/lib/photos/queries";
 import { computeRecoveryInsights, computeRecoverySummary } from "@/lib/progress/recovery";
 import { computeWeightTrend } from "@/lib/progress/weight-trend";
-import { buildHabitsSentence, buildMonthlyHeadline } from "@/lib/progress/narrative";
+import { buildGoalContextSentence, buildHabitsSentence, buildMonthlyHeadline } from "@/lib/progress/narrative";
 import type { ChangeDirection } from "@/components/progress/what-changed-section";
+import { getUserContext } from "@/lib/profile/context";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 const MONTH_PATTERN = /^\d{4}-\d{2}$/;
@@ -80,6 +81,7 @@ export default async function ProgressMonthlyPage({
     weightLogs,
     weightBaseline,
     photos,
+    userContext,
   ] = await Promise.all([
     getReportsInRange(previousStart, end),
     getLoggedDatesInRange(start, end),
@@ -90,7 +92,9 @@ export default async function ProgressMonthlyPage({
     getWeightLogsInRange(start, end),
     getLatestWeightLogBefore(start),
     getPhotosInRange(start, end),
+    getUserContext(),
   ]);
+  const primaryGoal = userContext.profile?.primary_goal ?? null;
 
   const allPoints = buildTrendPoints(reports);
   const currentPoints = allPoints.filter((p) => p.date >= start && p.date <= end);
@@ -122,7 +126,7 @@ export default async function ProgressMonthlyPage({
     { sleepLogs, waterLogs },
     { sleepLogs: previousSleepLogs, waterLogs: previousWaterLogs },
   );
-  const weightTrend = computeWeightTrend(weightLogs, weightBaseline, "month");
+  const weightTrend = computeWeightTrend(weightLogs, weightBaseline, "month", primaryGoal);
   const habitsSentence = buildHabitsSentence({
     avgProteinG: current.avgProteinG,
     previousAvgProteinG: previous.avgProteinG,
@@ -136,6 +140,7 @@ export default async function ProgressMonthlyPage({
       previous.avgWorkoutScore !== null &&
       current.avgWorkoutScore > previous.avgWorkoutScore,
   );
+  const goalContextSentence = buildGoalContextSentence(primaryGoal);
 
   const changeRows: ChangeRow[] = [
     {
@@ -246,7 +251,12 @@ export default async function ProgressMonthlyPage({
         }
       />
 
-      <p className="text-lg font-bold text-foreground">{headline}</p>
+      <div className="flex flex-col gap-1">
+        <p className="text-lg font-bold text-foreground">{headline}</p>
+        {goalContextSentence && (
+          <p className="text-sm text-muted-foreground">{goalContextSentence}</p>
+        )}
+      </div>
 
       <div className="flex flex-col gap-3">
         {sections.map(({ title, content }, index) => (
