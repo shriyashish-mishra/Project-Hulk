@@ -6,21 +6,24 @@ import { NightlyReportCard } from "@/components/nightly-report/nightly-report-ca
 import { StreakPills } from "@/components/today/streak-pills";
 import { WorkoutStreakCard } from "@/components/today/workout-streak-card";
 import { WaterRow } from "@/components/water/water-row";
+import { SleepRow } from "@/components/sleep/sleep-row";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
 import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import { getStreakSummary } from "@/lib/streaks/queries";
 import { getWaterLogForDate } from "@/lib/water/queries";
+import { getSleepLogForDate } from "@/lib/sleep/queries";
 import { requireUser } from "@/lib/supabase/auth";
 
 export default async function TodayPage() {
   const { user } = await requireUser();
   const loggedOn = getLocalDateString();
-  const [logs, workoutLog, streaks, waterLog] = await Promise.all([
+  const [logs, workoutLog, streaks, waterLog, sleepLog] = await Promise.all([
     getFoodLogsForDate(loggedOn),
     getWorkoutLogForDate(loggedOn),
     getStreakSummary(loggedOn),
     getWaterLogForDate(loggedOn),
+    getSleepLogForDate(loggedOn),
   ]);
 
   return (
@@ -61,11 +64,17 @@ export default async function TodayPage() {
         </CardContent>
       </Card>
 
-      <Card className="animate-fade-up" style={{ animationDelay: "60ms" }}>
-        <CardContent>
-          <WaterRow loggedOn={loggedOn} initialLog={waterLog} />
-        </CardContent>
-      </Card>
+      <div>
+        <p className="mb-2 text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+          Daily Signals
+        </p>
+        <Card className="animate-fade-up" style={{ animationDelay: "60ms" }}>
+          <CardContent className="divide-y divide-border">
+            <WaterRow loggedOn={loggedOn} initialLog={waterLog} />
+            <SleepRow loggedOn={loggedOn} initialLog={sleepLog} />
+          </CardContent>
+        </Card>
+      </div>
 
       <NightlyReportCard />
     </div>
