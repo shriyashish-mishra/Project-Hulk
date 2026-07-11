@@ -8,12 +8,10 @@ import {
   Bell,
   CalendarClock,
   ChevronRight,
-  LogOut,
 } from "lucide-react";
 import { BackLink } from "@/components/ui/back-link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { logOut } from "@/lib/auth/actions";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 const QUICK_LINKS = [
@@ -75,18 +73,21 @@ export default async function MorePage() {
       </div>
 
       <Card className="animate-fade-up">
-        <CardContent className="flex items-center gap-4">
-          <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-muted text-lg font-bold text-primary">
-            PH
-          </span>
-          <div className="min-w-0">
-            <p className="text-base font-semibold text-foreground">
-              Project Hulk
-            </p>
-            <p className="truncate text-sm text-muted-foreground">
-              {user.email}
-            </p>
-          </div>
+        <CardContent>
+          <Link href="/profile" className="flex items-center gap-4 active:opacity-60">
+            <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-muted text-lg font-bold text-primary">
+              PH
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-base font-semibold text-foreground">
+                Profile
+              </p>
+              <p className="truncate text-sm text-muted-foreground">
+                {user.email}
+              </p>
+            </div>
+            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+          </Link>
         </CardContent>
       </Card>
 
@@ -138,24 +139,6 @@ export default async function MorePage() {
           </CardContent>
         </Card>
       </div>
-
-      <Card className="animate-fade-up">
-        <CardContent>
-          <form action={logOut}>
-            <button
-              type="submit"
-              className="flex w-full items-center gap-3.5 text-left active:opacity-60"
-            >
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-muted text-destructive">
-                <LogOut className="size-5" />
-              </span>
-              <span className="text-sm font-semibold text-destructive">
-                Log out
-              </span>
-            </button>
-          </form>
-        </CardContent>
-      </Card>
     </div>
   );
 }
