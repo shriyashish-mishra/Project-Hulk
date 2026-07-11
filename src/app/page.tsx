@@ -8,6 +8,7 @@ import { WorkoutStreakCard } from "@/components/today/workout-streak-card";
 import { WaterRow } from "@/components/water/water-row";
 import { SleepRow } from "@/components/sleep/sleep-row";
 import { WeightRow } from "@/components/weight/weight-row";
+import { PhotosRow } from "@/components/photos/photos-row";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
 import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
@@ -76,6 +77,7 @@ export default async function TodayPage() {
             <WaterRow loggedOn={loggedOn} initialLog={waterLog} />
             <SleepRow loggedOn={loggedOn} initialLog={sleepLog} />
             <WeightRow loggedOn={loggedOn} initialLog={weightLog} />
+            <PhotosRow loggedOn={loggedOn} />
           </CardContent>
         </Card>
       </div>
