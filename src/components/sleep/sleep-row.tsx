@@ -3,19 +3,12 @@
 import { useState, useTransition } from "react";
 import { deleteSleepLog, saveSleepDuration } from "@/lib/sleep/actions";
 import type { SleepLog } from "@/lib/sleep/types";
+import { formatDuration } from "@/lib/date";
 import { SleepFormDrawer } from "./sleep-form-drawer";
 
 interface SleepRowProps {
   loggedOn: string;
   initialLog: SleepLog | null;
-}
-
-function formatDuration(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h === 0) return `${m}m`;
-  if (m === 0) return `${h}h`;
-  return `${h}h ${m}m`;
 }
 
 export function SleepRow({ loggedOn, initialLog }: SleepRowProps) {

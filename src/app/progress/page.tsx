@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProgressTabs } from "@/components/progress/progress-tabs";
 import { DateNav } from "@/components/progress/date-nav";
 import { DailyScoreCard } from "@/components/progress/daily-score-card";
+import { TodayAtGlance } from "@/components/progress/today-at-a-glance";
 import { NutrientBar } from "@/components/progress/nutrient-bar";
 import { DailyWorkoutSummary } from "@/components/progress/daily-workout-summary";
 import { CoachFeedbackList } from "@/components/progress/coach-feedback-list";
 import { NextDayPlanCard } from "@/components/progress/next-day-plan-card";
 import { CalorieBalanceBadge } from "@/components/progress/calorie-balance-badge";
-import { addDays, formatShortDate, getLocalDateString } from "@/lib/date";
+import { addDays, formatDuration, formatShortDate, getLocalDateString } from "@/lib/date";
 import { getAiReportForDate } from "@/lib/nightly-report/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import { getReportsInRange } from "@/lib/progress/queries";
@@ -18,8 +19,14 @@ import {
   computePeriodSummary,
   parseCalorieBalanceFallback,
 } from "@/lib/progress/stats";
+import { getWaterLogForDate } from "@/lib/water/queries";
+import { getSleepLogForDate, getSleepLogsInRange } from "@/lib/sleep/queries";
+import { getWeightLogForDate } from "@/lib/weight/queries";
+import { getPhotosForDate } from "@/lib/photos/queries";
+import { buildDailyRecoverySentence, computeRecoverySummary } from "@/lib/progress/recovery";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const DEFAULT_WATER_TARGET = 8;
 
 interface ProgressDailyPageProps {
   searchParams: Promise<{ date?: string }>;
@@ -36,17 +43,51 @@ export default async function ProgressDailyPage({
       : today;
   const isToday = date === today;
 
-  const [report, workoutLog, trailingReports] = await Promise.all([
-    getAiReportForDate(date),
-    getWorkoutLogForDate(date),
-    getReportsInRange(addDays(date, -7), addDays(date, -1)),
-  ]);
+  const [report, workoutLog, trailingReports, waterLog, sleepLog, trailingSleepLogs, weightLog, photos] =
+    await Promise.all([
+      getAiReportForDate(date),
+      getWorkoutLogForDate(date),
+      getReportsInRange(addDays(date, -7), addDays(date, -1)),
+      getWaterLogForDate(date),
+      getSleepLogForDate(date),
+      getSleepLogsInRange(addDays(date, -7), addDays(date, -1)),
+      getWeightLogForDate(date),
+      getPhotosForDate(date),
+    ]);
 
   const trailingSummary = computePeriodSummary(buildTrendPoints(trailingReports));
+  const { avgSleepMinutes } = computeRecoverySummary(trailingSleepLogs, []);
 
   const label = `${isToday ? "Today, " : ""}${formatShortDate(
     new Date(`${date}T00:00:00`),
   )}`;
+
+  const glanceRows = report
+    ? [
+        { label: "Protein", value: `${report.parsed_json.protein_g}g` },
+        { label: "Calories", value: `~${report.parsed_json.estimated_calories}` },
+        {
+          label: "Water",
+          value: waterLog ? `${waterLog.glass_count} glasses` : "Not logged",
+        },
+        {
+          label: "Sleep",
+          value: sleepLog ? formatDuration(sleepLog.duration_minutes) : "Not logged",
+        },
+        {
+          label: "Workout",
+          value: report.parsed_json.muscles_trained.length > 0 ? "Completed" : "Rest day",
+        },
+        ...(weightLog ? [{ label: "Weight", value: `${Number(weightLog.weight_kg)} kg` }] : []),
+      ]
+    : [];
+
+  const recoverySentence = buildDailyRecoverySentence({
+    sleepMinutes: sleepLog?.duration_minutes ?? null,
+    avgSleepMinutes,
+    waterGlasses: waterLog?.glass_count ?? null,
+    waterTarget: waterLog?.target_glasses ?? DEFAULT_WATER_TARGET,
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -68,7 +109,16 @@ export default async function ProgressDailyPage({
         <>
           <DailyScoreCard report={report.parsed_json} />
 
-          <Card className="animate-fade-up" style={{ animationDelay: "60ms" }}>
+          <Card className="animate-fade-up" style={{ animationDelay: "40ms" }}>
+            <CardHeader>
+              <CardTitle>Today at a Glance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TodayAtGlance rows={glanceRows} />
+            </CardContent>
+          </Card>
+
+          <Card className="animate-fade-up" style={{ animationDelay: "80ms" }}>
             <CardHeader>
               <CardTitle>Today&rsquo;s Nutrition</CardTitle>
             </CardHeader>
@@ -130,7 +180,7 @@ export default async function ProgressDailyPage({
             </CardContent>
           </Card>
 
-          <Card className="animate-fade-up" style={{ animationDelay: "180ms" }}>
+          <Card className="animate-fade-up" style={{ animationDelay: "160ms" }}>
             <CardHeader>
               <CardTitle>Coach Feedback</CardTitle>
             </CardHeader>
@@ -142,9 +192,32 @@ export default async function ProgressDailyPage({
             </CardContent>
           </Card>
 
+          <Card className="animate-fade-up" style={{ animationDelay: "200ms" }}>
+            <CardHeader>
+              <CardTitle>Recovery</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              <p className="text-sm text-foreground">{recoverySentence}</p>
+              {photos.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {photos.length} progress photo{photos.length > 1 ? "s" : ""} captured today.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
           <Card className="animate-fade-up" style={{ animationDelay: "240ms" }}>
             <CardHeader>
-              <CardTitle>Next Day Workout Plan</CardTitle>
+              <CardTitle>Coach&rsquo;s Take</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">{report.parsed_json.coach_summary}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="animate-fade-up" style={{ animationDelay: "280ms" }}>
+            <CardHeader>
+              <CardTitle>Tomorrow</CardTitle>
             </CardHeader>
             <CardContent>
               <NextDayPlanCard

@@ -85,6 +85,16 @@ export function getMonthRange(monthStr: string): { start: string; end: string } 
   };
 }
 
+export function formatDuration(minutes: number): string {
+  const sign = minutes < 0 ? "-" : "";
+  const abs = Math.abs(minutes);
+  const h = Math.floor(abs / 60);
+  const m = abs % 60;
+  if (h === 0) return `${sign}${m}m`;
+  if (m === 0) return `${sign}${h}h`;
+  return `${sign}${h}h ${m}m`;
+}
+
 export function formatMonthLabel(monthStr: string): string {
   const [year, month] = monthStr.split("-").map(Number);
   return new Intl.DateTimeFormat("en-US", {

@@ -17,13 +17,12 @@ export function DailyScoreCard({ report }: DailyScoreCardProps) {
             <span className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
               Overall Score
             </span>
-            <p className="text-sm text-muted-foreground">{report.coach_summary}</p>
+            <p className="text-xs text-muted-foreground">
+              Blends your nutrition, workout, and recovery scores below into one
+              number for the day.
+            </p>
           </div>
         </div>
-        <p className="-mt-3 text-xs text-muted-foreground">
-          Overall blends your nutrition, workout, and recovery scores below into one
-          number for the day.
-        </p>
         <div className="flex flex-col gap-4">
           <ScoreMeter label="Nutrition" score={report.nutrition_score} />
           <ScoreMeter label="Workout" score={report.workout_score} />

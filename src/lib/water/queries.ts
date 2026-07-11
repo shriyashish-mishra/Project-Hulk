@@ -13,3 +13,20 @@ export async function getWaterLogForDate(loggedOn: string): Promise<WaterLog | n
   if (error) throw new Error(error.message);
   return data;
 }
+
+export async function getWaterLogsInRange(
+  startDate: string,
+  endDate: string,
+): Promise<WaterLog[]> {
+  const { supabase, user } = await requireUser();
+  const { data, error } = await supabase
+    .from("water_logs")
+    .select("*")
+    .eq("user_id", user.id)
+    .gte("date", startDate)
+    .lte("date", endDate)
+    .order("date", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return data;
+}

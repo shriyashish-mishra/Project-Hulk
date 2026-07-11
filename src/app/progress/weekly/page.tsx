@@ -6,6 +6,8 @@ import { ScoreTrendChart } from "@/components/progress/score-trend-chart";
 import { NutritionTrendChart } from "@/components/progress/nutrition-trend-chart";
 import { ConsistencyTimeline } from "@/components/progress/consistency-timeline";
 import { MuscleBalanceSection } from "@/components/progress/muscle-balance-section";
+import { RecoverySection } from "@/components/progress/recovery-section";
+import { BodyResponseSection } from "@/components/progress/body-response-section";
 import { CoachMemoryCard } from "@/components/progress/coach-memory-card";
 import { RoadmapCard } from "@/components/progress/roadmap-card";
 import {
@@ -22,6 +24,13 @@ import {
 } from "@/lib/progress/stats";
 import { computeRegionCounts } from "@/lib/progress/muscle-map";
 import { generateWeeklyRoadmap } from "@/lib/progress/weekly-plan";
+import { getSleepLogsInRange } from "@/lib/sleep/queries";
+import { getWaterLogsInRange } from "@/lib/water/queries";
+import { getWeightLogsInRange, getLatestWeightLogBefore } from "@/lib/weight/queries";
+import { getPhotosInRange } from "@/lib/photos/queries";
+import { computeRecoveryInsights, computeRecoverySummary } from "@/lib/progress/recovery";
+import { computeWeightTrend } from "@/lib/progress/weight-trend";
+import { buildWeeklyHeadline, buildWeeklyStorySentence } from "@/lib/progress/narrative";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -44,8 +53,28 @@ export default async function ProgressWeeklyPage({
       : currentWeekStart;
   const end = addDays(start, 6);
   const previousStart = addDays(start, -7);
+  const previousEnd = addDays(start, -1);
 
-  const reports = await getReportsInRange(previousStart, end);
+  const [
+    reports,
+    sleepLogs,
+    previousSleepLogs,
+    waterLogs,
+    previousWaterLogs,
+    weightLogs,
+    weightBaseline,
+    photos,
+  ] = await Promise.all([
+    getReportsInRange(previousStart, end),
+    getSleepLogsInRange(start, end),
+    getSleepLogsInRange(previousStart, previousEnd),
+    getWaterLogsInRange(start, end),
+    getWaterLogsInRange(previousStart, previousEnd),
+    getWeightLogsInRange(start, end),
+    getLatestWeightLogBefore(start),
+    getPhotosInRange(start, end),
+  ]);
+
   const allPoints = buildTrendPoints(reports);
   const thisWeekPoints = allPoints.filter((p) => p.date >= start);
   const lastWeekPoints = allPoints.filter((p) => p.date < start);
@@ -57,6 +86,23 @@ export default async function ProgressWeeklyPage({
   const regionCounts = computeRegionCounts(thisWeekPoints.map((p) => p.musclesTrained));
   const coachInsights = computeCoachInsights(thisWeekPoints, lastWeekPoints);
   const roadmap = generateWeeklyRoadmap(regionCounts, current.avgProteinG);
+
+  const recoverySummary = computeRecoverySummary(sleepLogs, waterLogs);
+  const recoveryInsights = computeRecoveryInsights(
+    { sleepLogs, waterLogs },
+    { sleepLogs: previousSleepLogs, waterLogs: previousWaterLogs },
+  );
+  const weightTrend = computeWeightTrend(weightLogs, weightBaseline, "week");
+
+  const headline = buildWeeklyHeadline(
+    current.workoutsCompleted,
+    recoveryInsights.every((insight) => !/fell|dropped/.test(insight)),
+  );
+  const storySentence = buildWeeklyStorySentence(
+    current.workoutsCompleted,
+    previous.workoutsCompleted,
+    recoveryInsights,
+  );
 
   const sections = [
     {
@@ -84,6 +130,27 @@ export default async function ProgressWeeklyPage({
           regionCounts={regionCounts}
           musclesTrainedByDay={thisWeekPoints.map((p) => p.musclesTrained)}
           distributionLabel="Weekly Distribution"
+        />
+      ),
+    },
+    {
+      title: "How You Recovered",
+      content: (
+        <RecoverySection
+          avgSleepMinutes={recoverySummary.avgSleepMinutes}
+          hydrationTargetHitDays={recoverySummary.hydrationTargetHitDays}
+          totalDaysWithWater={recoverySummary.daysWithWater}
+          insights={recoveryInsights}
+        />
+      ),
+    },
+    {
+      title: "How Your Body Is Responding",
+      content: (
+        <BodyResponseSection
+          weightTrend={weightTrend}
+          photoCount={photos.length}
+          periodLabel="week"
         />
       ),
     },
@@ -116,6 +183,11 @@ export default async function ProgressWeeklyPage({
             : null
         }
       />
+
+      <div className="flex flex-col gap-1">
+        <p className="text-lg font-bold text-foreground">{headline}</p>
+        <p className="text-sm text-muted-foreground">{storySentence}</p>
+      </div>
 
       <div className="flex flex-col gap-3">
         {sections.map(({ title, content }, index) => (
