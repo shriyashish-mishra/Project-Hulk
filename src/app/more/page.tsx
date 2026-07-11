@@ -16,27 +16,40 @@ import { Card, CardContent } from "@/components/ui/card";
 import { logOut } from "@/lib/auth/actions";
 import { requireUser } from "@/lib/supabase/auth";
 
-const COMING_SOON = [
+const QUICK_LINKS = [
   {
+    href: "/log",
+    icon: CalendarClock,
+    label: "Log a past day",
+    description: "Add or edit meals and workout for any date.",
+  },
+  {
+    href: "/",
     icon: Scale,
     label: "Weight",
-    description: "Track bodyweight trends over time.",
+    description: "Log today's weight from the Daily Signals row.",
   },
   {
+    href: "/photos",
     icon: Camera,
     label: "Progress Photos",
-    description: "Visual proof of the work you're putting in.",
+    description: "Front, side, and back views over time.",
   },
   {
+    href: "/",
     icon: Moon,
     label: "Sleep",
-    description: "See how rest connects to recovery.",
+    description: "Log last night's duration from Daily Signals.",
   },
   {
+    href: "/",
     icon: Droplet,
     label: "Water",
-    description: "Simple daily hydration tracking.",
+    description: "Log today's glasses from Daily Signals.",
   },
+] as const;
+
+const COMING_SOON = [
   {
     icon: MessageCircle,
     label: "Coach Chat",
@@ -78,24 +91,25 @@ export default async function MorePage() {
       </Card>
 
       <Card className="animate-fade-up" style={{ animationDelay: "50ms" }}>
-        <CardContent>
-          <Link
-            href="/log"
-            className="flex items-center gap-3.5 active:opacity-60"
-          >
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-muted text-primary">
-              <CalendarClock className="size-5" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-foreground">
-                Log a past day
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Add or edit meals and workout for any date.
-              </p>
-            </div>
-            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-          </Link>
+        <CardContent className="divide-y divide-border">
+          {QUICK_LINKS.map(({ href, icon: Icon, label, description }) => (
+            <Link
+              key={label}
+              href={href}
+              className="flex items-center gap-3.5 py-3 first:pt-0 last:pb-0 active:opacity-60"
+            >
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-muted text-primary">
+                <Icon className="size-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground">
+                  {label}
+                </p>
+                <p className="text-xs text-muted-foreground">{description}</p>
+              </div>
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+            </Link>
+          ))}
         </CardContent>
       </Card>
 
@@ -103,14 +117,10 @@ export default async function MorePage() {
         <p className="mb-3 text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
           Coming soon
         </p>
-        <div className="flex flex-col gap-3">
-          {COMING_SOON.map(({ icon: Icon, label, description }, index) => (
-            <Card
-              key={label}
-              className="animate-fade-up"
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <CardContent className="flex items-center gap-3.5">
+        <Card className="animate-fade-up">
+          <CardContent className="divide-y divide-border">
+            {COMING_SOON.map(({ icon: Icon, label, description }) => (
+              <div key={label} className="flex items-center gap-3.5 py-3 first:pt-0 last:pb-0">
                 <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
                   <Icon className="size-5" />
                 </span>
@@ -123,10 +133,10 @@ export default async function MorePage() {
                 <Badge variant="secondary" className="shrink-0">
                   Soon
                 </Badge>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
 
       <Card className="animate-fade-up">
