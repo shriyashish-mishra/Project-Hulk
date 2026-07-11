@@ -1,9 +1,9 @@
 /**
- * Internal region boundaries, traced against front-reference.png /
- * back-reference.png at 1:1 scale (see the asset pack README — the
- * source SVGs only contain the outer silhouette, no internal muscle
- * geometry). Each region is grouped under one logical muscle id so a
- * single intensity value can drive both the left and right instance.
+ * Internal muscle-region geometry — hand-crafted organic bezier shapes
+ * (tapered, bulging "muscle belly" lozenges for limbs; custom curves for
+ * chest/core/back/glutes), not straight-edged polygons. Each region is
+ * grouped under one logical muscle id so a single intensity value drives
+ * both the left and right instance.
  */
 
 import type { MuscleGroupId } from "@/lib/progress/muscle-groups";
@@ -18,37 +18,37 @@ export interface RegionPath {
 }
 
 export const FRONT_REGION_PATHS: RegionPath[] = [
-  { id: "shoulders", view: "front", side: "left", d: "M116,178 Q113,212 128,240 Q150,252 192,244 L190,180 Q158,170 116,178 Z" },
-  { id: "shoulders", view: "front", side: "right", d: "M330,178 Q333,212 318,240 Q296,252 254,244 L256,180 Q288,170 330,178 Z" },
-  { id: "chest", view: "front", side: "center", d: "M190,180 L223,203 L256,180 L253,248 Q223,258 193,248 Z" },
-  { id: "core", view: "front", side: "center", d: "M196,250 L250,250 L247,384 L199,384 Z" },
-  { id: "obliques", view: "front", side: "left", d: "M176,252 L196,250 L199,384 L182,388 Q171,320 176,252 Z" },
-  { id: "obliques", view: "front", side: "right", d: "M270,252 L250,250 L247,384 L264,388 Q275,320 270,252 Z" },
-  { id: "quadriceps", view: "front", side: "left", d: "M168,452 L223,452 L216,602 L179,608 Z" },
-  { id: "quadriceps", view: "front", side: "right", d: "M278,452 L223,452 L230,602 L267,608 Z" },
-  { id: "calves", view: "front", side: "left", d: "M180,655 L222,655 L214,766 L190,766 Z" },
-  { id: "calves", view: "front", side: "right", d: "M266,655 L224,655 L232,766 L256,766 Z" },
-  { id: "biceps", view: "front", side: "left", d: "M90,248 L136,250 L129,350 L96,352 Z" },
-  { id: "biceps", view: "front", side: "right", d: "M356,248 L310,250 L317,350 L350,352 Z" },
-  { id: "forearms", view: "front", side: "left", d: "M76,352 L128,352 L123,436 L84,436 Z" },
-  { id: "forearms", view: "front", side: "right", d: "M370,352 L318,352 L323,436 L362,436 Z" },
+  { id: "shoulders", view: "front", side: "right", d: "M199.4,121.6 Q201.5,138.1 209.4,153.2 Q218.2,150.9 234.6,146.8 Q234.5,129.9 228.6,114.4 Q218.4,116.9 199.4,121.6 Z" },
+  { id: "shoulders", view: "front", side: "left", d: "M100.6,121.6 Q98.5,138.1 90.6,153.2 Q81.8,150.9 65.4,146.8 Q65.5,129.9 71.4,114.4 Q81.6,116.9 100.6,121.6 Z" },
+  { id: "chest", view: "front", side: "center", d: "M150,142 C138,132 116,136 110,152 C105,166 112,182 128,192 C138,198 146,196 150,188 C154,196 162,198 172,192 C188,182 195,166 190,152 C184,136 162,132 150,142 Z" },
+  { id: "core", view: "front", side: "center", d: "M125.0,198.0 Q129.0,239.0 128.0,280.0 Q143.4,280.0 172.0,280.0 Q171.0,239.0 175.0,198.0 Q157.5,198.0 125.0,198.0 Z" },
+  { id: "obliques", view: "front", side: "right", d: "M171.6,203.0 Q174.6,240.3 181.6,277.1 Q186.8,276.3 196.4,274.9 Q192.4,237.7 184.4,201.0 Q179.9,201.7 171.6,203.0 Z" },
+  { id: "obliques", view: "front", side: "left", d: "M128.4,203.0 Q125.4,240.3 118.4,277.1 Q113.2,276.3 103.6,274.9 Q107.6,237.7 115.6,201.0 Q120.1,201.7 128.4,203.0 Z" },
+  { id: "biceps", view: "front", side: "right", d: "M203.0,143.1 Q204.6,186.3 213.0,228.9 Q220.7,228.3 235.0,227.1 Q236.4,183.7 231.0,140.9 Q221.2,141.7 203.0,143.1 Z" },
+  { id: "biceps", view: "front", side: "left", d: "M97.0,143.1 Q95.4,186.3 87.0,228.9 Q79.3,228.3 65.0,227.1 Q63.6,183.7 69.0,140.9 Q78.8,141.7 97.0,143.1 Z" },
+  { id: "forearms", view: "front", side: "right", d: "M204.1,234.9 Q200.6,278.0 198.5,321.2 Q203.8,321.8 213.5,322.8 Q220.4,280.0 225.9,237.1 Q218.3,236.3 204.1,234.9 Z" },
+  { id: "forearms", view: "front", side: "left", d: "M95.9,234.9 Q99.4,278.0 101.5,321.2 Q96.2,321.8 86.5,322.8 Q79.6,280.0 74.1,237.1 Q81.7,236.3 95.9,234.9 Z" },
+  { id: "quadriceps", view: "front", side: "right", d: "M160.0,302.6 Q164.0,375.6 172.0,448.4 Q182.5,448.1 202.0,447.6 Q206.0,374.4 206.0,301.4 Q189.9,301.8 160.0,302.6 Z" },
+  { id: "quadriceps", view: "front", side: "left", d: "M140.0,302.6 Q136.0,375.6 128.0,448.4 Q117.5,448.1 98.0,447.6 Q94.0,374.4 94.0,301.4 Q110.1,301.8 140.0,302.6 Z" },
+  { id: "calves", view: "front", side: "right", d: "M174.1,463.2 Q178.1,528.4 191.5,592.7 Q196.8,592.2 206.5,591.3 Q207.9,525.6 199.9,460.8 Q190.9,461.6 174.1,463.2 Z" },
+  { id: "calves", view: "front", side: "left", d: "M125.9,463.2 Q121.9,528.4 108.5,592.7 Q103.2,592.2 93.5,591.3 Q92.1,525.6 100.1,460.8 Q109.1,461.6 125.9,463.2 Z" },
 ];
 
 export const BACK_REGION_PATHS: RegionPath[] = [
-  { id: "shoulders", view: "back", side: "left", d: "M92,192 Q86,222 100,248 Q122,258 158,248 L155,190 Q124,180 92,192 Z" },
-  { id: "shoulders", view: "back", side: "right", d: "M354,192 Q360,222 346,248 Q324,258 288,248 L291,190 Q322,180 354,192 Z" },
-  { id: "upper_back", view: "back", side: "center", d: "M186,188 L223,168 L260,188 L252,222 L223,212 L194,222 Z" },
-  { id: "lats", view: "back", side: "left", d: "M162,196 L188,224 L196,300 L172,312 Q150,250 162,196 Z" },
-  { id: "lats", view: "back", side: "right", d: "M284,196 L258,224 L250,300 L274,312 Q296,250 284,196 Z" },
-  { id: "lower_back", view: "back", side: "center", d: "M196,302 L250,302 L246,348 L200,348 Z" },
-  { id: "glutes", view: "back", side: "left", d: "M172,350 L222,350 L222,432 L176,434 Q158,392 172,350 Z" },
-  { id: "glutes", view: "back", side: "right", d: "M274,350 L224,350 L224,432 L270,434 Q288,392 274,350 Z" },
-  { id: "hamstrings", view: "back", side: "left", d: "M172,444 L220,444 L214,606 L184,610 Z" },
-  { id: "hamstrings", view: "back", side: "right", d: "M274,444 L226,444 L232,606 L262,610 Z" },
-  { id: "calves", view: "back", side: "left", d: "M182,650 L220,650 L212,764 L190,764 Z" },
-  { id: "calves", view: "back", side: "right", d: "M264,650 L226,650 L234,764 L256,764 Z" },
-  { id: "triceps", view: "back", side: "left", d: "M88,250 L158,250 L152,352 L96,352 Z" },
-  { id: "triceps", view: "back", side: "right", d: "M358,250 L288,250 L294,352 L350,352 Z" },
-  { id: "forearms", view: "back", side: "left", d: "M76,354 L128,354 L123,436 L86,436 Z" },
-  { id: "forearms", view: "back", side: "right", d: "M370,354 L318,354 L323,436 L360,436 Z" },
+  { id: "shoulders", view: "back", side: "right", d: "M199.4,121.6 Q201.5,138.1 209.4,153.2 Q218.2,150.9 234.6,146.8 Q234.5,129.9 228.6,114.4 Q218.4,116.9 199.4,121.6 Z" },
+  { id: "shoulders", view: "back", side: "left", d: "M100.6,121.6 Q98.5,138.1 90.6,153.2 Q81.8,150.9 65.4,146.8 Q65.5,129.9 71.4,114.4 Q81.6,116.9 100.6,121.6 Z" },
+  { id: "upper_back", view: "back", side: "center", d: "M150,132 C168,132 184,142 188,158 C184,176 168,190 150,192 C132,190 116,176 112,158 C116,142 132,132 150,132 Z" },
+  { id: "lats", view: "back", side: "right", d: "M171.2,165.9 Q162.2,201.4 163.1,238.5 Q169.3,239.6 180.9,241.5 Q193.8,206.6 196.8,170.1 Q187.8,168.6 171.2,165.9 Z" },
+  { id: "lats", view: "back", side: "left", d: "M128.8,165.9 Q137.8,201.4 136.9,238.5 Q130.7,239.6 119.1,241.5 Q106.2,206.6 103.2,170.1 Q112.2,168.6 128.8,165.9 Z" },
+  { id: "lower_back", view: "back", side: "center", d: "M135.0,216.0 Q137.0,249.0 130.0,282.0 Q144.0,282.0 170.0,282.0 Q163.0,249.0 165.0,216.0 Q154.5,216.0 135.0,216.0 Z" },
+  { id: "glutes", view: "back", side: "right", d: "M178,290 C198,288 210,302 208,320 C206,336 190,346 174,342 C160,338 154,322 158,308 C161,297 168,291 178,290 Z" },
+  { id: "glutes", view: "back", side: "left", d: "M122.0,290 C102.0,288 90.0,302 92.0,320 C94.0,336 110.0,346 126.0,342 C140.0,338 146.0,322 142.0,308 C139.0,297 132.0,291 122.0,290 Z" },
+  { id: "hamstrings", view: "back", side: "right", d: "M161.0,348.9 Q165.0,398.8 172.0,448.6 Q182.5,448.2 202.0,447.4 Q205.0,397.2 205.0,347.1 Q189.6,347.7 161.0,348.9 Z" },
+  { id: "hamstrings", view: "back", side: "left", d: "M139.0,348.9 Q135.0,398.8 128.0,448.6 Q117.5,448.2 98.0,447.4 Q95.0,397.2 95.0,347.1 Q110.4,347.7 139.0,348.9 Z" },
+  { id: "calves", view: "back", side: "right", d: "M174.1,463.2 Q178.1,528.4 191.5,592.7 Q196.8,592.2 206.5,591.3 Q207.9,525.6 199.9,460.8 Q190.9,461.6 174.1,463.2 Z" },
+  { id: "calves", view: "back", side: "left", d: "M125.9,463.2 Q121.9,528.4 108.5,592.7 Q103.2,592.2 93.5,591.3 Q92.1,525.6 100.1,460.8 Q109.1,461.6 125.9,463.2 Z" },
+  { id: "triceps", view: "back", side: "right", d: "M203.0,143.1 Q204.6,186.3 213.0,228.9 Q220.7,228.3 235.0,227.1 Q236.4,183.7 231.0,140.9 Q221.2,141.7 203.0,143.1 Z" },
+  { id: "triceps", view: "back", side: "left", d: "M97.0,143.1 Q95.4,186.3 87.0,228.9 Q79.3,228.3 65.0,227.1 Q63.6,183.7 69.0,140.9 Q78.8,141.7 97.0,143.1 Z" },
+  { id: "forearms", view: "back", side: "right", d: "M204.1,234.9 Q200.6,278.0 198.5,321.2 Q203.8,321.8 213.5,322.8 Q220.4,280.0 225.9,237.1 Q218.3,236.3 204.1,234.9 Z" },
+  { id: "forearms", view: "back", side: "left", d: "M95.9,234.9 Q99.4,278.0 101.5,321.2 Q96.2,321.8 86.5,322.8 Q79.6,280.0 74.1,237.1 Q81.7,236.3 95.9,234.9 Z" },
 ];

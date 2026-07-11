@@ -1,21 +1,14 @@
 import { useId } from "react";
 import { cn } from "@/lib/utils";
 import type { MuscleGroupId } from "@/lib/progress/muscle-groups";
-import {
-  BACK_DECOR_PATHS,
-  BACK_SILHOUETTE,
-  BODY_VIEWBOX,
-  FRONT_DECOR_PATHS,
-  FRONT_SILHOUETTE,
-} from "./silhouette-paths";
+import { BODY_VIEWBOX, SILHOUETTE_PIECES } from "./silhouette-paths";
 import { BACK_REGION_PATHS, FRONT_REGION_PATHS, type RegionPath } from "./muscle-regions";
 
 /**
- * Data-driven muscle map built on the approved asset pack's exact geometry
- * (silhouette-paths.ts — copied verbatim, never redrawn). Region boundaries
- * (muscle-regions.ts) were traced against the reference art, not invented,
- * and are clipped to the exact silhouette so tracing tolerance never draws
- * outside the approved outline.
+ * Data-driven muscle map — hand-crafted organic silhouette and muscle-belly
+ * shapes (smooth bezier curves throughout, no straight-edged polygons).
+ * Front and back share one silhouette; only the internal region highlights
+ * differ per view.
  */
 
 export interface MuscleMapProps {
@@ -52,8 +45,8 @@ function RegionLayer({
           fill="var(--primary)"
           fillOpacity={opacityFor(intensity[region.id])}
           stroke="var(--border)"
-          strokeWidth={0.75}
-          strokeOpacity={0.55}
+          strokeWidth={1}
+          strokeOpacity={0.5}
         />
       ))}
     </>
@@ -61,15 +54,11 @@ function RegionLayer({
 }
 
 function BodyView({
-  silhouette,
-  decor,
   regions,
   intensity,
   label,
   heightClass,
 }: {
-  silhouette: string;
-  decor: string[];
   regions: RegionPath[];
   intensity: Partial<Record<MuscleGroupId, number>>;
   label: string;
@@ -82,19 +71,13 @@ function BodyView({
       <svg viewBox={BODY_VIEWBOX} className={cn(heightClass, "w-auto")}>
         <defs>
           <clipPath id={clipId}>
-            <path d={silhouette} />
+            {SILHOUETTE_PIECES.map((d, index) => (
+              <path key={index} d={d} />
+            ))}
           </clipPath>
         </defs>
-        <path d={silhouette} fill="var(--muted)" stroke="var(--border)" strokeWidth={1} />
-        {decor.map((d, index) => (
-          <path
-            key={index}
-            d={d}
-            fill="var(--muted)"
-            stroke="var(--border)"
-            strokeWidth={0.75}
-            opacity={0.7}
-          />
+        {SILHOUETTE_PIECES.map((d, index) => (
+          <path key={index} d={d} fill="var(--muted)" stroke="var(--border)" strokeWidth={1.25} />
         ))}
         <g clipPath={`url(#${clipId})`}>
           <RegionLayer regions={regions} intensity={intensity} />
@@ -110,22 +93,8 @@ export function MuscleMap({ intensity, className, size = "sm" }: MuscleMapProps)
 
   return (
     <div className={cn("flex items-center justify-center gap-10", className)}>
-      <BodyView
-        silhouette={FRONT_SILHOUETTE}
-        decor={FRONT_DECOR_PATHS}
-        regions={FRONT_REGION_PATHS}
-        intensity={intensity}
-        label="Front"
-        heightClass={heightClass}
-      />
-      <BodyView
-        silhouette={BACK_SILHOUETTE}
-        decor={BACK_DECOR_PATHS}
-        regions={BACK_REGION_PATHS}
-        intensity={intensity}
-        label="Back"
-        heightClass={heightClass}
-      />
+      <BodyView regions={FRONT_REGION_PATHS} intensity={intensity} label="Front" heightClass={heightClass} />
+      <BodyView regions={BACK_REGION_PATHS} intensity={intensity} label="Back" heightClass={heightClass} />
     </div>
   );
 }
