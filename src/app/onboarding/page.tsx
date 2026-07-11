@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
+import { OnboardingFlow } from "@/components/onboarding/onboarding-flow";
 import { requireUser } from "@/lib/supabase/auth";
 
-/** State 3 guard: an already-onboarded user must never re-enter onboarding. The actual step flow is built next (Phase 3) — this currently only wires the routing. */
+/** State 3 guard: an already-onboarded user must never re-enter onboarding. */
 export default async function OnboardingPage() {
   const { supabase, user } = await requireUser();
 
@@ -15,14 +16,5 @@ export default async function OnboardingPage() {
     redirect("/");
   }
 
-  return (
-    <div className="flex min-h-[80vh] flex-col items-center justify-center gap-3 text-center">
-      <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">
-        Welcome
-      </p>
-      <h1 className="text-3xl font-black tracking-tight text-foreground">
-        Let&rsquo;s get you set up
-      </h1>
-    </div>
-  );
+  return <OnboardingFlow />;
 }
