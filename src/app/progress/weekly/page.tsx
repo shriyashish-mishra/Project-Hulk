@@ -137,6 +137,7 @@ export default async function ProgressWeeklyPage({
           regionCounts={regionCounts}
           musclesTrainedByDay={thisWeekPoints.map((p) => p.musclesTrained)}
           distributionLabel="Weekly Distribution"
+          muscleMapModel={userContext.profile?.muscle_map_model}
         />
       ),
     },

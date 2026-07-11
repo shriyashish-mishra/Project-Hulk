@@ -1,14 +1,18 @@
 import { useId } from "react";
 import { cn } from "@/lib/utils";
 import type { MuscleGroupId } from "@/lib/progress/muscle-groups";
+import type { MuscleMapModel } from "@/lib/profile/types";
 import { BODY_VIEWBOX, SILHOUETTE_PIECES } from "./silhouette-paths";
+import { SILHOUETTE_PIECES_MALE } from "./silhouette-paths-male";
 import { BACK_REGION_PATHS, FRONT_REGION_PATHS, type RegionPath } from "./muscle-regions";
 
 /**
  * Data-driven muscle map — hand-crafted organic silhouette and muscle-belly
  * shapes (smooth bezier curves throughout, no straight-edged polygons).
  * Front and back share one silhouette; only the internal region highlights
- * differ per view.
+ * differ per view. The region geometry (chest/shoulders/etc.) is identical
+ * between the female and male silhouettes — same analytics contract, same
+ * rendering logic, only the background body outline changes per `model`.
  */
 
 export interface MuscleMapProps {
@@ -16,7 +20,13 @@ export interface MuscleMapProps {
   intensity: Partial<Record<MuscleGroupId, number>>;
   className?: string;
   size?: "sm" | "lg";
+  model?: MuscleMapModel;
 }
+
+const SILHOUETTE_BY_MODEL: Record<MuscleMapModel, string[]> = {
+  female: SILHOUETTE_PIECES,
+  male: SILHOUETTE_PIECES_MALE,
+};
 
 const SIZE_CLASSES = {
   sm: "max-w-[220px]",
@@ -58,11 +68,13 @@ function BodyView({
   intensity,
   label,
   maxWidthClass,
+  silhouettePieces,
 }: {
   regions: RegionPath[];
   intensity: Partial<Record<MuscleGroupId, number>>;
   label: string;
   maxWidthClass: string;
+  silhouettePieces: string[];
 }) {
   const clipId = useId();
 
@@ -71,12 +83,12 @@ function BodyView({
       <svg viewBox={BODY_VIEWBOX} className="h-auto w-full">
         <defs>
           <clipPath id={clipId}>
-            {SILHOUETTE_PIECES.map((d, index) => (
+            {silhouettePieces.map((d, index) => (
               <path key={index} d={d} />
             ))}
           </clipPath>
         </defs>
-        {SILHOUETTE_PIECES.map((d, index) => (
+        {silhouettePieces.map((d, index) => (
           <path key={index} d={d} fill="var(--muted)" stroke="var(--border)" strokeWidth={1.25} />
         ))}
         <g clipPath={`url(#${clipId})`}>
@@ -88,8 +100,9 @@ function BodyView({
   );
 }
 
-export function MuscleMap({ intensity, className, size = "sm" }: MuscleMapProps) {
+export function MuscleMap({ intensity, className, size = "sm", model = "female" }: MuscleMapProps) {
   const maxWidthClass = SIZE_CLASSES[size];
+  const silhouettePieces = SILHOUETTE_BY_MODEL[model];
 
   return (
     <div className={cn("flex items-start justify-center gap-6", className)}>
@@ -98,12 +111,14 @@ export function MuscleMap({ intensity, className, size = "sm" }: MuscleMapProps)
         intensity={intensity}
         label="Front"
         maxWidthClass={maxWidthClass}
+        silhouettePieces={silhouettePieces}
       />
       <BodyView
         regions={BACK_REGION_PATHS}
         intensity={intensity}
         label="Back"
         maxWidthClass={maxWidthClass}
+        silhouettePieces={silhouettePieces}
       />
     </div>
   );

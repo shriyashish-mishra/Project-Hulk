@@ -182,6 +182,7 @@ export default async function ProgressMonthlyPage({
           regionCounts={regionCounts}
           musclesTrainedByDay={currentPoints.map((p) => p.musclesTrained)}
           distributionLabel="Monthly Distribution"
+          muscleMapModel={userContext.profile?.muscle_map_model}
         />
       ),
     },

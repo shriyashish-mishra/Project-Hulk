@@ -179,6 +179,7 @@ export default async function ProgressDailyPage({
                 durationMin={report.parsed_json.workout_duration_min}
                 caloriesBurned={report.parsed_json.workout_calories_burned}
                 exercises={report.parsed_json.workout_exercises}
+                muscleMapModel={userContext.profile?.muscle_map_model}
               />
             </CardContent>
           </Card>

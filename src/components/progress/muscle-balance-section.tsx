@@ -5,6 +5,7 @@ import {
   type MuscleRegion,
 } from "@/lib/progress/muscle-map";
 import { computeMuscleGroupIntensity } from "@/lib/progress/muscle-groups";
+import type { MuscleMapModel } from "@/lib/profile/types";
 
 function DistributionRow({
   label,
@@ -42,12 +43,14 @@ interface MuscleBalanceSectionProps {
   regionCounts: Map<MuscleRegion, number>;
   musclesTrainedByDay: string[][];
   distributionLabel: string;
+  muscleMapModel?: MuscleMapModel;
 }
 
 export function MuscleBalanceSection({
   regionCounts,
   musclesTrainedByDay,
   distributionLabel,
+  muscleMapModel,
 }: MuscleBalanceSectionProps) {
   const intensity = computeMuscleGroupIntensity(musclesTrainedByDay);
   const ranked = [...ALL_MUSCLE_REGIONS].sort(
@@ -70,7 +73,7 @@ export function MuscleBalanceSection({
 
   return (
     <div className="flex flex-col gap-6">
-      <MuscleMap intensity={intensity} size="lg" className="py-2" />
+      <MuscleMap intensity={intensity} size="lg" className="py-2" model={muscleMapModel} />
 
       <div className="flex flex-col gap-2">
         <span className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">

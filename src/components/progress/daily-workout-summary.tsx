@@ -2,6 +2,7 @@ import { Dumbbell } from "lucide-react";
 import { MuscleMap } from "./anatomy/MuscleMap";
 import { computeMuscleGroupIntensity } from "@/lib/progress/muscle-groups";
 import type { WorkoutExercise } from "@/lib/nightly-report/types";
+import type { MuscleMapModel } from "@/lib/profile/types";
 
 interface DailyWorkoutSummaryProps {
   musclesTrained: string[];
@@ -9,6 +10,7 @@ interface DailyWorkoutSummaryProps {
   durationMin?: number;
   caloriesBurned?: number;
   exercises?: WorkoutExercise[];
+  muscleMapModel?: MuscleMapModel;
 }
 
 function StatTile({ label, value }: { label: string; value: string }) {
@@ -26,6 +28,7 @@ export function DailyWorkoutSummary({
   durationMin,
   caloriesBurned,
   exercises,
+  muscleMapModel,
 }: DailyWorkoutSummaryProps) {
   if (musclesTrained.length === 0) {
     return (
@@ -61,7 +64,7 @@ export function DailyWorkoutSummary({
         </div>
       )}
 
-      <MuscleMap intensity={intensity} />
+      <MuscleMap intensity={intensity} model={muscleMapModel} />
 
       {hasExercises && (
         <ul className="flex flex-col divide-y divide-border">
