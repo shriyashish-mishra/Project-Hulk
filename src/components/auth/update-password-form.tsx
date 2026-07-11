@@ -1,14 +1,12 @@
 "use client";
 
 import { useState, useTransition, type FormEvent } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { logIn } from "@/lib/auth/actions";
+import { updatePassword } from "@/lib/auth/actions";
 
-export default function LoginPage() {
-  const [email, setEmail] = useState("");
+export function UpdatePasswordForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -17,7 +15,7 @@ export default function LoginPage() {
     event.preventDefault();
     setError(null);
     startTransition(async () => {
-      const result = await logIn(email, password);
+      const result = await updatePassword(password);
       if (result?.error) setError(result.error);
     });
   }
@@ -26,40 +24,22 @@ export default function LoginPage() {
     <div className="flex min-h-[80vh] flex-col justify-center gap-8">
       <div>
         <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">
-          Welcome back
+          Account recovery
         </p>
         <h1 className="mt-1 text-4xl font-black tracking-tight text-foreground">
-          Log in
+          Set a new password
         </h1>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
-            <Link
-              href="/reset-password"
-              className="text-xs text-muted-foreground underline-offset-4 hover:underline"
-            >
-              Forgot password?
-            </Link>
-          </div>
+          <Label htmlFor="password">New password</Label>
           <Input
             id="password"
             type="password"
-            autoComplete="current-password"
+            autoComplete="new-password"
             required
+            minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -68,19 +48,9 @@ export default function LoginPage() {
         {error && <p className="text-sm text-destructive">{error}</p>}
 
         <Button type="submit" disabled={isPending}>
-          {isPending ? "Logging in…" : "Log in"}
+          {isPending ? "Updating…" : "Update password"}
         </Button>
       </form>
-
-      <p className="text-center text-sm text-muted-foreground">
-        Don&rsquo;t have an account?{" "}
-        <Link
-          href="/signup"
-          className="text-primary underline-offset-4 hover:underline"
-        >
-          Sign up
-        </Link>
-      </p>
     </div>
   );
 }

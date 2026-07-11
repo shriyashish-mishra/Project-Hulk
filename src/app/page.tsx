@@ -16,10 +16,10 @@ import { getStreakSummary } from "@/lib/streaks/queries";
 import { getWaterLogForDate } from "@/lib/water/queries";
 import { getSleepLogForDate } from "@/lib/sleep/queries";
 import { getWeightLogForDate } from "@/lib/weight/queries";
-import { requireUser } from "@/lib/supabase/auth";
+import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 export default async function TodayPage() {
-  const { user } = await requireUser();
+  const { user } = await requireOnboardedUser();
   const loggedOn = getLocalDateString();
   const [logs, workoutLog, streaks, waterLog, sleepLog, weightLog] = await Promise.all([
     getFoodLogsForDate(loggedOn),

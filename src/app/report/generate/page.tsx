@@ -6,8 +6,10 @@ import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import { buildNightlyReportPrompt } from "@/lib/nightly-report/prompt";
 import { getRecoveryPromptContext } from "@/lib/nightly-report/context";
+import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 export default async function GenerateReportPage() {
+  await requireOnboardedUser();
   const loggedOn = getLocalDateString();
   const [foodLogs, workoutLog, recoveryContext] = await Promise.all([
     getFoodLogsForDate(loggedOn),

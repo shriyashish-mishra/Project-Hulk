@@ -34,6 +34,7 @@ import { computeRecoveryInsights, computeRecoverySummary } from "@/lib/progress/
 import { computeWeightTrend } from "@/lib/progress/weight-trend";
 import { buildHabitsSentence, buildMonthlyHeadline } from "@/lib/progress/narrative";
 import type { ChangeDirection } from "@/components/progress/what-changed-section";
+import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 const MONTH_PATTERN = /^\d{4}-\d{2}$/;
 
@@ -55,6 +56,7 @@ interface ProgressMonthlyPageProps {
 export default async function ProgressMonthlyPage({
   searchParams,
 }: ProgressMonthlyPageProps) {
+  await requireOnboardedUser();
   const { month: monthParam } = await searchParams;
   const currentMonth = getCurrentMonthString();
   const month =

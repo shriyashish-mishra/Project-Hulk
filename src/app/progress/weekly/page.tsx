@@ -31,6 +31,7 @@ import { getPhotosInRange } from "@/lib/photos/queries";
 import { computeRecoveryInsights, computeRecoverySummary } from "@/lib/progress/recovery";
 import { computeWeightTrend } from "@/lib/progress/weight-trend";
 import { buildWeeklyHeadline, buildWeeklyStorySentence } from "@/lib/progress/narrative";
+import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -41,6 +42,7 @@ interface ProgressWeeklyPageProps {
 export default async function ProgressWeeklyPage({
   searchParams,
 }: ProgressWeeklyPageProps) {
+  await requireOnboardedUser();
   const { start: startParam } = await searchParams;
   const today = getLocalDateString();
   const currentWeekStart = getWeekStart(today);

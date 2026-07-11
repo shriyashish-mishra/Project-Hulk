@@ -2,8 +2,10 @@ import { BackLink } from "@/components/ui/back-link";
 import { ReportDayView } from "@/components/nightly-report/report-day-view";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
 import { getAiReportForDate } from "@/lib/nightly-report/queries";
+import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 export default async function ReportPage() {
+  await requireOnboardedUser();
   const loggedOn = getLocalDateString();
   const report = await getAiReportForDate(loggedOn);
 

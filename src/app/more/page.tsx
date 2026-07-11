@@ -14,7 +14,7 @@ import { BackLink } from "@/components/ui/back-link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { logOut } from "@/lib/auth/actions";
-import { requireUser } from "@/lib/supabase/auth";
+import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 const QUICK_LINKS = [
   {
@@ -63,7 +63,7 @@ const COMING_SOON = [
 ] as const;
 
 export default async function MorePage() {
-  const { user } = await requireUser();
+  const { user } = await requireOnboardedUser();
 
   return (
     <div className="flex flex-col gap-6">

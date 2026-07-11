@@ -3,8 +3,10 @@ import { PhotoSlot } from "@/components/photos/photo-slot";
 import { PHOTO_VIEW_TYPES } from "@/lib/photos/types";
 import { getPhotosForDate } from "@/lib/photos/queries";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
+import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 export default async function PhotosPage() {
+  await requireOnboardedUser();
   const today = getLocalDateString();
   const photos = await getPhotosForDate(today);
   const photoByView = new Map(photos.map((photo) => [photo.view_type, photo]));

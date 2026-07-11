@@ -24,6 +24,7 @@ import { getSleepLogForDate, getSleepLogsInRange } from "@/lib/sleep/queries";
 import { getWeightLogForDate } from "@/lib/weight/queries";
 import { getPhotosForDate } from "@/lib/photos/queries";
 import { buildDailyRecoverySentence, computeRecoverySummary } from "@/lib/progress/recovery";
+import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const DEFAULT_WATER_TARGET = 8;
@@ -35,6 +36,7 @@ interface ProgressDailyPageProps {
 export default async function ProgressDailyPage({
   searchParams,
 }: ProgressDailyPageProps) {
+  await requireOnboardedUser();
   const { date: dateParam } = await searchParams;
   const today = getLocalDateString();
   const date =
