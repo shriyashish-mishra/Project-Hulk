@@ -27,10 +27,30 @@ import {
 } from "@/lib/profile/types";
 import { formatDuration } from "@/lib/date";
 
+type StepKey =
+  | "name"
+  | "dob"
+  | "sex"
+  | "cycle"
+  | "body"
+  | "goal"
+  | "targetWeight"
+  | "activity"
+  | "frequency"
+  | "review";
+
+function getVisibleSteps(biologicalSex: BiologicalSex | null): StepKey[] {
+  const steps: StepKey[] = ["name", "dob", "sex"];
+  if (biologicalSex === "female") steps.push("cycle");
+  steps.push("body", "goal", "targetWeight", "activity", "frequency", "review");
+  return steps;
+}
+
 interface OnboardingState {
   displayName: string;
   dateOfBirth: string;
   biologicalSex: BiologicalSex | null;
+  lastPeriodStart: string;
   unitsPreference: UnitsPreference;
   heightCm: string;
   heightFeet: string;
@@ -48,6 +68,7 @@ const INITIAL_STATE: OnboardingState = {
   displayName: "",
   dateOfBirth: "",
   biologicalSex: null,
+  lastPeriodStart: "",
   unitsPreference: "metric",
   heightCm: "",
   heightFeet: "",
@@ -61,7 +82,6 @@ const INITIAL_STATE: OnboardingState = {
   trainingFrequency: null,
 };
 
-const TOTAL_STEPS = 9;
 const CM_PER_INCH = 2.54;
 const KG_PER_LB = 0.453592;
 const MIN_AGE = 13;
@@ -102,11 +122,45 @@ function isValidDob(dateOfBirth: string): boolean {
   return age >= MIN_AGE && age <= MAX_AGE;
 }
 
+function canAdvanceFrom(
+  key: StepKey,
+  state: OnboardingState,
+  heightCm: number | null,
+  weightKg: number | null,
+): boolean {
+  switch (key) {
+    case "name":
+      return true;
+    case "dob":
+      return isValidDob(state.dateOfBirth);
+    case "sex":
+      return state.biologicalSex !== null;
+    case "cycle":
+      return true; // optional, always skippable
+    case "body":
+      return heightCm !== null && weightKg !== null;
+    case "goal":
+      return state.primaryGoal !== null;
+    case "targetWeight":
+      return true; // optional, always skippable
+    case "activity":
+      return state.activityLevel !== null;
+    case "frequency":
+      return state.trainingFrequency !== null;
+    case "review":
+      return true;
+  }
+}
+
 export function OnboardingFlow() {
   const [step, setStep] = useState(0);
   const [state, setState] = useState<OnboardingState>(INITIAL_STATE);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const steps = getVisibleSteps(state.biologicalSex);
+  const currentIndex = Math.min(step, steps.length - 1);
+  const currentStepKey = steps[currentIndex];
 
   function update<K extends keyof OnboardingState>(key: K, value: OnboardingState[K]) {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -114,7 +168,7 @@ export function OnboardingFlow() {
 
   function goNext() {
     setError(null);
-    setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1));
+    setStep((s) => Math.min(s + 1, steps.length - 1));
   }
   function goBack() {
     setError(null);
@@ -123,18 +177,7 @@ export function OnboardingFlow() {
 
   const heightCm = resolveHeightCm(state);
   const weightKg = resolveWeightKg(state);
-
-  const canAdvance: boolean[] = [
-    true, // name (optional)
-    isValidDob(state.dateOfBirth),
-    state.biologicalSex !== null,
-    heightCm !== null && weightKg !== null,
-    state.primaryGoal !== null,
-    true, // target weight (optional)
-    state.activityLevel !== null,
-    state.trainingFrequency !== null,
-    true, // review
-  ];
+  const canAdvance = canAdvanceFrom(currentStepKey, state, heightCm, weightKg);
 
   function handleSubmit() {
     if (!state.biologicalSex || !state.primaryGoal || !state.activityLevel || !state.trainingFrequency) {
@@ -151,6 +194,7 @@ export function OnboardingFlow() {
           displayName: state.displayName,
           dateOfBirth: state.dateOfBirth,
           biologicalSex: state.biologicalSex!,
+          lastPeriodStart: state.lastPeriodStart || null,
           heightCm: resolvedHeight,
           weightKg: resolvedWeight,
           primaryGoal: state.primaryGoal!,
@@ -165,10 +209,15 @@ export function OnboardingFlow() {
     });
   }
 
+  const isLastStep = currentIndex === steps.length - 1;
+  const isSkippableEmpty =
+    (currentStepKey === "targetWeight" && !state.targetWeightKg && !state.targetWeightLb) ||
+    (currentStepKey === "cycle" && !state.lastPeriodStart);
+
   return (
     <div className="flex min-h-[85vh] flex-col gap-8">
       <div className="flex items-center gap-3">
-        {step > 0 ? (
+        {currentIndex > 0 ? (
           <button
             type="button"
             onClick={goBack}
@@ -180,7 +229,7 @@ export function OnboardingFlow() {
         ) : (
           <div className="size-9 shrink-0" />
         )}
-        <Progress value={((step + 1) / TOTAL_STEPS) * 100} className="flex-1">
+        <Progress value={((currentIndex + 1) / steps.length) * 100} className="flex-1">
           <ProgressTrack>
             <ProgressIndicator />
           </ProgressTrack>
@@ -188,7 +237,7 @@ export function OnboardingFlow() {
       </div>
 
       <div className="flex-1">
-        {step === 0 && (
+        {currentStepKey === "name" && (
           <Step title="What should we call you?">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="displayName">Name</Label>
@@ -203,7 +252,7 @@ export function OnboardingFlow() {
           </Step>
         )}
 
-        {step === 1 && (
+        {currentStepKey === "dob" && (
           <Step title="When were you born?" subtitle="Used only for calculation accuracy.">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="dob">Date of birth</Label>
@@ -219,7 +268,7 @@ export function OnboardingFlow() {
           </Step>
         )}
 
-        {step === 2 && (
+        {currentStepKey === "sex" && (
           <Step title="Biological sex" subtitle="Used for calorie-estimate accuracy, and to choose your muscle map on Progress.">
             <div className="flex flex-col gap-3">
               <SelectableCard label="Female" selected={state.biologicalSex === "female"} onSelect={() => update("biologicalSex", "female")} />
@@ -228,7 +277,26 @@ export function OnboardingFlow() {
           </Step>
         )}
 
-        {step === 3 && (
+        {currentStepKey === "cycle" && (
+          <Step
+            title="Track your cycle? (optional)"
+            subtitle="If you'd like, we can gently factor your cycle into tomorrow's workout suggestions — lighter framing on lower-energy days, nothing prescriptive. Completely private, and you can update or turn this off anytime from Profile."
+          >
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="lastPeriodStart">First day of your last period</Label>
+              <input
+                id="lastPeriodStart"
+                type="date"
+                value={state.lastPeriodStart}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => update("lastPeriodStart", e.target.value)}
+                className="h-12 w-full rounded-2xl bg-muted px-4 text-[15px] text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+              />
+            </div>
+          </Step>
+        )}
+
+        {currentStepKey === "body" && (
           <Step title="Height & weight">
             <div className="flex flex-col gap-5">
               <div className="flex gap-2">
@@ -309,7 +377,7 @@ export function OnboardingFlow() {
           </Step>
         )}
 
-        {step === 4 && (
+        {currentStepKey === "goal" && (
           <Step title="What's your main goal?">
             <div className="flex flex-col gap-3">
               {(Object.keys(PRIMARY_GOAL_LABEL) as PrimaryGoal[]).map((goal) => (
@@ -324,7 +392,7 @@ export function OnboardingFlow() {
           </Step>
         )}
 
-        {step === 5 && (
+        {currentStepKey === "targetWeight" && (
           <Step title="Target weight" subtitle="Optional — skip if you don't want to track a target scale weight.">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="targetWeight">
@@ -344,7 +412,7 @@ export function OnboardingFlow() {
           </Step>
         )}
 
-        {step === 6 && (
+        {currentStepKey === "activity" && (
           <Step title="How active is your day-to-day, outside of training?">
             <div className="flex flex-col gap-3">
               {(Object.keys(ACTIVITY_LEVEL_LABEL) as ActivityLevel[]).map((level) => (
@@ -359,7 +427,7 @@ export function OnboardingFlow() {
           </Step>
         )}
 
-        {step === 7 && (
+        {currentStepKey === "frequency" && (
           <Step title="How often do you typically train?">
             <div className="flex flex-col gap-3">
               {(Object.keys(TRAINING_FREQUENCY_LABEL) as TrainingFrequency[]).map((freq) => (
@@ -374,17 +442,17 @@ export function OnboardingFlow() {
           </Step>
         )}
 
-        {step === 8 && (
+        {currentStepKey === "review" && (
           <ReviewStep state={state} heightCm={heightCm} weightKg={weightKg} error={error} />
         )}
       </div>
 
       <Button
         type="button"
-        disabled={!canAdvance[step] || isPending}
-        onClick={step === TOTAL_STEPS - 1 ? handleSubmit : goNext}
+        disabled={!canAdvance || isPending}
+        onClick={isLastStep ? handleSubmit : goNext}
       >
-        {step === TOTAL_STEPS - 1 ? (isPending ? "Setting up…" : "Start") : step === 5 && !state.targetWeightKg && !state.targetWeightLb ? "Skip" : "Continue"}
+        {isLastStep ? (isPending ? "Setting up…" : "Start") : isSkippableEmpty ? "Skip" : "Continue"}
       </Button>
     </div>
   );

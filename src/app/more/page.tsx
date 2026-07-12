@@ -8,6 +8,7 @@ import {
   Bell,
   CalendarClock,
   ChevronRight,
+  Download,
 } from "lucide-react";
 import { BackLink } from "@/components/ui/back-link";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +45,12 @@ const QUICK_LINKS = [
     icon: Droplet,
     label: "Water",
     description: "Log today's glasses from Daily Signals.",
+  },
+  {
+    href: "/report/export",
+    icon: Download,
+    label: "Export Reports",
+    description: "Download your coach reports as a spreadsheet.",
   },
 ] as const;
 

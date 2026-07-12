@@ -6,11 +6,14 @@ import { IdentityBodyDrawer } from "@/components/profile/identity-body-drawer";
 import { GoalTrainingDrawer } from "@/components/profile/goal-training-drawer";
 import { TargetsDrawer } from "@/components/profile/targets-drawer";
 import { PreferencesDrawer } from "@/components/profile/preferences-drawer";
+import { CycleSettingsDrawer } from "@/components/profile/cycle-settings-drawer";
 import { DeleteDataDrawer } from "@/components/profile/delete-data-drawer";
 import { logOut } from "@/lib/auth/actions";
 import { getUserContext } from "@/lib/profile/context";
 import { cmToFeetInches, kgToLb } from "@/lib/profile/units";
 import { formatDuration } from "@/lib/date";
+import { CYCLE_PHASE_LABEL } from "@/lib/cycle/types";
+import { DEFAULT_CYCLE_LENGTH_DAYS } from "@/lib/cycle/math";
 import {
   ACTIVITY_LEVEL_LABEL,
   PRIMARY_GOAL_LABEL,
@@ -116,6 +119,32 @@ export default async function ProfilePage() {
           />
         </CardContent>
       </Card>
+
+      {profile.biological_sex === "female" && (
+        <Card className="animate-fade-up" style={{ animationDelay: "75ms" }}>
+          <CardContent>
+            <CycleSettingsDrawer
+              profile={profile}
+              trigger={
+                <SectionButton title="Cycle Tracking">
+                  <Row
+                    label="Status"
+                    value={
+                      context.cycleEstimate
+                        ? `Day ${context.cycleEstimate.cycleDay} · ${CYCLE_PHASE_LABEL[context.cycleEstimate.phase]}`
+                        : "Not tracked"
+                    }
+                  />
+                  <Row
+                    label="Cycle length"
+                    value={`${context.cycleEstimate?.cycleLengthDays ?? profile.average_cycle_length_days ?? DEFAULT_CYCLE_LENGTH_DAYS} days`}
+                  />
+                </SectionButton>
+              }
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="animate-fade-up" style={{ animationDelay: "100ms" }}>
         <CardContent>

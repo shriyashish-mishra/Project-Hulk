@@ -24,6 +24,7 @@ export interface CompleteOnboardingInput {
   displayName: string;
   dateOfBirth: string;
   biologicalSex: BiologicalSex;
+  lastPeriodStart?: string | null;
   heightCm: number;
   weightKg: number;
   primaryGoal: PrimaryGoal;
@@ -80,6 +81,17 @@ export async function completeOnboarding(input: CompleteOnboardingInput): Promis
     );
   if (weightError) throw new Error(weightError.message);
 
+  // Entirely optional — only written if the user chose to share it.
+  if (input.lastPeriodStart) {
+    const { error: periodError } = await supabase
+      .from("period_logs")
+      .upsert(
+        { user_id: user.id, started_on: input.lastPeriodStart },
+        { onConflict: "user_id,started_on" },
+      );
+    if (periodError) throw new Error(periodError.message);
+  }
+
   revalidatePath("/", "layout");
   redirect("/");
 }
@@ -95,6 +107,7 @@ export interface UpdateProfileFieldsInput {
   trainingFrequency?: TrainingFrequency;
   proteinTargetG?: number | null;
   unitsPreference?: UnitsPreference;
+  averageCycleLengthDays?: number | null;
 }
 
 /** Partial update over one or more profile sections — the Profile page edits by logical group, not one giant form. */
@@ -114,6 +127,7 @@ export async function updateProfileFields(input: UpdateProfileFieldsInput): Prom
   if (input.trainingFrequency !== undefined) patch.training_frequency = input.trainingFrequency;
   if (input.proteinTargetG !== undefined) patch.protein_target_g = input.proteinTargetG;
   if (input.unitsPreference !== undefined) patch.units_preference = input.unitsPreference;
+  if (input.averageCycleLengthDays !== undefined) patch.average_cycle_length_days = input.averageCycleLengthDays;
 
   const { error } = await supabase.from("profiles").update(patch).eq("id", user.id);
   if (error) throw new Error(error.message);
@@ -129,6 +143,7 @@ const DATA_TABLES = [
   "sleep_logs",
   "weight_logs",
   "progress_photos",
+  "period_logs",
 ] as const;
 
 /**

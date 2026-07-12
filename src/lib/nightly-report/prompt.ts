@@ -12,6 +12,7 @@ import {
   TRAINING_FREQUENCY_LABEL,
 } from "@/lib/profile/types";
 import { formatDuration } from "@/lib/date";
+import { CYCLE_PHASE_LABEL } from "@/lib/cycle/types";
 import type { WeekSoFarContext } from "./week-context";
 import { AI_REPORT_JSON_EXAMPLE } from "./constants";
 
@@ -79,6 +80,16 @@ function buildAboutMeMarkdown(userContext: UserContext): string {
   if (profile.target_weight_kg) lines.push(`Target weight: ${profile.target_weight_kg} kg`);
 
   return lines.length > 0 ? lines.join("\n") : "Not provided yet.";
+}
+
+/** Entirely opt-in — only present when the user chose to share it. Never shown, never inferred, when absent. */
+function buildCycleContextMarkdown(cycleEstimate: UserContext["cycleEstimate"]): string {
+  if (!cycleEstimate) return "";
+  return `## Cycle Context (optional, for gentle training-intensity awareness only)
+
+Day ${cycleEstimate.cycleDay} of ~${cycleEstimate.cycleLengthDays} · ${CYCLE_PHASE_LABEL[cycleEstimate.phase]} phase
+
+`;
 }
 
 function buildRecoveryContextMarkdown({
@@ -165,7 +176,7 @@ ${workoutMarkdown}
 
 ${buildWeekSoFarMarkdown(weekSoFar)}
 
-## Hydration, Sleep & Weight
+${buildCycleContextMarkdown(userContext.cycleEstimate)}## Hydration, Sleep & Weight
 
 ${recoveryContextMarkdown}
 
@@ -196,7 +207,7 @@ under "About Me" above, not generic advice:
 - What I did well (as many points as are genuinely worth noting)
 - What I could improve (as many points as are genuinely worth noting)
 - Suggested meals tomorrow — informed by this week's protein/calorie pattern under "This Week So Far" above, not just today's numbers in isolation
-- Suggested workout tomorrow, both as a sentence and as a specific exercise list with sets/reps — prioritize whatever's listed as "Not yet trained this week" while training days remain in the week, rather than repeating what's already been trained
+- Suggested workout tomorrow, both as a sentence and as a specific exercise list with sets/reps — prioritize whatever's listed as "Not yet trained this week" while training days remain in the week, rather than repeating what's already been trained. If "Cycle Context" is provided above, let it gently inform intensity/volume only (e.g. a lower-intensity or recovery-leaning session may suit menstrual or late-luteal days better for some people) — never change exercise selection rigidly because of it, never offer medical commentary, and simply ignore this entirely if no cycle context is given
 
 IMPORTANT:
 

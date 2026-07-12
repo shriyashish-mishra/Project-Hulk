@@ -86,9 +86,31 @@ export type Database = {
         }
         Relationships: []
       }
+      period_logs: {
+        Row: {
+          created_at: string
+          id: string
+          started_on: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          started_on: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          started_on?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           activity_level: string | null
+          average_cycle_length_days: number | null
           biological_sex: string | null
           created_at: string
           date_of_birth: string | null
@@ -105,6 +127,7 @@ export type Database = {
         }
         Insert: {
           activity_level?: string | null
+          average_cycle_length_days?: number | null
           biological_sex?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -121,6 +144,7 @@ export type Database = {
         }
         Update: {
           activity_level?: string | null
+          average_cycle_length_days?: number | null
           biological_sex?: string | null
           created_at?: string
           date_of_birth?: string | null
