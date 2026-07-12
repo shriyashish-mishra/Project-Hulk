@@ -10,7 +10,7 @@ export async function PhotosRow({ loggedOn }: PhotosRowProps) {
 
   return (
     <Link
-      href="/photos"
+      href={`/photos?date=${loggedOn}`}
       className="flex w-full items-center justify-between gap-3 py-4 active:opacity-60"
     >
       <span className="text-base font-semibold text-foreground">Photos</span>

@@ -9,9 +9,13 @@ import { BackLink } from "@/components/ui/back-link";
 import { importAiReport } from "@/lib/nightly-report/actions";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
 
-export function ImportReportForm() {
+interface ImportReportFormProps {
+  initialDate?: string;
+}
+
+export function ImportReportForm({ initialDate }: ImportReportFormProps = {}) {
   const today = getLocalDateString();
-  const [reportDate, setReportDate] = useState(today);
+  const [reportDate, setReportDate] = useState(initialDate ?? today);
   const [rawResponse, setRawResponse] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -64,7 +68,7 @@ export function ImportReportForm() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <BackLink href="/" />
+        <BackLink href={reportDate === today ? "/" : `/log/${reportDate}`} />
         <h1 className="mt-2 text-3xl font-black tracking-tight text-foreground">
           Import AI Report
         </h1>

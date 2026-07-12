@@ -3,9 +3,17 @@ import { BackLink } from "@/components/ui/back-link";
 import { Card, CardContent } from "@/components/ui/card";
 import { FoodDashboard } from "@/components/food/food-dashboard";
 import { WorkoutCard } from "@/components/workout/workout-card";
+import { WaterRow } from "@/components/water/water-row";
+import { SleepRow } from "@/components/sleep/sleep-row";
+import { WeightRow } from "@/components/weight/weight-row";
+import { PhotosRow } from "@/components/photos/photos-row";
+import { NightlyReportCard } from "@/components/nightly-report/nightly-report-card";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
 import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
+import { getWaterLogForDate } from "@/lib/water/queries";
+import { getSleepLogForDate } from "@/lib/sleep/queries";
+import { getWeightLogForDate } from "@/lib/weight/queries";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -22,9 +30,12 @@ export default async function LogDatePage({ params }: LogDatePageProps) {
   const today = getLocalDateString();
   const isToday = date === today;
 
-  const [logs, workoutLog] = await Promise.all([
+  const [logs, workoutLog, waterLog, sleepLog, weightLog] = await Promise.all([
     getFoodLogsForDate(date),
     getWorkoutLogForDate(date),
+    getWaterLogForDate(date),
+    getSleepLogForDate(date),
+    getWeightLogForDate(date),
   ]);
 
   return (
@@ -45,6 +56,22 @@ export default async function LogDatePage({ params }: LogDatePageProps) {
           <WorkoutCard loggedOn={date} initialLog={workoutLog} />
         </CardContent>
       </Card>
+
+      <div>
+        <p className="mb-2 text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+          Daily Signals
+        </p>
+        <Card className="animate-fade-up" style={{ animationDelay: "60ms" }}>
+          <CardContent className="divide-y divide-border">
+            <WaterRow loggedOn={date} initialLog={waterLog} />
+            <SleepRow loggedOn={date} initialLog={sleepLog} />
+            <WeightRow loggedOn={date} initialLog={weightLog} />
+            <PhotosRow loggedOn={date} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <NightlyReportCard loggedOn={date} />
     </div>
   );
 }

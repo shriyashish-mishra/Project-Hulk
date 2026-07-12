@@ -5,9 +5,16 @@ import { getLocalDateString } from "@/lib/date";
 import { getAiReportForDate } from "@/lib/nightly-report/queries";
 import { ScoreBadge } from "./score-badge";
 
-export async function NightlyReportCard() {
-  const loggedOn = getLocalDateString();
-  const report = await getAiReportForDate(loggedOn);
+interface NightlyReportCardProps {
+  loggedOn?: string;
+}
+
+export async function NightlyReportCard({ loggedOn }: NightlyReportCardProps = {}) {
+  const today = getLocalDateString();
+  const date = loggedOn ?? today;
+  const isToday = date === today;
+  const report = await getAiReportForDate(date);
+  const reportHref = isToday ? "/report" : `/report/${date}`;
 
   return (
     <Card className="animate-fade-up" style={{ animationDelay: "300ms" }}>
@@ -23,14 +30,14 @@ export async function NightlyReportCard() {
                 {report.coach_summary}
               </p>
             </div>
-            <Button nativeButton={false} render={<Link href="/report" />}>
+            <Button nativeButton={false} render={<Link href={reportHref} />}>
               View full report
             </Button>
             <Button
               variant="ghost"
               size="sm"
               nativeButton={false}
-              render={<Link href="/report/import" />}
+              render={<Link href={`/report/import?date=${date}`} />}
             >
               Re-import a new response
             </Button>
@@ -41,14 +48,14 @@ export async function NightlyReportCard() {
               Generate a report to analyze in Claude, then import the results
               back once ready.
             </p>
-            <Button nativeButton={false} render={<Link href="/report/generate" />}>
+            <Button nativeButton={false} render={<Link href={`/report/generate?date=${date}`} />}>
               Generate Nightly Report
             </Button>
             <Button
               variant="ghost"
               size="sm"
               nativeButton={false}
-              render={<Link href="/report/import" />}
+              render={<Link href={`/report/import?date=${date}`} />}
             >
               Already have a response? Import it
             </Button>

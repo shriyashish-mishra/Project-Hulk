@@ -9,9 +9,20 @@ import { getRecoveryPromptContext } from "@/lib/nightly-report/context";
 import { getUserContext } from "@/lib/profile/context";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
-export default async function GenerateReportPage() {
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+interface GenerateReportPageProps {
+  searchParams: Promise<{ date?: string }>;
+}
+
+export default async function GenerateReportPage({ searchParams }: GenerateReportPageProps) {
   await requireOnboardedUser();
-  const loggedOn = getLocalDateString();
+  const { date: dateParam } = await searchParams;
+  const today = getLocalDateString();
+  const loggedOn =
+    dateParam && DATE_PATTERN.test(dateParam) && dateParam <= today ? dateParam : today;
+  const isToday = loggedOn === today;
+
   const [foodLogs, workoutLog, recoveryContext, userContext] = await Promise.all([
     getFoodLogsForDate(loggedOn),
     getWorkoutLogForDate(loggedOn),
@@ -30,17 +41,19 @@ export default async function GenerateReportPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <BackLink href="/" />
+        <BackLink href={isToday ? "/" : `/log/${loggedOn}`} />
         <h1 className="mt-2 text-3xl font-black tracking-tight text-foreground">
           Nightly Report Prompt
         </h1>
-        <p className="text-sm text-muted-foreground">{formatDateHeading()}</p>
+        <p className="text-sm text-muted-foreground">
+          {formatDateHeading(new Date(`${loggedOn}T00:00:00`))}
+        </p>
       </div>
 
       <PromptView prompt={prompt} />
 
       <Link
-        href="/report/import"
+        href={`/report/import?date=${loggedOn}`}
         className="text-center text-sm text-primary underline-offset-4 hover:underline"
       >
         Already have Claude&rsquo;s response? Import it →
