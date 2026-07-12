@@ -37,6 +37,14 @@ export async function NightlyReportCard({ loggedOn }: NightlyReportCardProps = {
               variant="ghost"
               size="sm"
               nativeButton={false}
+              render={<Link href={`/report/generate?date=${date}`} />}
+            >
+              Regenerate Nightly Report
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              nativeButton={false}
               render={<Link href={`/report/import?date=${date}`} />}
             >
               Re-import a new response
