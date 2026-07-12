@@ -6,6 +6,7 @@ import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import { buildNightlyReportPrompt } from "@/lib/nightly-report/prompt";
 import { getRecoveryPromptContext } from "@/lib/nightly-report/context";
+import { getWeekSoFarContext } from "@/lib/nightly-report/week-context";
 import { getUserContext } from "@/lib/profile/context";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
@@ -23,11 +24,12 @@ export default async function GenerateReportPage({ searchParams }: GenerateRepor
     dateParam && DATE_PATTERN.test(dateParam) && dateParam <= today ? dateParam : today;
   const isToday = loggedOn === today;
 
-  const [foodLogs, workoutLog, recoveryContext, userContext] = await Promise.all([
+  const [foodLogs, workoutLog, recoveryContext, userContext, weekSoFar] = await Promise.all([
     getFoodLogsForDate(loggedOn),
     getWorkoutLogForDate(loggedOn),
     getRecoveryPromptContext(loggedOn),
     getUserContext(),
+    getWeekSoFarContext(loggedOn),
   ]);
 
   const prompt = buildNightlyReportPrompt({
@@ -36,6 +38,7 @@ export default async function GenerateReportPage({ searchParams }: GenerateRepor
     workoutLog,
     ...recoveryContext,
     userContext,
+    weekSoFar,
   });
 
   return (

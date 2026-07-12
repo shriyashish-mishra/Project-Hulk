@@ -12,6 +12,7 @@ import {
   TRAINING_FREQUENCY_LABEL,
 } from "@/lib/profile/types";
 import { formatDuration } from "@/lib/date";
+import type { WeekSoFarContext } from "./week-context";
 import { AI_REPORT_JSON_EXAMPLE } from "./constants";
 
 interface PriorWeightContext {
@@ -29,6 +30,35 @@ interface BuildPromptInput {
   priorWeight: PriorWeightContext | null;
   photoViewsCaptured: PhotoViewType[];
   userContext: UserContext;
+  weekSoFar: WeekSoFarContext;
+}
+
+/**
+ * Deterministic weekly rollup (Monday up to, but not including, today) so
+ * suggestions build on the week's actual pattern instead of treating each
+ * night as if it started from zero — and so the same week produces the same
+ * context regardless of which AI reads it. Today's own data is detailed
+ * separately above; this section is strictly what happened earlier.
+ */
+function buildWeekSoFarMarkdown(week: WeekSoFarContext): string {
+  if (week.daysWithReports === 0) {
+    return `Today is ${week.weekdayLabel}, the first reported day this week — no earlier context yet.`;
+  }
+
+  const lines: string[] = [
+    `Today is ${week.weekdayLabel}. ${week.daysWithReports} earlier day(s) reported this week, ${week.daysRemainingInWeek} day(s) left after today.`,
+    `Workouts so far this week: ${week.workoutsCompleted}, rest days: ${week.restDays}.`,
+  ];
+  if (week.trainedRegionLabels.length > 0) {
+    lines.push(`Already trained this week: ${week.trainedRegionLabels.join(", ")}.`);
+  }
+  if (week.untrainedRegionLabels.length > 0) {
+    lines.push(`Not yet trained this week: ${week.untrainedRegionLabels.join(", ")}.`);
+  }
+  if (week.avgProteinG !== null) lines.push(`Avg protein/day so far this week: ${week.avgProteinG}g.`);
+  if (week.avgCalories !== null) lines.push(`Avg calories/day so far this week: ${week.avgCalories} kcal.`);
+
+  return lines.join("\n");
 }
 
 /** Structured facts about who's asking — the AI interprets them, it never has to guess or ask what the user's goal is. */
@@ -98,6 +128,7 @@ export function buildNightlyReportPrompt({
   priorWeight,
   photoViewsCaptured,
   userContext,
+  weekSoFar,
 }: BuildPromptInput): string {
   const foodByMeal = new Map<MealType, string>();
   for (const log of foodLogs) foodByMeal.set(log.meal_type, log.raw_text);
@@ -130,6 +161,10 @@ ${mealsMarkdown}
 
 ${workoutMarkdown}
 
+## This Week So Far
+
+${buildWeekSoFarMarkdown(weekSoFar)}
+
 ## Hydration, Sleep & Weight
 
 ${recoveryContextMarkdown}
@@ -160,8 +195,8 @@ under "About Me" above, not generic advice:
 - Muscle groups trained
 - What I did well (as many points as are genuinely worth noting)
 - What I could improve (as many points as are genuinely worth noting)
-- Suggested meals tomorrow
-- Suggested workout tomorrow, both as a sentence and as a specific exercise list with sets/reps
+- Suggested meals tomorrow — informed by this week's protein/calorie pattern under "This Week So Far" above, not just today's numbers in isolation
+- Suggested workout tomorrow, both as a sentence and as a specific exercise list with sets/reps — prioritize whatever's listed as "Not yet trained this week" while training days remain in the week, rather than repeating what's already been trained
 
 IMPORTANT:
 

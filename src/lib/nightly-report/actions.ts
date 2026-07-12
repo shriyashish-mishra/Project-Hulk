@@ -7,6 +7,7 @@ import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import type { Json } from "@/lib/supabase/database.types";
 import { buildNightlyReportPrompt } from "./prompt";
 import { getRecoveryPromptContext } from "./context";
+import { getWeekSoFarContext } from "./week-context";
 import { getUserContext } from "@/lib/profile/context";
 import { deriveMuscleMapModel } from "@/lib/profile/types";
 import { parseAiReportResponse } from "./parse";
@@ -30,11 +31,12 @@ export async function importAiReport(
 
   const { supabase, user } = await requireUser();
 
-  const [foodLogs, workoutLog, recoveryContext, userContext] = await Promise.all([
+  const [foodLogs, workoutLog, recoveryContext, userContext, weekSoFar] = await Promise.all([
     getFoodLogsForDate(reportDate),
     getWorkoutLogForDate(reportDate),
     getRecoveryPromptContext(reportDate),
     getUserContext(),
+    getWeekSoFarContext(reportDate),
   ]);
   const promptMarkdown = buildNightlyReportPrompt({
     date: reportDate,
@@ -42,6 +44,7 @@ export async function importAiReport(
     workoutLog,
     ...recoveryContext,
     userContext,
+    weekSoFar,
   });
 
   // What mattered, as of today — so a later goal change never silently
