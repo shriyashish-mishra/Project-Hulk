@@ -84,13 +84,73 @@ export function calculateCalorieRangeKcal(
   };
 }
 
-const ML_PER_KG_BODYWEIGHT = 35;
+const ML_PER_KG_BY_SEX: Record<BiologicalSex, number> = {
+  // Commonly cited sports-nutrition range is 30-35ml/kg; split by the
+  // typical difference in body-water percentage between sexes rather than
+  // using one flat number for everyone.
+  male: 35,
+  female: 31,
+};
+const DEFAULT_ML_PER_KG = 33;
+const REFERENCE_HEIGHT_CM = 170;
+const HEIGHT_ADJUSTMENT_PER_10CM = 0.01;
+const MAX_HEIGHT_ADJUSTMENT = 0.05;
+const OLDER_ADULT_AGE = 65;
+const OLDER_ADULT_ADJUSTMENT = -0.05;
 const GLASS_SIZE_ML = 250;
 const MIN_HYDRATION_GLASSES = 6;
 const MAX_HYDRATION_GLASSES = 14;
 
-/** Simple bodyweight-based hydration suggestion — water_logs.target_glasses stays per-log editable, this only seeds a smarter default. */
-export function calculateHydrationTargetGlasses(weightKg: number): number {
-  const glasses = Math.round((weightKg * ML_PER_KG_BODYWEIGHT) / GLASS_SIZE_ML);
+export interface HydrationTargetInput {
+  weightKg: number;
+  biologicalSex: BiologicalSex | null;
+  age: number | null;
+  heightCm: number | null;
+}
+
+/**
+ * Bodyweight is the dominant factor (ml/kg, split by sex). Height and age
+ * are deliberately small secondary adjustments, not independent factors —
+ * there's no credible formula where a 20-year-old and a 70-year-old at the
+ * same weight need meaningfully different water intake, so age only trims
+ * the total modestly for older adults (lower total body-water %), and
+ * height only nudges for surface-area differences at a given weight.
+ * Never asked of the user directly — always derived.
+ */
+export function calculateHydrationTargetGlasses(input: HydrationTargetInput): number {
+  const { weightKg, biologicalSex, age, heightCm } = input;
+  const mlPerKg = biologicalSex ? ML_PER_KG_BY_SEX[biologicalSex] : DEFAULT_ML_PER_KG;
+  const base = weightKg * mlPerKg;
+
+  const heightAdjustment = heightCm
+    ? Math.max(
+        -MAX_HEIGHT_ADJUSTMENT,
+        Math.min(MAX_HEIGHT_ADJUSTMENT, ((heightCm - REFERENCE_HEIGHT_CM) / 10) * HEIGHT_ADJUSTMENT_PER_10CM),
+      )
+    : 0;
+  const ageAdjustment = age !== null && age >= OLDER_ADULT_AGE ? OLDER_ADULT_ADJUSTMENT : 0;
+
+  const adjustedMl = base * (1 + heightAdjustment + ageAdjustment);
+  const glasses = Math.round(adjustedMl / GLASS_SIZE_ML);
   return Math.min(MAX_HYDRATION_GLASSES, Math.max(MIN_HYDRATION_GLASSES, glasses));
+}
+
+const SLEEP_TARGET_MINUTES_DEFAULT = 480; // 8h — adults 18-64, National Sleep Foundation range 7-9h
+const SLEEP_TARGET_MINUTES_TEEN = 540; // 9h — under 18, NSF range 8-10h
+const SLEEP_TARGET_MINUTES_OLDER_ADULT = 450; // 7.5h — 65+, NSF range 7-8h
+const OLDER_ADULT_SLEEP_AGE = 65;
+const TEEN_MAX_AGE = 17;
+
+/**
+ * Sleep-duration guidelines (National Sleep Foundation) are banded by age
+ * only — there is no credible evidence that weight, height, or sex changes
+ * how much sleep an adult needs, unlike hydration. Deliberately NOT
+ * extended with those factors to avoid fabricating precision the science
+ * doesn't support. Never asked of the user directly — always derived.
+ */
+export function calculateSleepTargetMinutes(age: number | null): number {
+  if (age === null) return SLEEP_TARGET_MINUTES_DEFAULT;
+  if (age <= TEEN_MAX_AGE) return SLEEP_TARGET_MINUTES_TEEN;
+  if (age >= OLDER_ADULT_SLEEP_AGE) return SLEEP_TARGET_MINUTES_OLDER_ADULT;
+  return SLEEP_TARGET_MINUTES_DEFAULT;
 }

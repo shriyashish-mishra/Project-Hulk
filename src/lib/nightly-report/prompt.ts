@@ -66,16 +66,16 @@ function buildRecoveryContextMarkdown({
     : "Water: Not logged";
 
   const sleepLine = sleepLog
-    ? `Sleep: ${formatDuration(sleepLog.duration_minutes)}`
+    ? `Sleep: ${formatDuration(sleepLog.duration_minutes)} of ${formatDuration(sleepLog.target_minutes)} target`
     : "Sleep: Not logged";
 
   let weightLine: string;
   if (weightLog) {
-    weightLine = `Weight: ${Number(weightLog.weight_kg)} kg (logged today)`;
+    weightLine = `Weight: ${Number(weightLog.weight_kg)} kg (logged today, for long-term tracking only)`;
   } else if (priorWeight) {
     const label =
       priorWeight.daysAgo === 1 ? "1 day ago" : `${priorWeight.daysAgo} days ago`;
-    weightLine = `Weight: ${Number(priorWeight.log.weight_kg)} kg (most recent, logged ${label} on ${priorWeight.log.measured_on})`;
+    weightLine = `Weight: ${Number(priorWeight.log.weight_kg)} kg (most recent, logged ${label} on ${priorWeight.log.measured_on}, for long-term tracking only)`;
   } else {
     weightLine = "Weight: Not logged recently";
   }
@@ -156,12 +156,25 @@ under "About Me" above, not generic advice:
 
 - Nutrition quality
 - Workout quality
-- Recovery — a 0-100 assessment of how well-recovered I likely am, judged from training load, rest patterns, the hydration/sleep/weight logged above, and anything I mentioned (not a biometric reading, a coaching judgment). Only factor weight in if a trend is visible — a single reading is not a trend.
+- Recovery — a 0-100 assessment of how well-recovered I likely am, judged from training load, rest patterns, and today's hydration and sleep versus their targets above (not a biometric reading, a coaching judgment).
 - Muscle groups trained
 - What I did well (as many points as are genuinely worth noting)
 - What I could improve (as many points as are genuinely worth noting)
 - Suggested meals tomorrow
 - Suggested workout tomorrow, both as a sentence and as a specific exercise list with sets/reps
+
+IMPORTANT:
+
+- Weight is logged for my own long-term tracking only, never as a daily
+  performance signal. It must NOT influence nutrition_score,
+  workout_score, recovery_score, or overall_score — base those four
+  purely on today's food, training, hydration, and sleep.
+- Judge workout_score only on the quality and effort of what I actually
+  trained today (e.g. an arms-and-shoulders session should be scored as
+  an arms-and-shoulders session, not marked down for skipping legs). No
+  single day is expected to hit every muscle group — whether my training
+  is balanced across muscle groups is a weekly/monthly question, never a
+  daily one, so don't factor muscle-group coverage into today's score.
 
 Return TWO outputs:
 

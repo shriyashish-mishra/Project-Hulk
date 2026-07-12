@@ -5,6 +5,7 @@ import {
   calculateCalorieRangeKcal,
   calculateHydrationTargetGlasses,
   calculateProteinTargetG,
+  calculateSleepTargetMinutes,
 } from "./targets";
 import type { Profile } from "./types";
 
@@ -15,6 +16,7 @@ export interface UserContext {
   proteinTargetG: number | null;
   calorieRangeKcal: { min: number; max: number } | null;
   hydrationTargetGlasses: number | null;
+  sleepTargetMinutes: number | null;
 }
 
 const DEFAULT_HYDRATION_TARGET_GLASSES = 8;
@@ -35,6 +37,7 @@ export async function getUserContext(): Promise<UserContext> {
       proteinTargetG: null,
       calorieRangeKcal: null,
       hydrationTargetGlasses: null,
+      sleepTargetMinutes: null,
     };
   }
 
@@ -57,8 +60,23 @@ export async function getUserContext(): Promise<UserContext> {
   });
 
   const hydrationTargetGlasses = latestWeightKg
-    ? calculateHydrationTargetGlasses(latestWeightKg)
+    ? calculateHydrationTargetGlasses({
+        weightKg: latestWeightKg,
+        biologicalSex: profile.biological_sex,
+        age,
+        heightCm: profile.height_cm,
+      })
     : DEFAULT_HYDRATION_TARGET_GLASSES;
 
-  return { profile, age, latestWeightKg, proteinTargetG, calorieRangeKcal, hydrationTargetGlasses };
+  const sleepTargetMinutes = calculateSleepTargetMinutes(age);
+
+  return {
+    profile,
+    age,
+    latestWeightKg,
+    proteinTargetG,
+    calorieRangeKcal,
+    hydrationTargetGlasses,
+    sleepTargetMinutes,
+  };
 }

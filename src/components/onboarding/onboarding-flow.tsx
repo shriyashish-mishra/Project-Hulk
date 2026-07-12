@@ -13,6 +13,7 @@ import {
   calculateCalorieRangeKcal,
   calculateHydrationTargetGlasses,
   calculateProteinTargetG,
+  calculateSleepTargetMinutes,
 } from "@/lib/profile/targets";
 import {
   ACTIVITY_LEVEL_LABEL,
@@ -24,6 +25,7 @@ import {
   type TrainingFrequency,
   type UnitsPreference,
 } from "@/lib/profile/types";
+import { formatDuration } from "@/lib/date";
 
 interface OnboardingState {
   displayName: string;
@@ -453,7 +455,16 @@ function ReviewStep({
     primaryGoal: state.primaryGoal,
     latestWeightKg: weightKg,
   });
-  const hydrationGlasses = weightKg ? calculateHydrationTargetGlasses(weightKg) : null;
+  const age = state.dateOfBirth ? calculateAge(state.dateOfBirth) : null;
+  const hydrationGlasses = weightKg
+    ? calculateHydrationTargetGlasses({
+        weightKg,
+        biologicalSex: state.biologicalSex,
+        age,
+        heightCm,
+      })
+    : null;
+  const sleepTargetMinutes = calculateSleepTargetMinutes(age);
 
   return (
     <div className="flex flex-col gap-6 animate-fade-up">
@@ -477,6 +488,7 @@ function ReviewStep({
         {hydrationGlasses !== null && (
           <ReviewRow label="Hydration" value={`${hydrationGlasses} glasses`} />
         )}
+        <ReviewRow label="Sleep" value={formatDuration(sleepTargetMinutes)} />
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}

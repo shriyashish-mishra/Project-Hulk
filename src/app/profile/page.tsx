@@ -10,6 +10,7 @@ import { DeleteDataDrawer } from "@/components/profile/delete-data-drawer";
 import { logOut } from "@/lib/auth/actions";
 import { getUserContext } from "@/lib/profile/context";
 import { cmToFeetInches, kgToLb } from "@/lib/profile/units";
+import { formatDuration } from "@/lib/date";
 import {
   ACTIVITY_LEVEL_LABEL,
   PRIMARY_GOAL_LABEL,
@@ -129,6 +130,7 @@ export default async function ProfilePage() {
                   value={context.calorieRangeKcal ? `${context.calorieRangeKcal.min}–${context.calorieRangeKcal.max} kcal` : "Not enough info yet"}
                 />
                 <Row label="Hydration" value={context.hydrationTargetGlasses ? `${context.hydrationTargetGlasses} glasses` : "—"} />
+                <Row label="Sleep" value={context.sleepTargetMinutes ? formatDuration(context.sleepTargetMinutes) : "—"} />
               </SectionButton>
             }
           />

@@ -103,8 +103,8 @@ function TargetsForm({
           className="text-2xl font-bold tabular-nums"
         />
         <p className="text-xs text-muted-foreground">
-          Calorie range and hydration are estimated automatically from your
-          details and aren&rsquo;t set directly.
+          Calorie range, hydration, and sleep targets are estimated
+          automatically from your details and aren&rsquo;t set directly.
         </p>
         {error && <p className="text-sm text-destructive">{error}</p>}
       </div>

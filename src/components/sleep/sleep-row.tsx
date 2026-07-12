@@ -55,7 +55,9 @@ export function SleepRow({ loggedOn, initialLog }: SleepRowProps) {
         >
           <span className="text-base font-semibold text-foreground">Sleep</span>
           <span className="text-sm text-muted-foreground">
-            {log ? formatDuration(log.duration_minutes) : "Not logged"}
+            {log
+              ? `${formatDuration(log.duration_minutes)} of ${formatDuration(log.target_minutes)} target`
+              : "Not logged"}
           </span>
         </button>
       }

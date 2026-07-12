@@ -170,6 +170,7 @@ export type Database = {
           date: string
           duration_minutes: number
           id: string
+          target_minutes: number
           updated_at: string
           user_id: string
         }
@@ -178,6 +179,7 @@ export type Database = {
           date: string
           duration_minutes: number
           id?: string
+          target_minutes?: number
           updated_at?: string
           user_id: string
         }
@@ -186,6 +188,7 @@ export type Database = {
           date?: string
           duration_minutes?: number
           id?: string
+          target_minutes?: number
           updated_at?: string
           user_id?: string
         }
