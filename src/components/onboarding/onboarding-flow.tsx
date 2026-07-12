@@ -20,7 +20,6 @@ import {
   TRAINING_FREQUENCY_LABEL,
   type ActivityLevel,
   type BiologicalSex,
-  type MuscleMapModel,
   type PrimaryGoal,
   type TrainingFrequency,
   type UnitsPreference,
@@ -30,7 +29,6 @@ interface OnboardingState {
   displayName: string;
   dateOfBirth: string;
   biologicalSex: BiologicalSex | null;
-  muscleMapModel: MuscleMapModel | null;
   unitsPreference: UnitsPreference;
   heightCm: string;
   heightFeet: string;
@@ -48,7 +46,6 @@ const INITIAL_STATE: OnboardingState = {
   displayName: "",
   dateOfBirth: "",
   biologicalSex: null,
-  muscleMapModel: null,
   unitsPreference: "metric",
   heightCm: "",
   heightFeet: "",
@@ -62,7 +59,7 @@ const INITIAL_STATE: OnboardingState = {
   trainingFrequency: null,
 };
 
-const TOTAL_STEPS = 10;
+const TOTAL_STEPS = 9;
 const CM_PER_INCH = 2.54;
 const KG_PER_LB = 0.453592;
 const MIN_AGE = 13;
@@ -122,14 +119,6 @@ export function OnboardingFlow() {
     setStep((s) => Math.max(s - 1, 0));
   }
 
-  function selectSex(sex: BiologicalSex) {
-    setState((prev) => ({
-      ...prev,
-      biologicalSex: sex,
-      muscleMapModel: prev.muscleMapModel ?? sex,
-    }));
-  }
-
   const heightCm = resolveHeightCm(state);
   const weightKg = resolveWeightKg(state);
 
@@ -137,7 +126,6 @@ export function OnboardingFlow() {
     true, // name (optional)
     isValidDob(state.dateOfBirth),
     state.biologicalSex !== null,
-    state.muscleMapModel !== null,
     heightCm !== null && weightKg !== null,
     state.primaryGoal !== null,
     true, // target weight (optional)
@@ -147,7 +135,7 @@ export function OnboardingFlow() {
   ];
 
   function handleSubmit() {
-    if (!state.biologicalSex || !state.muscleMapModel || !state.primaryGoal || !state.activityLevel || !state.trainingFrequency) {
+    if (!state.biologicalSex || !state.primaryGoal || !state.activityLevel || !state.trainingFrequency) {
       return;
     }
     const resolvedHeight = resolveHeightCm(state);
@@ -161,7 +149,6 @@ export function OnboardingFlow() {
           displayName: state.displayName,
           dateOfBirth: state.dateOfBirth,
           biologicalSex: state.biologicalSex!,
-          muscleMapModel: state.muscleMapModel!,
           heightCm: resolvedHeight,
           weightKg: resolvedWeight,
           primaryGoal: state.primaryGoal!,
@@ -231,24 +218,15 @@ export function OnboardingFlow() {
         )}
 
         {step === 2 && (
-          <Step title="Biological sex" subtitle="Used for calorie-estimate accuracy — not shown elsewhere.">
+          <Step title="Biological sex" subtitle="Used for calorie-estimate accuracy, and to choose your muscle map on Progress.">
             <div className="flex flex-col gap-3">
-              <SelectableCard label="Female" selected={state.biologicalSex === "female"} onSelect={() => selectSex("female")} />
-              <SelectableCard label="Male" selected={state.biologicalSex === "male"} onSelect={() => selectSex("male")} />
+              <SelectableCard label="Female" selected={state.biologicalSex === "female"} onSelect={() => update("biologicalSex", "female")} />
+              <SelectableCard label="Male" selected={state.biologicalSex === "male"} onSelect={() => update("biologicalSex", "male")} />
             </div>
           </Step>
         )}
 
         {step === 3 && (
-          <Step title="Muscle map" subtitle="Which body shows your training on Progress? You can change this later, independent of biological sex.">
-            <div className="flex flex-col gap-3">
-              <SelectableCard label="Female body" selected={state.muscleMapModel === "female"} onSelect={() => update("muscleMapModel", "female")} />
-              <SelectableCard label="Male body" selected={state.muscleMapModel === "male"} onSelect={() => update("muscleMapModel", "male")} />
-            </div>
-          </Step>
-        )}
-
-        {step === 4 && (
           <Step title="Height & weight">
             <div className="flex flex-col gap-5">
               <div className="flex gap-2">
@@ -329,7 +307,7 @@ export function OnboardingFlow() {
           </Step>
         )}
 
-        {step === 5 && (
+        {step === 4 && (
           <Step title="What's your main goal?">
             <div className="flex flex-col gap-3">
               {(Object.keys(PRIMARY_GOAL_LABEL) as PrimaryGoal[]).map((goal) => (
@@ -344,7 +322,7 @@ export function OnboardingFlow() {
           </Step>
         )}
 
-        {step === 6 && (
+        {step === 5 && (
           <Step title="Target weight" subtitle="Optional — skip if you don't want to track a target scale weight.">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="targetWeight">
@@ -364,7 +342,7 @@ export function OnboardingFlow() {
           </Step>
         )}
 
-        {step === 7 && (
+        {step === 6 && (
           <Step title="How active is your day-to-day, outside of training?">
             <div className="flex flex-col gap-3">
               {(Object.keys(ACTIVITY_LEVEL_LABEL) as ActivityLevel[]).map((level) => (
@@ -379,7 +357,7 @@ export function OnboardingFlow() {
           </Step>
         )}
 
-        {step === 8 && (
+        {step === 7 && (
           <Step title="How often do you typically train?">
             <div className="flex flex-col gap-3">
               {(Object.keys(TRAINING_FREQUENCY_LABEL) as TrainingFrequency[]).map((freq) => (
@@ -394,7 +372,7 @@ export function OnboardingFlow() {
           </Step>
         )}
 
-        {step === 9 && (
+        {step === 8 && (
           <ReviewStep state={state} heightCm={heightCm} weightKg={weightKg} error={error} />
         )}
       </div>
@@ -404,7 +382,7 @@ export function OnboardingFlow() {
         disabled={!canAdvance[step] || isPending}
         onClick={step === TOTAL_STEPS - 1 ? handleSubmit : goNext}
       >
-        {step === TOTAL_STEPS - 1 ? (isPending ? "Setting up…" : "Start") : step === 6 && !state.targetWeightKg && !state.targetWeightLb ? "Skip" : "Continue"}
+        {step === TOTAL_STEPS - 1 ? (isPending ? "Setting up…" : "Start") : step === 5 && !state.targetWeightKg && !state.targetWeightLb ? "Skip" : "Continue"}
       </Button>
     </div>
   );

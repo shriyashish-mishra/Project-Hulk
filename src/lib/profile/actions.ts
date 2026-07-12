@@ -9,7 +9,6 @@ import { calculateProteinTargetG } from "./targets";
 import type {
   ActivityLevel,
   BiologicalSex,
-  MuscleMapModel,
   PrimaryGoal,
   TrainingFrequency,
   UnitsPreference,
@@ -25,7 +24,6 @@ export interface CompleteOnboardingInput {
   displayName: string;
   dateOfBirth: string;
   biologicalSex: BiologicalSex;
-  muscleMapModel: MuscleMapModel;
   heightCm: number;
   weightKg: number;
   primaryGoal: PrimaryGoal;
@@ -63,7 +61,6 @@ export async function completeOnboarding(input: CompleteOnboardingInput): Promis
     display_name: input.displayName.trim() || null,
     date_of_birth: input.dateOfBirth,
     biological_sex: input.biologicalSex,
-    muscle_map_model: input.muscleMapModel,
     height_cm: input.heightCm,
     primary_goal: input.primaryGoal,
     target_weight_kg: input.targetWeightKg,
@@ -91,7 +88,6 @@ export interface UpdateProfileFieldsInput {
   displayName?: string;
   dateOfBirth?: string;
   biologicalSex?: BiologicalSex;
-  muscleMapModel?: MuscleMapModel;
   heightCm?: number;
   primaryGoal?: PrimaryGoal;
   targetWeightKg?: number | null;
@@ -111,7 +107,6 @@ export async function updateProfileFields(input: UpdateProfileFieldsInput): Prom
   if (input.displayName !== undefined) patch.display_name = input.displayName.trim() || null;
   if (input.dateOfBirth !== undefined) patch.date_of_birth = input.dateOfBirth;
   if (input.biologicalSex !== undefined) patch.biological_sex = input.biologicalSex;
-  if (input.muscleMapModel !== undefined) patch.muscle_map_model = input.muscleMapModel;
   if (input.heightCm !== undefined) patch.height_cm = input.heightCm;
   if (input.primaryGoal !== undefined) patch.primary_goal = input.primaryGoal;
   if (input.targetWeightKg !== undefined) patch.target_weight_kg = input.targetWeightKg;

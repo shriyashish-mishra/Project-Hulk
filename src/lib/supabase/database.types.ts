@@ -95,7 +95,6 @@ export type Database = {
           display_name: string | null
           height_cm: number | null
           id: string
-          muscle_map_model: string
           onboarding_completed_at: string | null
           primary_goal: string | null
           protein_target_g: number | null
@@ -112,7 +111,6 @@ export type Database = {
           display_name?: string | null
           height_cm?: number | null
           id: string
-          muscle_map_model?: string
           onboarding_completed_at?: string | null
           primary_goal?: string | null
           protein_target_g?: number | null
@@ -129,7 +127,6 @@ export type Database = {
           display_name?: string | null
           height_cm?: number | null
           id?: string
-          muscle_map_model?: string
           onboarding_completed_at?: string | null
           primary_goal?: string | null
           protein_target_g?: number | null

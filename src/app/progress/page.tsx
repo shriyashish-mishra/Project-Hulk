@@ -25,6 +25,7 @@ import { getWeightLogForDate } from "@/lib/weight/queries";
 import { getPhotosForDate } from "@/lib/photos/queries";
 import { buildDailyRecoverySentence, computeRecoverySummary } from "@/lib/progress/recovery";
 import { getUserContext } from "@/lib/profile/context";
+import { deriveMuscleMapModel } from "@/lib/profile/types";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -179,7 +180,7 @@ export default async function ProgressDailyPage({
                 durationMin={report.parsed_json.workout_duration_min}
                 caloriesBurned={report.parsed_json.workout_calories_burned}
                 exercises={report.parsed_json.workout_exercises}
-                muscleMapModel={userContext.profile?.muscle_map_model}
+                muscleMapModel={deriveMuscleMapModel(userContext.profile?.biological_sex ?? null)}
               />
             </CardContent>
           </Card>

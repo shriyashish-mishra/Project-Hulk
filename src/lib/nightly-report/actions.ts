@@ -8,6 +8,7 @@ import type { Json } from "@/lib/supabase/database.types";
 import { buildNightlyReportPrompt } from "./prompt";
 import { getRecoveryPromptContext } from "./context";
 import { getUserContext } from "@/lib/profile/context";
+import { deriveMuscleMapModel } from "@/lib/profile/types";
 import { parseAiReportResponse } from "./parse";
 import type { AiDailyReport, AiReportJson } from "./types";
 
@@ -51,7 +52,7 @@ export async function importAiReport(
         protein_target_g: userContext.proteinTargetG,
         calorie_range_kcal: userContext.calorieRangeKcal,
         training_frequency: userContext.profile.training_frequency,
-        muscle_map_model: userContext.profile.muscle_map_model,
+        muscle_map_model: deriveMuscleMapModel(userContext.profile.biological_sex),
       }
     : null;
 

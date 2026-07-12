@@ -142,7 +142,6 @@ export default async function ProfilePage() {
             trigger={
               <SectionButton title="Preferences">
                 <Row label="Units" value={isImperial ? "Imperial" : "Metric"} />
-                <Row label="Muscle map" value={profile.muscle_map_model === "male" ? "Male body" : "Female body"} />
               </SectionButton>
             }
           />

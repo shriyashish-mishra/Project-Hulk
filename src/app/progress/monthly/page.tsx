@@ -35,6 +35,7 @@ import { computeWeightTrend } from "@/lib/progress/weight-trend";
 import { buildGoalContextSentence, buildHabitsSentence, buildMonthlyHeadline } from "@/lib/progress/narrative";
 import type { ChangeDirection } from "@/components/progress/what-changed-section";
 import { getUserContext } from "@/lib/profile/context";
+import { deriveMuscleMapModel } from "@/lib/profile/types";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 const MONTH_PATTERN = /^\d{4}-\d{2}$/;
@@ -182,7 +183,7 @@ export default async function ProgressMonthlyPage({
           regionCounts={regionCounts}
           musclesTrainedByDay={currentPoints.map((p) => p.musclesTrained)}
           distributionLabel="Monthly Distribution"
-          muscleMapModel={userContext.profile?.muscle_map_model}
+          muscleMapModel={deriveMuscleMapModel(userContext.profile?.biological_sex ?? null)}
         />
       ),
     },

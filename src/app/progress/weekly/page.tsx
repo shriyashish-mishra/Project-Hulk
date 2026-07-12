@@ -32,6 +32,7 @@ import { computeRecoveryInsights, computeRecoverySummary } from "@/lib/progress/
 import { computeWeightTrend } from "@/lib/progress/weight-trend";
 import { buildGoalContextSentence, buildWeeklyHeadline, buildWeeklyStorySentence } from "@/lib/progress/narrative";
 import { getUserContext } from "@/lib/profile/context";
+import { deriveMuscleMapModel } from "@/lib/profile/types";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -137,7 +138,7 @@ export default async function ProgressWeeklyPage({
           regionCounts={regionCounts}
           musclesTrainedByDay={thisWeekPoints.map((p) => p.musclesTrained)}
           distributionLabel="Weekly Distribution"
-          muscleMapModel={userContext.profile?.muscle_map_model}
+          muscleMapModel={deriveMuscleMapModel(userContext.profile?.biological_sex ?? null)}
         />
       ),
     },

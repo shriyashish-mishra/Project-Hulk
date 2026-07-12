@@ -12,14 +12,18 @@ export type UnitsPreference = "metric" | "imperial";
 /** `ProfileRow` with its free-text-checked columns narrowed to their real union types. */
 export interface Profile extends Omit<
   ProfileRow,
-  "biological_sex" | "muscle_map_model" | "primary_goal" | "activity_level" | "training_frequency" | "units_preference"
+  "biological_sex" | "primary_goal" | "activity_level" | "training_frequency" | "units_preference"
 > {
   biological_sex: BiologicalSex | null;
-  muscle_map_model: MuscleMapModel;
   primary_goal: PrimaryGoal | null;
   activity_level: ActivityLevel | null;
   training_frequency: TrainingFrequency | null;
   units_preference: UnitsPreference;
+}
+
+/** The muscle map always mirrors biological sex — no independent preference, no separate stored column to drift out of sync. Defaults to "female" when sex isn't set yet, matching MuscleMap's existing default. */
+export function deriveMuscleMapModel(biologicalSex: BiologicalSex | null): MuscleMapModel {
+  return biologicalSex === "male" ? "male" : "female";
 }
 
 export const PRIMARY_GOAL_LABEL: Record<PrimaryGoal, string> = {

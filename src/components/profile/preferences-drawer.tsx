@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { SelectableCard } from "@/components/ui/selectable-card";
 import { updateProfileFields } from "@/lib/profile/actions";
-import type { MuscleMapModel, Profile, UnitsPreference } from "@/lib/profile/types";
+import type { Profile, UnitsPreference } from "@/lib/profile/types";
 
 interface PreferencesDrawerProps {
   trigger: ReactElement;
@@ -41,7 +41,6 @@ export function PreferencesDrawer({ trigger, profile }: PreferencesDrawerProps) 
 
 function PreferencesForm({ profile, onDone }: { profile: Profile; onDone: () => void }) {
   const [unitsPreference, setUnitsPreference] = useState<UnitsPreference>(profile.units_preference);
-  const [muscleMapModel, setMuscleMapModel] = useState<MuscleMapModel>(profile.muscle_map_model);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -50,7 +49,7 @@ function PreferencesForm({ profile, onDone }: { profile: Profile; onDone: () => 
     setError(null);
     startTransition(async () => {
       try {
-        await updateProfileFields({ unitsPreference, muscleMapModel });
+        await updateProfileFields({ unitsPreference });
         onDone();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -70,14 +69,6 @@ function PreferencesForm({ profile, onDone }: { profile: Profile; onDone: () => 
           <div className="flex gap-2">
             <SelectableCard label="Metric" selected={unitsPreference === "metric"} onSelect={() => setUnitsPreference("metric")} />
             <SelectableCard label="Imperial" selected={unitsPreference === "imperial"} onSelect={() => setUnitsPreference("imperial")} />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label>Muscle map</Label>
-          <div className="flex gap-2">
-            <SelectableCard label="Female body" selected={muscleMapModel === "female"} onSelect={() => setMuscleMapModel("female")} />
-            <SelectableCard label="Male body" selected={muscleMapModel === "male"} onSelect={() => setMuscleMapModel("male")} />
           </div>
         </div>
 
