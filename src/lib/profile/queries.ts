@@ -1,24 +1,16 @@
-import { cache } from "react";
-import { requireUser } from "@/lib/supabase/auth";
+import { getUserContextRpc } from "./rpc";
 import type { Profile } from "./types";
 
 /**
- * Gated pages call requireOnboardedUser() (its own profiles query, for the
- * onboarding-complete check) AND getUserContext() (which calls this), so
- * without memoization every one of those pages queried profiles twice.
- * Same per-request dedup as requireUser() — see lib/supabase/auth.ts.
+ * Derives from the same cached get_user_context RPC that getUserContext()
+ * uses (see rpc.ts) — requireOnboardedUser()'s gate check and full
+ * personalization now share one Postgres round-trip per request instead of
+ * two, no matter which of getProfile()/getUserContext() gets called first.
  */
-export const getProfile = cache(async (): Promise<Profile | null> => {
-  const { supabase, user } = await requireUser();
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-  return data as Profile | null;
-});
+export async function getProfile(): Promise<Profile | null> {
+  const { profile } = await getUserContextRpc();
+  return profile as Profile | null;
+}
 
 export async function isOnboardingComplete(): Promise<boolean> {
   const profile = await getProfile();

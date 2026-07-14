@@ -1,9 +1,7 @@
-import { getLatestWeightLog } from "@/lib/weight/queries";
-import { getAllPeriodLogsAscending, getLatestPeriodLog } from "@/lib/cycle/queries";
 import { calculateAverageCycleLengthDays, estimateCyclePhase, DEFAULT_CYCLE_LENGTH_DAYS } from "@/lib/cycle/math";
 import type { CycleEstimate } from "@/lib/cycle/types";
 import { getLocalDateString } from "@/lib/date";
-import { getProfile } from "./queries";
+import { getUserContextRpc } from "./rpc";
 import {
   calculateAge,
   calculateCalorieRangeKcal,
@@ -29,10 +27,13 @@ const DEFAULT_HYDRATION_TARGET_GLASSES = 8;
 /**
  * Single fetch point for "who is this user and what do they need." Reused by
  * Today, the nightly report prompt, Progress, and the Profile page itself —
- * nothing should re-fetch/re-derive profile targets independently.
+ * nothing should re-fetch/re-derive profile targets independently. Backed
+ * by one cached RPC call (see rpc.ts) rather than several separate queries.
  */
 export async function getUserContext(): Promise<UserContext> {
-  const [profile, latestWeightLog] = await Promise.all([getProfile(), getLatestWeightLog()]);
+  const { profile: rawProfile, latest_weight: latestWeightLog, period_starts: periodStarts } =
+    await getUserContextRpc();
+  const profile = rawProfile as Profile | null;
 
   if (!profile) {
     return {
@@ -79,18 +80,13 @@ export async function getUserContext(): Promise<UserContext> {
   // Entirely opt-in: only computed for users who've said they're female AND
   // logged at least one period start. No log, no estimate — never inferred.
   let cycleEstimate: CycleEstimate | null = null;
-  if (profile.biological_sex === "female") {
-    const [latestPeriodLog, allPeriodLogs] = await Promise.all([
-      getLatestPeriodLog(),
-      getAllPeriodLogsAscending(),
-    ]);
-    if (latestPeriodLog) {
-      const cycleLengthDays =
-        calculateAverageCycleLengthDays(allPeriodLogs.map((p) => p.started_on)) ??
-        profile.average_cycle_length_days ??
-        DEFAULT_CYCLE_LENGTH_DAYS;
-      cycleEstimate = estimateCyclePhase(latestPeriodLog.started_on, cycleLengthDays, getLocalDateString());
-    }
+  if (profile.biological_sex === "female" && periodStarts.length > 0) {
+    const latestPeriodStart = periodStarts[periodStarts.length - 1];
+    const cycleLengthDays =
+      calculateAverageCycleLengthDays(periodStarts) ??
+      profile.average_cycle_length_days ??
+      DEFAULT_CYCLE_LENGTH_DAYS;
+    cycleEstimate = estimateCyclePhase(latestPeriodStart, cycleLengthDays, getLocalDateString());
   }
 
   return {

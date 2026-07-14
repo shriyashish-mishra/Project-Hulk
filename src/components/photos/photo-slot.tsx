@@ -63,11 +63,13 @@ export function PhotoSlot({ viewType, capturedOn, photo }: PhotoSlotProps) {
 
   function handleDelete() {
     if (!current) return;
+    const previous = current;
+    setCurrent(null);
     startTransition(async () => {
       try {
-        await deleteProgressPhoto(current.id);
-        setCurrent(null);
+        await deleteProgressPhoto(previous.id);
       } catch (err) {
+        setCurrent(previous);
         setError(err instanceof Error ? err.message : "Could not delete.");
       }
     });

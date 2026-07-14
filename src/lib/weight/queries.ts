@@ -31,21 +31,6 @@ export async function getWeightLogsInRange(
   return data;
 }
 
-/** The single most recent weight measurement, regardless of date — "latest weight" for the profile/personalization layer. */
-export async function getLatestWeightLog(): Promise<WeightLog | null> {
-  const { supabase, user } = await requireUser();
-  const { data, error } = await supabase
-    .from("weight_logs")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("measured_on", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-  return data;
-}
-
 /** Most recent measurement strictly before `beforeDate` — used as a trend baseline when the period itself has no earlier entry. */
 export async function getLatestWeightLogBefore(beforeDate: string): Promise<WeightLog | null> {
   const { supabase, user } = await requireUser();
