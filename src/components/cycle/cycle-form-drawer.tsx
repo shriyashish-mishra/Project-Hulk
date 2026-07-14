@@ -15,11 +15,23 @@ import { getLocalDateString } from "@/lib/date";
 interface CycleFormDrawerProps {
   trigger: ReactElement;
   isTracking: boolean;
-  onSubmit: (startedOn: string) => Promise<void>;
+  isOngoing: boolean;
+  /** Defaults both date inputs to this day instead of real "today" — lets a past-day log page backfill periods for that day. */
+  asOfDate: string;
+  onSubmitStart: (startedOn: string) => Promise<void>;
+  onSubmitEnd: (endedOn: string) => Promise<void>;
   onClear: () => Promise<void>;
 }
 
-export function CycleFormDrawer({ trigger, isTracking, onSubmit, onClear }: CycleFormDrawerProps) {
+export function CycleFormDrawer({
+  trigger,
+  isTracking,
+  isOngoing,
+  asOfDate,
+  onSubmitStart,
+  onSubmitEnd,
+  onClear,
+}: CycleFormDrawerProps) {
   const [open, setOpen] = useState(false);
   const [sessionKey, setSessionKey] = useState(0);
 
@@ -35,7 +47,10 @@ export function CycleFormDrawer({ trigger, isTracking, onSubmit, onClear }: Cycl
         <CycleFormBody
           key={sessionKey}
           isTracking={isTracking}
-          onSubmit={onSubmit}
+          isOngoing={isOngoing}
+          asOfDate={asOfDate}
+          onSubmitStart={onSubmitStart}
+          onSubmitEnd={onSubmitEnd}
           onClear={onClear}
           onDone={() => setOpen(false)}
         />
@@ -46,25 +61,45 @@ export function CycleFormDrawer({ trigger, isTracking, onSubmit, onClear }: Cycl
 
 function CycleFormBody({
   isTracking,
-  onSubmit,
+  isOngoing,
+  asOfDate,
+  onSubmitStart,
+  onSubmitEnd,
   onClear,
   onDone,
 }: {
   isTracking: boolean;
-  onSubmit: (startedOn: string) => Promise<void>;
+  isOngoing: boolean;
+  asOfDate: string;
+  onSubmitStart: (startedOn: string) => Promise<void>;
+  onSubmitEnd: (endedOn: string) => Promise<void>;
   onClear: () => Promise<void>;
   onDone: () => void;
 }) {
-  const [startedOn, setStartedOn] = useState(getLocalDateString());
+  const today = getLocalDateString();
+  const [startedOn, setStartedOn] = useState(asOfDate);
+  const [endedOn, setEndedOn] = useState(asOfDate);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  function handleSubmit(event: React.FormEvent) {
+  function handleSubmitStart(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
     startTransition(async () => {
       try {
-        await onSubmit(startedOn);
+        await onSubmitStart(startedOn);
+        onDone();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Something went wrong.");
+      }
+    });
+  }
+
+  function handleSubmitEnd() {
+    setError(null);
+    startTransition(async () => {
+      try {
+        await onSubmitEnd(endedOn);
         onDone();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -85,7 +120,7 @@ function CycleFormBody({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+    <form onSubmit={handleSubmitStart} className="flex min-h-0 flex-1 flex-col">
       <DrawerHeader className="pt-2">
         <DrawerTitle className="text-2xl font-bold tracking-tight">Log period start</DrawerTitle>
       </DrawerHeader>
@@ -94,7 +129,7 @@ function CycleFormBody({
         <input
           type="date"
           value={startedOn}
-          max={getLocalDateString()}
+          max={today}
           onChange={(e) => setStartedOn(e.target.value)}
           className="h-12 w-full rounded-2xl bg-muted px-4 text-[15px] text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         />
@@ -103,6 +138,29 @@ function CycleFormBody({
           suggestions. Update anytime, or leave it be — this is entirely
           optional.
         </p>
+
+        {isOngoing && (
+          <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
+            <p className="text-sm font-semibold text-foreground">Mark period as over</p>
+            <input
+              type="date"
+              value={endedOn}
+              min={startedOn}
+              max={today}
+              onChange={(e) => setEndedOn(e.target.value)}
+              className="h-12 w-full rounded-2xl bg-muted px-4 text-[15px] text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={isPending}
+              onClick={handleSubmitEnd}
+            >
+              Mark as over
+            </Button>
+          </div>
+        )}
+
         {error && <p className="text-sm text-destructive">{error}</p>}
       </div>
 

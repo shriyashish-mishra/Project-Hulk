@@ -7,6 +7,7 @@ import { WaterRow } from "@/components/water/water-row";
 import { SleepRow } from "@/components/sleep/sleep-row";
 import { WeightRow } from "@/components/weight/weight-row";
 import { PhotosRow } from "@/components/photos/photos-row";
+import { CycleRow } from "@/components/cycle/cycle-row";
 import { NightlyReportCard } from "@/components/nightly-report/nightly-report-card";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
 import { getFoodLogsForDate } from "@/lib/food-logs/queries";
@@ -14,6 +15,7 @@ import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import { getWaterLogForDate } from "@/lib/water/queries";
 import { getSleepLogForDate } from "@/lib/sleep/queries";
 import { getWeightLogForDate } from "@/lib/weight/queries";
+import { getUserContext } from "@/lib/profile/context";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -30,13 +32,15 @@ export default async function LogDatePage({ params }: LogDatePageProps) {
   const today = getLocalDateString();
   const isToday = date === today;
 
-  const [logs, workoutLog, waterLog, sleepLog, weightLog] = await Promise.all([
+  const [logs, workoutLog, waterLog, sleepLog, weightLog, userContext] = await Promise.all([
     getFoodLogsForDate(date),
     getWorkoutLogForDate(date),
     getWaterLogForDate(date),
     getSleepLogForDate(date),
     getWeightLogForDate(date),
+    getUserContext(date),
   ]);
+  const isFemale = userContext.profile?.biological_sex === "female";
 
   return (
     <div className="flex flex-col gap-6">
@@ -67,6 +71,13 @@ export default async function LogDatePage({ params }: LogDatePageProps) {
             <SleepRow loggedOn={date} initialLog={sleepLog} />
             <WeightRow loggedOn={date} initialLog={weightLog} />
             <PhotosRow loggedOn={date} />
+            {isFemale && (
+              <CycleRow
+                initialPeriods={userContext.periods}
+                fallbackCycleLengthDays={userContext.profile?.average_cycle_length_days ?? null}
+                asOfDate={date}
+              />
+            )}
           </CardContent>
         </Card>
       </div>

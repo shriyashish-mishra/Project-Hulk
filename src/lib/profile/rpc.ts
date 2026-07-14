@@ -8,7 +8,7 @@ type WeightLogRow = Database["public"]["Tables"]["weight_logs"]["Row"];
 export interface UserContextRpcResult {
   profile: ProfileRow | null;
   latest_weight: WeightLogRow | null;
-  period_starts: string[];
+  periods: { started_on: string; ended_on: string | null }[];
 }
 
 /**
@@ -31,6 +31,6 @@ export const getUserContextRpc = cache(async (): Promise<UserContextRpcResult> =
   return {
     profile: result?.profile ?? null,
     latest_weight: result?.latest_weight ?? null,
-    period_starts: result?.period_starts ?? [],
+    periods: result?.periods ?? [],
   };
 });

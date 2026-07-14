@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProgressTabs } from "@/components/progress/progress-tabs";
 import { DateNav } from "@/components/progress/date-nav";
@@ -175,10 +176,17 @@ export default async function ProgressWeeklyPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <header>
+      <header className="flex items-start justify-between">
         <h1 className="text-4xl font-black tracking-tight text-foreground">
           Progress
         </h1>
+        <Link
+          href="/more"
+          aria-label="More"
+          className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-card text-sm font-bold text-primary transition-transform duration-150 active:scale-90"
+        >
+          PH
+        </Link>
       </header>
 
       <ProgressTabs active="weekly" />

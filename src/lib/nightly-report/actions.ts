@@ -35,7 +35,7 @@ export async function importAiReport(
     getFoodLogsForDate(reportDate),
     getWorkoutLogForDate(reportDate),
     getRecoveryPromptContext(reportDate),
-    getUserContext(),
+    getUserContext(reportDate),
     getWeekSoFarContext(reportDate),
   ]);
   const promptMarkdown = buildNightlyReportPrompt({

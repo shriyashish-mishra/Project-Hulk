@@ -82,7 +82,13 @@ export default async function TodayPage() {
             <SleepRow loggedOn={loggedOn} initialLog={sleepLog} />
             <WeightRow loggedOn={loggedOn} initialLog={weightLog} />
             <PhotosRow loggedOn={loggedOn} />
-            {isFemale && <CycleRow initialEstimate={userContext.cycleEstimate} />}
+            {isFemale && (
+              <CycleRow
+                initialPeriods={userContext.periods}
+                fallbackCycleLengthDays={userContext.profile?.average_cycle_length_days ?? null}
+                asOfDate={loggedOn}
+              />
+            )}
           </CardContent>
         </Card>
       </div>

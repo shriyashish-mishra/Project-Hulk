@@ -89,18 +89,21 @@ export type Database = {
       period_logs: {
         Row: {
           created_at: string
+          ended_on: string | null
           id: string
           started_on: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          ended_on?: string | null
           id?: string
           started_on: string
           user_id: string
         }
         Update: {
           created_at?: string
+          ended_on?: string | null
           id?: string
           started_on?: string
           user_id?: string

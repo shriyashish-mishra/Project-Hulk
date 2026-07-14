@@ -15,4 +15,11 @@ export interface CycleEstimate {
   cycleDay: number;
   phase: CyclePhase;
   cycleLengthDays: number;
+  /** True when the most recent period has no ended_on yet and is being treated as ground-truth "currently menstruating" rather than assumed from a fixed length. */
+  isOngoing: boolean;
+}
+
+export interface PeriodRange {
+  startedOn: string;
+  endedOn: string | null;
 }

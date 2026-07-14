@@ -28,7 +28,7 @@ export default async function GenerateReportPage({ searchParams }: GenerateRepor
     getFoodLogsForDate(loggedOn),
     getWorkoutLogForDate(loggedOn),
     getRecoveryPromptContext(loggedOn),
-    getUserContext(),
+    getUserContext(loggedOn),
     getWeekSoFarContext(loggedOn),
   ]);
 
