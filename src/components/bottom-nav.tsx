@@ -11,8 +11,23 @@ const NAV_ITEMS = [
   { href: "/progress", label: "Progress", icon: TrendingUp, enabled: true },
 ] as const;
 
+// Auth and onboarding are standalone flows, not app screens — showing nav
+// tabs the user can't use yet (or that just bounce them back here) is
+// confusing, not helpful.
+const CHROMELESS_PATHS = [
+  "/login",
+  "/signup",
+  "/reset-password",
+  "/update-password",
+  "/onboarding",
+];
+
 export function BottomNav() {
   const pathname = usePathname();
+
+  if (CHROMELESS_PATHS.some((path) => pathname.startsWith(path))) {
+    return null;
+  }
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 flex justify-center px-5 pb-5">
