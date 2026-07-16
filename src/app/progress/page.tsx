@@ -10,7 +10,12 @@ import { DailyWorkoutSummary } from "@/components/progress/daily-workout-summary
 import { CoachFeedbackList } from "@/components/progress/coach-feedback-list";
 import { NextDayPlanCard } from "@/components/progress/next-day-plan-card";
 import { CalorieBalanceBadge } from "@/components/progress/calorie-balance-badge";
-import { addDays, formatDuration, formatShortDate, getLocalDateString } from "@/lib/date";
+import {
+  addDays,
+  formatDuration,
+  formatShortDateWithWeekday,
+  getLocalDateString,
+} from "@/lib/date";
 import { getAiReportForDate } from "@/lib/nightly-report/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import { getReportsInRange } from "@/lib/progress/queries";
@@ -62,7 +67,7 @@ export default async function ProgressDailyPage({
   const trailingSummary = computePeriodSummary(buildTrendPoints(trailingReports));
   const { avgSleepMinutes } = computeRecoverySummary(trailingSleepLogs, []);
 
-  const label = `${isToday ? "Today, " : ""}${formatShortDate(
+  const label = `${isToday ? "Today, " : ""}${formatShortDateWithWeekday(
     new Date(`${date}T00:00:00`),
   )}`;
 

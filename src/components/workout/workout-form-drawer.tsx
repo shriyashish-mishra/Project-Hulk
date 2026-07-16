@@ -97,6 +97,10 @@ function WorkoutFormBody({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  function handlePickPreset(presetText: string) {
+    setRawText((prev) => (prev.trim() ? `${prev}\n${presetText}` : presetText));
+  }
+
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 
@@ -140,7 +144,7 @@ function WorkoutFormBody({
           emptyLabel="No saved workouts yet. Add the regimes you repeat often."
           addPlaceholder={PLACEHOLDER}
           presets={presets}
-          onSelect={setRawText}
+          onSelect={handlePickPreset}
           onCreate={onCreatePreset}
           onUpdate={onUpdatePreset}
           onDelete={onDeletePreset}

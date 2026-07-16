@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatShortDate } from "@/lib/date";
+import { formatShortDateWithWeekday } from "@/lib/date";
 import type { AiDailyReport } from "@/lib/nightly-report/types";
 import { ScoreBadge } from "@/components/nightly-report/score-badge";
 
@@ -30,7 +30,7 @@ export function ReportHistoryList({ reports }: ReportHistoryListProps) {
             <ScoreBadge score={report.overall_score} />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">
-                {formatShortDate(new Date(`${report.report_date}T00:00:00`))}
+                {formatShortDateWithWeekday(new Date(`${report.report_date}T00:00:00`))}
               </p>
               <p className="line-clamp-1 text-xs text-muted-foreground">
                 {report.coach_summary}

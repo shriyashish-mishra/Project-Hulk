@@ -39,6 +39,10 @@ export function formatWeekdayShort(date: Date = new Date()): string {
   }).format(date);
 }
 
+export function formatShortDateWithWeekday(date: Date = new Date()): string {
+  return `${formatShortDate(date)} (${formatWeekdayShort(date)})`;
+}
+
 export function addDays(dateStr: string, days: number): string {
   return getDaysAgoDateString(-days, new Date(`${dateStr}T00:00:00`));
 }
