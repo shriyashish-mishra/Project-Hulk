@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { requireUser } from "@/lib/supabase/auth";
+import { getSupabaseClient } from "@/lib/supabase/auth";
 import type { Database } from "@/lib/supabase/database.types";
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
@@ -20,9 +20,15 @@ export interface UserContextRpcResult {
  * to take. Cached per-request via React's cache(), so getProfile() and
  * getUserContext() — however many times either is called on a page —
  * share this one result instead of each re-querying.
+ *
+ * Uses getSupabaseClient() rather than requireUser() deliberately: the RPC
+ * is validated by RLS via the request's JWT on the DB side, so it doesn't
+ * need the client-side getUser() call to have resolved first. That lets
+ * this round-trip run concurrently with the Auth server round-trip instead
+ * of waiting behind it — see requireOnboardedUser() in supabase/auth.ts.
  */
 export const getUserContextRpc = cache(async (): Promise<UserContextRpcResult> => {
-  const { supabase } = await requireUser();
+  const supabase = await getSupabaseClient();
   const { data, error } = await supabase.rpc("get_user_context");
 
   if (error) throw new Error(error.message);

@@ -7,18 +7,26 @@ async function attachSignedUrls(
   supabase: Awaited<ReturnType<typeof requireUser>>["supabase"],
   rows: ProgressPhotoRow[],
 ): Promise<ProgressPhoto[]> {
-  return Promise.all(
-    rows.map(async (row) => {
-      const { data: signed } = await supabase.storage
-        .from("progress-photos")
-        .createSignedUrl(row.storage_path, SIGNED_URL_TTL_SECONDS);
-      return {
-        ...row,
-        view_type: row.view_type as PhotoViewType,
-        signedUrl: signed?.signedUrl ?? null,
-      };
-    }),
+  if (rows.length === 0) return [];
+
+  // One batched Storage call instead of one round-trip per photo — matters
+  // most on the Monthly timeline, which can render dozens of photos.
+  const { data: signed } = await supabase.storage
+    .from("progress-photos")
+    .createSignedUrls(
+      rows.map((row) => row.storage_path),
+      SIGNED_URL_TTL_SECONDS,
+    );
+
+  const signedUrlByPath = new Map(
+    (signed ?? []).map((entry) => [entry.path, entry.signedUrl]),
   );
+
+  return rows.map((row) => ({
+    ...row,
+    view_type: row.view_type as PhotoViewType,
+    signedUrl: signedUrlByPath.get(row.storage_path) ?? null,
+  }));
 }
 
 /** All photos captured on `capturedOn` (up to one per view), each with a ready-to-render signed URL. */

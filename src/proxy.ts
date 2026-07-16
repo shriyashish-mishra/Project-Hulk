@@ -31,21 +31,25 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() verifies the JWT locally (WebCrypto + a cached JWKS lookup)
+  // instead of round-tripping to the Auth server like getUser() does — this
+  // runs on every navigation via the matcher below, so the network call
+  // getUser() required here was a full extra round-trip on top of the one
+  // requireUser() already pays for inside the page render.
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims ?? null;
 
   const isPublicPath = PUBLIC_PATHS.some((path) =>
     request.nextUrl.pathname.startsWith(path),
   );
 
-  if (!user && !isPublicPath) {
+  if (!claims && !isPublicPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  if (user && isPublicPath) {
+  if (claims && isPublicPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);

@@ -7,10 +7,10 @@ import { computeConsecutiveStreak, computeNutritionStreak } from "./stats";
 const NUTRITION_STREAK_THRESHOLD = 75;
 const LOOKBACK_DAYS = 60;
 
-export async function getLoggedDatesInRange(
+async function getLoggedAndWorkoutDatesInRange(
   startDate: string,
   endDate: string,
-): Promise<Set<string>> {
+): Promise<{ loggedDates: Set<string>; workoutDates: Set<string> }> {
   const { supabase, user } = await requireUser();
   const [foodResult, workoutResult] = await Promise.all([
     supabase
@@ -30,26 +30,21 @@ export async function getLoggedDatesInRange(
   if (foodResult.error) throw new Error(foodResult.error.message);
   if (workoutResult.error) throw new Error(workoutResult.error.message);
 
-  const dates = new Set<string>();
-  for (const row of foodResult.data) dates.add(row.logged_on);
-  for (const row of workoutResult.data) dates.add(row.logged_on);
-  return dates;
+  const workoutDates = new Set(workoutResult.data.map((row) => row.logged_on));
+
+  const loggedDates = new Set(workoutDates);
+  for (const row of foodResult.data) loggedDates.add(row.logged_on);
+
+  return { loggedDates, workoutDates };
 }
 
-async function getWorkoutDatesInRange(
+/** Dates with a food or workout log in range — used by the Monthly progress calendar. */
+export async function getLoggedDatesInRange(
   startDate: string,
   endDate: string,
 ): Promise<Set<string>> {
-  const { supabase, user } = await requireUser();
-  const { data, error } = await supabase
-    .from("workout_logs")
-    .select("logged_on")
-    .eq("user_id", user.id)
-    .gte("logged_on", startDate)
-    .lte("logged_on", endDate);
-
-  if (error) throw new Error(error.message);
-  return new Set(data.map((row) => row.logged_on));
+  const { loggedDates } = await getLoggedAndWorkoutDatesInRange(startDate, endDate);
+  return loggedDates;
 }
 
 export async function getStreakSummary(today: string): Promise<StreakSummary> {
@@ -61,9 +56,8 @@ export async function getStreakSummary(today: string): Promise<StreakSummary> {
     getDaysAgoDateString(6 - i, new Date(`${today}T00:00:00`)),
   );
 
-  const [loggedDates, workoutDates, reports] = await Promise.all([
-    getLoggedDatesInRange(rangeStart, today),
-    getWorkoutDatesInRange(rangeStart, today),
+  const [{ loggedDates, workoutDates }, reports] = await Promise.all([
+    getLoggedAndWorkoutDatesInRange(rangeStart, today),
     getReportsInRange(rangeStart, today),
   ]);
 
