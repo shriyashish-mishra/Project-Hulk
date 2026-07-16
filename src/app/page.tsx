@@ -4,6 +4,7 @@ import { FoodDashboard } from "@/components/food/food-dashboard";
 import { WorkoutCard } from "@/components/workout/workout-card";
 import { NightlyReportCard } from "@/components/nightly-report/nightly-report-card";
 import { StreakPills } from "@/components/today/streak-pills";
+import { DateSwitcher } from "@/components/today/date-switcher";
 import { WorkoutStreakCard } from "@/components/today/workout-streak-card";
 import { WaterRow } from "@/components/water/water-row";
 import { SleepRow } from "@/components/sleep/sleep-row";
@@ -45,13 +46,16 @@ export default async function TodayPage() {
             Today
           </h1>
         </div>
-        <Link
-          href="/more"
-          aria-label="More"
-          className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-card text-sm font-bold text-primary transition-transform duration-150 active:scale-90"
-        >
-          PH
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <DateSwitcher />
+          <Link
+            href="/more"
+            aria-label="More"
+            className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-card text-sm font-bold text-primary transition-transform duration-150 active:scale-90"
+          >
+            PH
+          </Link>
+        </div>
       </header>
 
       <StreakPills streaks={streaks} />
