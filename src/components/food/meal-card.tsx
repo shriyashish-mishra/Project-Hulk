@@ -4,6 +4,7 @@ import { Check, Plus } from "lucide-react";
 import { FoodFormDrawer } from "./food-form-drawer";
 import type { MealLogInput } from "@/lib/food-logs/actions";
 import type { FoodLog, MealType } from "@/lib/food-logs/types";
+import type { FoodPreset } from "@/lib/food-presets/types";
 
 const EMPTY_STATE_COPY: Record<MealType, string> = {
   breakfast: "Fuel your morning.",
@@ -16,11 +17,25 @@ interface MealCardProps {
   mealType: MealType;
   label: string;
   log?: FoodLog;
+  presets: FoodPreset[];
   onSave: (input: MealLogInput) => Promise<void>;
   onClear: (mealType: MealType) => Promise<void>;
+  onCreatePreset: (rawText: string) => Promise<FoodPreset>;
+  onUpdatePreset: (id: string, rawText: string) => Promise<FoodPreset>;
+  onDeletePreset: (id: string) => Promise<void>;
 }
 
-export function MealCard({ mealType, label, log, onSave, onClear }: MealCardProps) {
+export function MealCard({
+  mealType,
+  label,
+  log,
+  presets,
+  onSave,
+  onClear,
+  onCreatePreset,
+  onUpdatePreset,
+  onDeletePreset,
+}: MealCardProps) {
   const preview = log?.raw_text.split("\n").slice(0, 3).join("\n");
 
   return (
@@ -28,8 +43,12 @@ export function MealCard({ mealType, label, log, onSave, onClear }: MealCardProp
       mealType={mealType}
       mealLabel={label}
       initialLog={log}
+      presets={presets}
       onSubmit={onSave}
       onDelete={log ? () => onClear(mealType) : undefined}
+      onCreatePreset={onCreatePreset}
+      onUpdatePreset={onUpdatePreset}
+      onDeletePreset={onDeletePreset}
       trigger={
         <button
           type="button"

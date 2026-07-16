@@ -11,7 +11,9 @@ import { CycleRow } from "@/components/cycle/cycle-row";
 import { NightlyReportCard } from "@/components/nightly-report/nightly-report-card";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
 import { getFoodLogsForDate } from "@/lib/food-logs/queries";
+import { getFoodPresets } from "@/lib/food-presets/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
+import { getWorkoutPresets } from "@/lib/workout-presets/queries";
 import { getWaterLogForDate } from "@/lib/water/queries";
 import { getSleepLogForDate } from "@/lib/sleep/queries";
 import { getWeightLogForDate } from "@/lib/weight/queries";
@@ -32,9 +34,20 @@ export default async function LogDatePage({ params }: LogDatePageProps) {
   const today = getLocalDateString();
   const isToday = date === today;
 
-  const [logs, workoutLog, waterLog, sleepLog, weightLog, userContext] = await Promise.all([
+  const [
+    logs,
+    foodPresets,
+    workoutLog,
+    workoutPresets,
+    waterLog,
+    sleepLog,
+    weightLog,
+    userContext,
+  ] = await Promise.all([
     getFoodLogsForDate(date),
+    getFoodPresets(),
     getWorkoutLogForDate(date),
+    getWorkoutPresets(),
     getWaterLogForDate(date),
     getSleepLogForDate(date),
     getWeightLogForDate(date),
@@ -56,8 +69,17 @@ export default async function LogDatePage({ params }: LogDatePageProps) {
 
       <Card>
         <CardContent className="divide-y divide-border">
-          <FoodDashboard loggedOn={date} initialLogs={logs} userId={user.id} />
-          <WorkoutCard loggedOn={date} initialLog={workoutLog} />
+          <FoodDashboard
+            loggedOn={date}
+            initialLogs={logs}
+            initialPresets={foodPresets}
+            userId={user.id}
+          />
+          <WorkoutCard
+            loggedOn={date}
+            initialLog={workoutLog}
+            initialPresets={workoutPresets}
+          />
         </CardContent>
       </Card>
 

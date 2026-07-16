@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, type ReactElement } from "react";
+import { Bookmark } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
@@ -11,7 +12,9 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { PresetPickerDrawer } from "@/components/presets/preset-picker-drawer";
 import type { WorkoutLog } from "@/lib/workout-logs/types";
+import type { WorkoutPreset } from "@/lib/workout-presets/types";
 
 const PLACEHOLDER =
   "Chest & Shoulders\n\nAround the World\n4kg\n4 x 12\n\nLateral Raises\n4kg\n4 x 12\n\nIncline Bench Press\n15kg\n4 x 10";
@@ -19,15 +22,23 @@ const PLACEHOLDER =
 interface WorkoutFormDrawerProps {
   trigger: ReactElement;
   initialLog?: WorkoutLog | null;
+  presets: WorkoutPreset[];
   onSubmit: (rawText: string) => Promise<void>;
   onDelete?: () => Promise<void>;
+  onCreatePreset: (rawText: string) => Promise<WorkoutPreset>;
+  onUpdatePreset: (id: string, rawText: string) => Promise<WorkoutPreset>;
+  onDeletePreset: (id: string) => Promise<void>;
 }
 
 export function WorkoutFormDrawer({
   trigger,
   initialLog,
+  presets,
   onSubmit,
   onDelete,
+  onCreatePreset,
+  onUpdatePreset,
+  onDeletePreset,
 }: WorkoutFormDrawerProps) {
   const [open, setOpen] = useState(false);
   const [sessionKey, setSessionKey] = useState(0);
@@ -48,8 +59,12 @@ export function WorkoutFormDrawer({
         <WorkoutFormBody
           key={sessionKey}
           initialLog={initialLog}
+          presets={presets}
           onSubmit={onSubmit}
           onDelete={onDelete}
+          onCreatePreset={onCreatePreset}
+          onUpdatePreset={onUpdatePreset}
+          onDeletePreset={onDeletePreset}
           onDone={() => setOpen(false)}
         />
       </DrawerContent>
@@ -59,15 +74,23 @@ export function WorkoutFormDrawer({
 
 interface WorkoutFormBodyProps {
   initialLog?: WorkoutLog | null;
+  presets: WorkoutPreset[];
   onSubmit: (rawText: string) => Promise<void>;
   onDelete?: () => Promise<void>;
+  onCreatePreset: (rawText: string) => Promise<WorkoutPreset>;
+  onUpdatePreset: (id: string, rawText: string) => Promise<WorkoutPreset>;
+  onDeletePreset: (id: string) => Promise<void>;
   onDone: () => void;
 }
 
 function WorkoutFormBody({
   initialLog,
+  presets,
   onSubmit,
   onDelete,
+  onCreatePreset,
+  onUpdatePreset,
+  onDeletePreset,
   onDone,
 }: WorkoutFormBodyProps) {
   const [rawText, setRawText] = useState(initialLog?.raw_text ?? "");
@@ -108,10 +131,29 @@ function WorkoutFormBody({
 
   return (
     <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-      <DrawerHeader className="pt-2">
+      <DrawerHeader className="flex-row items-center justify-between pt-2">
         <DrawerTitle className="text-2xl font-bold tracking-tight">
           Workout
         </DrawerTitle>
+        <PresetPickerDrawer
+          title="Saved workouts"
+          emptyLabel="No saved workouts yet. Add the regimes you repeat often."
+          addPlaceholder={PLACEHOLDER}
+          presets={presets}
+          onSelect={setRawText}
+          onCreate={onCreatePreset}
+          onUpdate={onUpdatePreset}
+          onDelete={onDeletePreset}
+          trigger={
+            <button
+              type="button"
+              className="flex items-center gap-1 text-sm font-semibold text-primary active:opacity-60"
+            >
+              <Bookmark className="size-3.5" />
+              Saved
+            </button>
+          }
+        />
       </DrawerHeader>
 
       <div className="flex flex-col gap-2 overflow-y-auto px-5 py-5">

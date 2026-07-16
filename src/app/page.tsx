@@ -13,7 +13,9 @@ import { PhotosRow } from "@/components/photos/photos-row";
 import { CycleRow } from "@/components/cycle/cycle-row";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
 import { getFoodLogsForDate } from "@/lib/food-logs/queries";
+import { getFoodPresets } from "@/lib/food-presets/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
+import { getWorkoutPresets } from "@/lib/workout-presets/queries";
 import { getStreakSummary } from "@/lib/streaks/queries";
 import { getWaterLogForDate } from "@/lib/water/queries";
 import { getSleepLogForDate } from "@/lib/sleep/queries";
@@ -24,9 +26,21 @@ import { requireOnboardedUser } from "@/lib/supabase/auth";
 export default async function TodayPage() {
   const { user } = await requireOnboardedUser();
   const loggedOn = getLocalDateString();
-  const [logs, workoutLog, streaks, waterLog, sleepLog, weightLog, userContext] = await Promise.all([
+  const [
+    logs,
+    foodPresets,
+    workoutLog,
+    workoutPresets,
+    streaks,
+    waterLog,
+    sleepLog,
+    weightLog,
+    userContext,
+  ] = await Promise.all([
     getFoodLogsForDate(loggedOn),
+    getFoodPresets(),
     getWorkoutLogForDate(loggedOn),
+    getWorkoutPresets(),
     getStreakSummary(loggedOn),
     getWaterLogForDate(loggedOn),
     getSleepLogForDate(loggedOn),
@@ -70,9 +84,14 @@ export default async function TodayPage() {
           <FoodDashboard
             loggedOn={loggedOn}
             initialLogs={logs}
+            initialPresets={foodPresets}
             userId={user.id}
           />
-          <WorkoutCard loggedOn={loggedOn} initialLog={workoutLog} />
+          <WorkoutCard
+            loggedOn={loggedOn}
+            initialLog={workoutLog}
+            initialPresets={workoutPresets}
+          />
         </CardContent>
       </Card>
 

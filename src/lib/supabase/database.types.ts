@@ -86,6 +86,27 @@ export type Database = {
         }
         Relationships: []
       }
+      food_presets: {
+        Row: {
+          created_at: string
+          id: string
+          raw_text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          raw_text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          raw_text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       period_logs: {
         Row: {
           created_at: string
@@ -297,6 +318,27 @@ export type Database = {
           created_at?: string
           id?: string
           logged_on?: string
+          raw_text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workout_presets: {
+        Row: {
+          created_at: string
+          id: string
+          raw_text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          raw_text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
           raw_text?: string
           user_id?: string
         }

@@ -6,13 +6,20 @@ import {
   saveMealLog,
   type MealLogInput,
 } from "@/lib/food-logs/actions";
+import {
+  createFoodPreset,
+  deleteFoodPreset,
+  updateFoodPreset,
+} from "@/lib/food-presets/actions";
 import { MEAL_SECTIONS } from "@/lib/food-logs/constants";
 import type { FoodLog, MealType } from "@/lib/food-logs/types";
+import type { FoodPreset } from "@/lib/food-presets/types";
 import { MealCard } from "./meal-card";
 
 interface FoodDashboardProps {
   loggedOn: string;
   initialLogs: FoodLog[];
+  initialPresets: FoodPreset[];
   userId: string;
 }
 
@@ -35,10 +42,12 @@ function reduceLogs(state: FoodLog[], action: OptimisticAction): FoodLog[] {
 export function FoodDashboard({
   loggedOn,
   initialLogs,
+  initialPresets,
   userId,
 }: FoodDashboardProps) {
   const [logs, setLogs] = useState(initialLogs);
   const [optimisticLogs, applyOptimistic] = useOptimistic(logs, reduceLogs);
+  const [presets, setPresets] = useState(initialPresets);
   const [, startTransition] = useTransition();
 
   const logByMeal = useMemo(() => {
@@ -89,6 +98,23 @@ export function FoodDashboard({
     });
   }
 
+  async function handleCreatePreset(rawText: string) {
+    const created = await createFoodPreset(rawText);
+    setPresets((prev) => [...prev, created]);
+    return created;
+  }
+
+  async function handleUpdatePreset(id: string, rawText: string) {
+    const updated = await updateFoodPreset(id, rawText);
+    setPresets((prev) => prev.map((preset) => (preset.id === id ? updated : preset)));
+    return updated;
+  }
+
+  async function handleDeletePreset(id: string) {
+    await deleteFoodPreset(id);
+    setPresets((prev) => prev.filter((preset) => preset.id !== id));
+  }
+
   return (
     <>
       {MEAL_SECTIONS.map((section) => (
@@ -97,8 +123,12 @@ export function FoodDashboard({
           mealType={section.type}
           label={section.label}
           log={logByMeal.get(section.type)}
+          presets={presets}
           onSave={handleSave}
           onClear={handleClear}
+          onCreatePreset={handleCreatePreset}
+          onUpdatePreset={handleUpdatePreset}
+          onDeletePreset={handleDeletePreset}
         />
       ))}
     </>
