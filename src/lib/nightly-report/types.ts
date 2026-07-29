@@ -43,6 +43,8 @@ export interface AiReportJson {
   tomorrow_workout: string;
   tomorrow_workout_exercises?: WorkoutExercise[];
   coach_summary: string;
+  /** Vision comparison of today's progress photo(s) against the most recent prior capture of each view — computed by us, not by the AI that returns the rest of this JSON. Optional: absent when no photo was captured today or no baseline exists yet. */
+  photo_comparison_note?: string;
 }
 
 export interface MicronutrientNote {
@@ -59,4 +61,6 @@ export interface TomorrowMeal {
 export interface WorkoutExercise {
   name: string;
   detail?: string;
+  /** Best-effort per-exercise estimate — the workout-wide `workout_calories_burned` total isn't a per-movement breakdown, so this is separate. Optional: absent on reports imported before schema v3. */
+  calories_burned?: number;
 }

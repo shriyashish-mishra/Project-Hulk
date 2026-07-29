@@ -13,18 +13,49 @@ import type {
   PeriodSummary,
 } from "./types";
 
+const CALORIE_BALANCE_KEYWORD_PATTERN = /(deficit|surplus|excess)/i;
+const CALORIE_BALANCE_NUMBER_PATTERN = /([+-]?\d+)/;
+const KEYWORD_PROXIMITY_WINDOW = 40;
+
+function signedCalorieBalance(rawNumber: string, signalText: string): number {
+  const value = parseInt(rawNumber, 10);
+  const isExplicitlySigned = rawNumber.startsWith("+") || rawNumber.startsWith("-");
+  if (isExplicitlySigned) return value;
+  return /surplus|excess/i.test(signalText) ? value : -value;
+}
+
 /**
  * Reports imported before schema v2 have no `calorie_balance_kcal`, only
  * the free-text `calorie_balance` (e.g. "-395 kcal (deficit)"). Extracts a
  * signed number from that text so older reports still chart correctly.
+ *
+ * Prefers a number found near the word "deficit"/"surplus"/"excess" over
+ * just grabbing the first number anywhere in the sentence — the old
+ * behavior could latch onto an unrelated number mentioned earlier, e.g.
+ * "consumed 1800 kcal against a 2120 kcal maintenance, a 320 kcal
+ * deficit" would previously report -1800 instead of -320. The sign is
+ * also read from that same nearby keyword rather than the whole sentence,
+ * so a sentence that mentions both words ("not a surplus, a deficit of
+ * 320 kcal") resolves against the keyword actually next to the number.
+ * Falls back to the old first-number-anywhere behavior only if no number
+ * appears near any of those keywords.
  */
 export function parseCalorieBalanceFallback(text: string): number | null {
-  const match = text.match(/([+-]?\d+)/);
-  if (!match) return null;
-  const value = parseInt(match[1], 10);
-  const isExplicitlySigned = match[1].startsWith("+") || match[1].startsWith("-");
-  if (isExplicitlySigned) return value;
-  return /surplus|excess/i.test(text) ? value : -value;
+  const keywordMatch = CALORIE_BALANCE_KEYWORD_PATTERN.exec(text);
+  if (keywordMatch && keywordMatch.index !== undefined) {
+    const windowStart = Math.max(0, keywordMatch.index - KEYWORD_PROXIMITY_WINDOW);
+    const windowEnd = Math.min(
+      text.length,
+      keywordMatch.index + keywordMatch[0].length + KEYWORD_PROXIMITY_WINDOW,
+    );
+    const nearbyMatch = text.slice(windowStart, windowEnd).match(CALORIE_BALANCE_NUMBER_PATTERN);
+    if (nearbyMatch) {
+      return signedCalorieBalance(nearbyMatch[1], keywordMatch[0]);
+    }
+  }
+
+  const match = text.match(CALORIE_BALANCE_NUMBER_PATTERN);
+  return match ? signedCalorieBalance(match[1], text) : null;
 }
 
 export function buildTrendPoints(reports: AiDailyReport[]): DailyTrendPoint[] {

@@ -199,6 +199,10 @@ export default async function ProgressWeeklyPage({
             ? `/progress/weekly?start=${addDays(start, 7)}`
             : null
         }
+        pickerValue={start}
+        pickerMax={today}
+        mode="week"
+        hrefBase="/progress/weekly"
       />
 
       <div className="flex flex-col gap-1">

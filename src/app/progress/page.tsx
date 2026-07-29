@@ -119,6 +119,10 @@ export default async function ProgressDailyPage({
         label={label}
         prevHref={`/progress?date=${addDays(date, -1)}`}
         nextHref={isToday ? null : `/progress?date=${addDays(date, 1)}`}
+        pickerValue={date}
+        pickerMax={today}
+        mode="day"
+        hrefBase="/progress"
       />
 
       {report ? (
@@ -144,6 +148,13 @@ export default async function ProgressDailyPage({
                   label="Calories"
                   value={report.parsed_json.estimated_calories}
                   unit=" kcal"
+                  target={
+                    userContext.calorieRangeKcal
+                      ? Math.round(
+                          (userContext.calorieRangeKcal.min + userContext.calorieRangeKcal.max) / 2,
+                        )
+                      : null
+                  }
                   avg={trailingSummary.avgCalories}
                 />
                 <CalorieBalanceBadge
@@ -158,24 +169,28 @@ export default async function ProgressDailyPage({
                 label="Protein"
                 value={report.parsed_json.protein_g}
                 unit="g"
+                target={userContext.proteinTargetG}
                 avg={trailingSummary.avgProteinG}
               />
               <NutrientBar
                 label="Carbs"
                 value={report.parsed_json.carbs_g}
                 unit="g"
+                target={userContext.carbsTargetG}
                 avg={null}
               />
               <NutrientBar
                 label="Fat"
                 value={report.parsed_json.fat_g}
                 unit="g"
+                target={userContext.fatTargetG}
                 avg={null}
               />
               <NutrientBar
                 label="Fibre"
                 value={report.parsed_json.fiber_g}
                 unit="g"
+                target={userContext.fiberTargetG}
                 avg={null}
               />
             </CardContent>

@@ -1,4 +1,4 @@
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;
 
 /**
  * Shown inside the generated prompt so Claude returns JSON in exactly
@@ -28,9 +28,9 @@ export const AI_REPORT_JSON_EXAMPLE = {
   workout_duration_min: 55,
   workout_calories_burned: 420,
   workout_exercises: [
-    { name: "Incline Dumbbell Press", detail: "4x10" },
-    { name: "Lateral Raises", detail: "4x12" },
-    { name: "Overhead Tricep Extension", detail: "3x12" },
+    { name: "Incline Dumbbell Press", detail: "4x10", calories_burned: 60 },
+    { name: "Lateral Raises", detail: "4x12", calories_burned: 30 },
+    { name: "Overhead Tricep Extension", detail: "3x12", calories_burned: 25 },
   ],
   strengths: ["High protein intake", "Consistent meal timing"],
   improvements: ["Low fiber", "Add more vegetables at dinner"],

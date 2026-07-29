@@ -84,6 +84,53 @@ export function calculateCalorieRangeKcal(
   };
 }
 
+const FAT_PERCENT_OF_CALORIES: Record<PrimaryGoal, number> = {
+  // Fat as a share of total calories; carbs fill whatever's left after
+  // protein (grams-based, from calculateProteinTargetG) and fat are
+  // allocated. Lower fat for build_muscle leaves more room for carbs to
+  // fuel training; slightly higher fat for lose_fat helps satiety in a
+  // deficit. Same goal-banding philosophy as PROTEIN_G_PER_KG above.
+  lose_fat: 0.3,
+  build_muscle: 0.25,
+  recomposition: 0.28,
+  maintain: 0.28,
+};
+
+/**
+ * Carb/fat targets in grams, derived from the calorie range's midpoint and
+ * the already-computed protein target — never independently guessed.
+ * Returns null whenever `calculateCalorieRangeKcal` would (missing
+ * inputs, or a recomposition goal, which is deliberately never reduced to
+ * a calorie framing) so callers get one consistent "not enough info yet"
+ * signal across calories, protein, carbs, and fat.
+ */
+export function calculateMacroTargetsG(
+  calorieRangeKcal: { min: number; max: number } | null,
+  proteinTargetG: number | null,
+  goal: PrimaryGoal | null,
+): { carbsG: number; fatG: number } | null {
+  if (!calorieRangeKcal || proteinTargetG === null || !goal) return null;
+
+  const calorieTargetKcal = (calorieRangeKcal.min + calorieRangeKcal.max) / 2;
+  const fatKcal = calorieTargetKcal * FAT_PERCENT_OF_CALORIES[goal];
+  const proteinKcal = proteinTargetG * 4;
+  const remainingKcal = Math.max(0, calorieTargetKcal - proteinKcal - fatKcal);
+
+  return {
+    fatG: Math.round(fatKcal / 9 / 5) * 5,
+    carbsG: Math.round(remainingKcal / 4 / 5) * 5,
+  };
+}
+
+const FIBER_G_PER_1000_KCAL = 14; // Dietary Guidelines for Americans / IOM guideline
+
+/** Same null-propagation as `calculateMacroTargetsG` — fiber is calorie-derived, so it's only ever meaningful when a calorie range exists. */
+export function calculateFiberTargetG(calorieRangeKcal: { min: number; max: number } | null): number | null {
+  if (!calorieRangeKcal) return null;
+  const calorieTargetKcal = (calorieRangeKcal.min + calorieRangeKcal.max) / 2;
+  return Math.round(((calorieTargetKcal / 1000) * FIBER_G_PER_1000_KCAL) / 5) * 5;
+}
+
 const ML_PER_KG_BY_SEX: Record<BiologicalSex, number> = {
   // Commonly cited sports-nutrition range is 30-35ml/kg; split by the
   // typical difference in body-water percentage between sexes rather than

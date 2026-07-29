@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // mobile/ is a separate Expo project with its own eslint.config.js —
+    // untracked by git, but present locally, so the root linter must not
+    // walk into it.
+    "mobile/**",
   ]),
 ]);
 

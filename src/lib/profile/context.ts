@@ -5,7 +5,9 @@ import { getUserContextRpc } from "./rpc";
 import {
   calculateAge,
   calculateCalorieRangeKcal,
+  calculateFiberTargetG,
   calculateHydrationTargetGlasses,
+  calculateMacroTargetsG,
   calculateProteinTargetG,
   calculateSleepTargetMinutes,
 } from "./targets";
@@ -17,6 +19,9 @@ export interface UserContext {
   latestWeightKg: number | null;
   proteinTargetG: number | null;
   calorieRangeKcal: { min: number; max: number } | null;
+  carbsTargetG: number | null;
+  fatTargetG: number | null;
+  fiberTargetG: number | null;
   hydrationTargetGlasses: number | null;
   sleepTargetMinutes: number | null;
   cycleEstimate: CycleEstimate | null;
@@ -48,6 +53,9 @@ export async function getUserContext(asOfDate: string = getLocalDateString()): P
       latestWeightKg: null,
       proteinTargetG: null,
       calorieRangeKcal: null,
+      carbsTargetG: null,
+      fatTargetG: null,
+      fiberTargetG: null,
       hydrationTargetGlasses: null,
       sleepTargetMinutes: null,
       cycleEstimate: null,
@@ -72,6 +80,9 @@ export async function getUserContext(asOfDate: string = getLocalDateString()): P
     primaryGoal: profile.primary_goal,
     latestWeightKg,
   });
+
+  const macroTargetsG = calculateMacroTargetsG(calorieRangeKcal, proteinTargetG, profile.primary_goal);
+  const fiberTargetG = calculateFiberTargetG(calorieRangeKcal);
 
   const hydrationTargetGlasses = latestWeightKg
     ? calculateHydrationTargetGlasses({
@@ -106,6 +117,9 @@ export async function getUserContext(asOfDate: string = getLocalDateString()): P
     latestWeightKg,
     proteinTargetG,
     calorieRangeKcal,
+    carbsTargetG: macroTargetsG?.carbsG ?? null,
+    fatTargetG: macroTargetsG?.fatG ?? null,
+    fiberTargetG,
     hydrationTargetGlasses,
     sleepTargetMinutes,
     cycleEstimate,

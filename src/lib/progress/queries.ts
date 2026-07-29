@@ -1,12 +1,13 @@
 import { requireUser } from "@/lib/supabase/auth";
 import type { AiDailyReport, AiReportJson } from "@/lib/nightly-report/types";
 
-/** Reports between `startDate` and `endDate` (inclusive), oldest first. */
+/** Reports between `startDate` and `endDate` (inclusive), oldest first. `ctx` lets callers outside a browser request (MCP, quick-log) inject an already-authenticated context instead of `requireUser()`. */
 export async function getReportsInRange(
   startDate: string,
   endDate: string,
+  ctx?: Awaited<ReturnType<typeof requireUser>>,
 ): Promise<AiDailyReport[]> {
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = ctx ?? (await requireUser());
   const { data, error } = await supabase
     .from("daily_ai_reports")
     .select("*")

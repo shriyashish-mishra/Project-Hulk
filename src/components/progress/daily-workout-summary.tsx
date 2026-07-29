@@ -74,9 +74,11 @@ export function DailyWorkoutSummary({
               className="flex items-baseline justify-between gap-3 py-2 text-sm"
             >
               <span className="text-foreground">{exercise.name}</span>
-              {exercise.detail && (
+              {(exercise.detail || exercise.calories_burned !== undefined) && (
                 <span className="shrink-0 text-xs text-muted-foreground">
-                  {exercise.detail}
+                  {[exercise.detail, exercise.calories_burned !== undefined ? `${exercise.calories_burned} kcal` : null]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </span>
               )}
             </li>

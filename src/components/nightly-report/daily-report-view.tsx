@@ -121,7 +121,20 @@ export function DailyReportView({ report }: DailyReportViewProps) {
         </CardContent>
       </Card>
 
-      <Card className="animate-fade-up" style={{ animationDelay: "180ms" }}>
+      {report.photo_comparison_note && (
+        <Card className="animate-fade-up" style={{ animationDelay: "180ms" }}>
+          <CardHeader>
+            <CardTitle>Progress Photos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="whitespace-pre-line text-sm text-muted-foreground">
+              {report.photo_comparison_note}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="animate-fade-up" style={{ animationDelay: "240ms" }}>
         <CardHeader>
           <CardTitle>What Went Well</CardTitle>
         </CardHeader>
@@ -137,7 +150,7 @@ export function DailyReportView({ report }: DailyReportViewProps) {
         </CardContent>
       </Card>
 
-      <Card className="animate-fade-up" style={{ animationDelay: "240ms" }}>
+      <Card className="animate-fade-up" style={{ animationDelay: "300ms" }}>
         <CardHeader>
           <CardTitle>What Could Improve</CardTitle>
         </CardHeader>
@@ -153,7 +166,7 @@ export function DailyReportView({ report }: DailyReportViewProps) {
         </CardContent>
       </Card>
 
-      <Card className="animate-fade-up" style={{ animationDelay: "300ms" }}>
+      <Card className="animate-fade-up" style={{ animationDelay: "360ms" }}>
         <CardHeader>
           <CardTitle>Tomorrow&rsquo;s Nutrition Plan</CardTitle>
         </CardHeader>
@@ -171,7 +184,7 @@ export function DailyReportView({ report }: DailyReportViewProps) {
         </CardContent>
       </Card>
 
-      <Card className="animate-fade-up" style={{ animationDelay: "360ms" }}>
+      <Card className="animate-fade-up" style={{ animationDelay: "420ms" }}>
         <CardHeader>
           <CardTitle>Tomorrow&rsquo;s Workout Suggestion</CardTitle>
         </CardHeader>

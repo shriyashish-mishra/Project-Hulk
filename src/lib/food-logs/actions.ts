@@ -2,8 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/supabase/auth";
+import type { Database } from "@/lib/supabase/database.types";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { MEAL_SECTIONS } from "./constants";
 import type { FoodLog, MealType } from "./types";
+
+interface AuthContext {
+  supabase: SupabaseClient<Database>;
+  user: User;
+}
 
 export interface MealLogInput {
   mealType: MealType;
@@ -28,14 +35,20 @@ function assertValidInput(input: MealLogInput, loggedOn: string) {
   }
 }
 
-/** Upserts the note for a meal type on `loggedOn` — one entry per meal per day. */
+/**
+ * Upserts the note for a meal type on `loggedOn` — one entry per meal per day.
+ * `ctx` lets callers outside a browser request (e.g. the MCP server, which
+ * resolves auth from a bearer token rather than cookies) inject an
+ * already-authenticated `{ supabase, user }` instead of `requireUser()`.
+ */
 export async function saveMealLog(
   input: MealLogInput,
   loggedOn: string,
+  ctx?: AuthContext,
 ): Promise<FoodLog> {
   assertValidInput(input, loggedOn);
 
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = ctx ?? (await requireUser());
   const { data, error } = await supabase
     .from("food_logs")
     .upsert(

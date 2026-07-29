@@ -8,6 +8,7 @@ import type { Json } from "@/lib/supabase/database.types";
 import { buildNightlyReportPrompt } from "./prompt";
 import { getRecoveryPromptContext } from "./context";
 import { getWeekSoFarContext } from "./week-context";
+import { getPhotoComparisonNote } from "./photo-comparison";
 import { getUserContext } from "@/lib/profile/context";
 import { deriveMuscleMapModel } from "@/lib/profile/types";
 import { parseAiReportResponse } from "./parse";
@@ -31,21 +32,27 @@ export async function importAiReport(
 
   const { supabase, user } = await requireUser();
 
-  const [foodLogs, workoutLog, recoveryContext, userContext, weekSoFar] = await Promise.all([
-    getFoodLogsForDate(reportDate),
-    getWorkoutLogForDate(reportDate),
-    getRecoveryPromptContext(reportDate),
-    getUserContext(reportDate),
-    getWeekSoFarContext(reportDate),
-  ]);
+  const [foodLogs, workoutLog, recoveryContext, userContext, weekSoFar, photoComparisonNote] =
+    await Promise.all([
+      getFoodLogsForDate(reportDate),
+      getWorkoutLogForDate(reportDate),
+      getRecoveryPromptContext(reportDate),
+      getUserContext(reportDate),
+      getWeekSoFarContext(reportDate),
+      getPhotoComparisonNote(reportDate),
+    ]);
   const promptMarkdown = buildNightlyReportPrompt({
     date: reportDate,
     foodLogs,
     workoutLog,
     ...recoveryContext,
+    photoComparisonNote,
     userContext,
     weekSoFar,
   });
+  if (photoComparisonNote) {
+    parsed.photo_comparison_note = photoComparisonNote;
+  }
 
   // What mattered, as of today — so a later goal change never silently
   // reinterprets this already-generated report (see plan doc section 7).

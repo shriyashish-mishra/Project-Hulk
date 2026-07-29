@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, type ReactElement } from "react";
+import { useState, useTransition, type ReactElement, type ReactNode } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import {
   Drawer,
@@ -28,6 +28,8 @@ interface PresetPickerDrawerProps {
   onCreate: (rawText: string) => Promise<PresetItem>;
   onUpdate: (id: string, rawText: string) => Promise<PresetItem>;
   onDelete: (id: string) => Promise<void>;
+  /** Optional structured preview for a preset's body in the picker list — falls back to the raw, truncated paragraph when omitted (food presets have no structure to render). */
+  renderPresetBody?: (rawText: string) => ReactNode;
 }
 
 export function PresetPickerDrawer({
@@ -40,6 +42,7 @@ export function PresetPickerDrawer({
   onCreate,
   onUpdate,
   onDelete,
+  renderPresetBody,
 }: PresetPickerDrawerProps) {
   const [open, setOpen] = useState(false);
   const [sessionKey, setSessionKey] = useState(0);
@@ -64,6 +67,7 @@ export function PresetPickerDrawer({
           onUpdate={onUpdate}
           onDelete={onDelete}
           onDone={() => setOpen(false)}
+          renderPresetBody={renderPresetBody}
         />
       </DrawerContent>
     </Drawer>
@@ -80,6 +84,7 @@ interface PresetPickerBodyProps {
   onUpdate: (id: string, rawText: string) => Promise<PresetItem>;
   onDelete: (id: string) => Promise<void>;
   onDone: () => void;
+  renderPresetBody?: (rawText: string) => ReactNode;
 }
 
 function PresetPickerBody({
@@ -92,6 +97,7 @@ function PresetPickerBody({
   onUpdate,
   onDelete,
   onDone,
+  renderPresetBody,
 }: PresetPickerBodyProps) {
   const [presets, setPresets] = useState(initialPresets);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -212,9 +218,13 @@ function PresetPickerBody({
                 onClick={() => handlePick(preset.raw_text)}
                 className="min-w-0 flex-1 text-left active:opacity-60"
               >
-                <p className="line-clamp-2 whitespace-pre-line text-[15px] text-foreground">
-                  {preset.raw_text}
-                </p>
+                {renderPresetBody ? (
+                  renderPresetBody(preset.raw_text)
+                ) : (
+                  <p className="line-clamp-2 whitespace-pre-line text-[15px] text-foreground">
+                    {preset.raw_text}
+                  </p>
+                )}
               </button>
               <button
                 type="button"

@@ -2,14 +2,26 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/supabase/auth";
+import type { Database } from "@/lib/supabase/database.types";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { WorkoutLog } from "./types";
+
+interface AuthContext {
+  supabase: SupabaseClient<Database>;
+  user: User;
+}
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Upserts the workout note for `loggedOn` — one entry per day. */
+/**
+ * Upserts the workout note for `loggedOn` — one entry per day. `ctx` lets
+ * callers outside a browser request (the MCP server) inject an
+ * already-authenticated `{ supabase, user }` instead of `requireUser()`.
+ */
 export async function saveWorkoutLog(
   rawText: string,
   loggedOn: string,
+  ctx?: AuthContext,
 ): Promise<WorkoutLog> {
   if (!rawText.trim()) {
     throw new Error("Write your workout.");
@@ -18,7 +30,7 @@ export async function saveWorkoutLog(
     throw new Error("Invalid date.");
   }
 
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = ctx ?? (await requireUser());
   const { data, error } = await supabase
     .from("workout_logs")
     .upsert(

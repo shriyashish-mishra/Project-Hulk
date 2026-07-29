@@ -1,3 +1,4 @@
+import { requireUser } from "@/lib/supabase/auth";
 import { addDays, formatWeekdayShort, getWeekStart } from "@/lib/date";
 import { getReportsInRange } from "@/lib/progress/queries";
 import { buildTrendPoints, computePeriodSummary } from "@/lib/progress/stats";
@@ -30,11 +31,15 @@ export interface WeekSoFarContext {
  * a day logged but never generated/imported won't appear here, same
  * limitation the Weekly Progress page already has.
  */
-export async function getWeekSoFarContext(date: string): Promise<WeekSoFarContext> {
+export async function getWeekSoFarContext(
+  date: string,
+  ctx?: Awaited<ReturnType<typeof requireUser>>,
+): Promise<WeekSoFarContext> {
   const weekStart = getWeekStart(date);
   const weekEnd = addDays(weekStart, 6);
 
-  const priorReports = date === weekStart ? [] : await getReportsInRange(weekStart, addDays(date, -1));
+  const priorReports =
+    date === weekStart ? [] : await getReportsInRange(weekStart, addDays(date, -1), ctx);
   const points = buildTrendPoints(priorReports);
   const summary = computePeriodSummary(points);
   const regionCounts = computeRegionCounts(points.map((p) => p.musclesTrained));

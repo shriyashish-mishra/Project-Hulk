@@ -1,8 +1,16 @@
 import { requireUser } from "@/lib/supabase/auth";
+import type { Database } from "@/lib/supabase/database.types";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { WeightLog } from "./types";
 
-export async function getWeightLogForDate(measuredOn: string): Promise<WeightLog | null> {
-  const { supabase, user } = await requireUser();
+interface AuthContext {
+  supabase: SupabaseClient<Database>;
+  user: User;
+}
+
+/** `ctx` lets callers outside a browser request (MCP, quick-log) inject an already-authenticated context instead of `requireUser()`. */
+export async function getWeightLogForDate(measuredOn: string, ctx?: AuthContext): Promise<WeightLog | null> {
+  const { supabase, user } = ctx ?? (await requireUser());
   const { data, error } = await supabase
     .from("weight_logs")
     .select("*")
@@ -31,9 +39,12 @@ export async function getWeightLogsInRange(
   return data;
 }
 
-/** Most recent measurement strictly before `beforeDate` — used as a trend baseline when the period itself has no earlier entry. */
-export async function getLatestWeightLogBefore(beforeDate: string): Promise<WeightLog | null> {
-  const { supabase, user } = await requireUser();
+/** Most recent measurement strictly before `beforeDate` — used as a trend baseline when the period itself has no earlier entry. `ctx` lets callers outside a browser request (MCP, quick-log) inject an already-authenticated context instead of `requireUser()`. */
+export async function getLatestWeightLogBefore(
+  beforeDate: string,
+  ctx?: AuthContext,
+): Promise<WeightLog | null> {
+  const { supabase, user } = ctx ?? (await requireUser());
   const { data, error } = await supabase
     .from("weight_logs")
     .select("*")

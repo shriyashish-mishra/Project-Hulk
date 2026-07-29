@@ -1,10 +1,19 @@
 import { requireUser } from "@/lib/supabase/auth";
+import type { Database } from "@/lib/supabase/database.types";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { WorkoutLog } from "./types";
 
+interface AuthContext {
+  supabase: SupabaseClient<Database>;
+  user: User;
+}
+
+/** `ctx` lets callers outside a browser request (MCP, quick-log) inject an already-authenticated context instead of `requireUser()`. */
 export async function getWorkoutLogForDate(
   loggedOn: string,
+  ctx?: AuthContext,
 ): Promise<WorkoutLog | null> {
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = ctx ?? (await requireUser());
   const { data, error } = await supabase
     .from("workout_logs")
     .select("*")

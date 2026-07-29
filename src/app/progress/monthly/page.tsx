@@ -13,6 +13,7 @@ import { NextMonthMilestones } from "@/components/progress/next-month-milestones
 import {
   formatMonthLabel,
   getCurrentMonthString,
+  getLocalDateString,
   getMonthRange,
   shiftMonthString,
 } from "@/lib/date";
@@ -259,6 +260,10 @@ export default async function ProgressMonthlyPage({
             ? `/progress/monthly?month=${shiftMonthString(month, 1)}`
             : null
         }
+        pickerValue={start}
+        pickerMax={getLocalDateString()}
+        mode="month"
+        hrefBase="/progress/monthly"
       />
 
       <div className="flex flex-col gap-1">

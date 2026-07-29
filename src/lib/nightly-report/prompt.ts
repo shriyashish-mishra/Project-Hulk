@@ -30,6 +30,7 @@ interface BuildPromptInput {
   weightLog: WeightLog | null;
   priorWeight: PriorWeightContext | null;
   photoViewsCaptured: PhotoViewType[];
+  photoComparisonNote: string | null;
   userContext: UserContext;
   weekSoFar: WeekSoFarContext;
 }
@@ -64,7 +65,7 @@ function buildWeekSoFarMarkdown(week: WeekSoFarContext): string {
 
 /** Structured facts about who's asking — the AI interprets them, it never has to guess or ask what the user's goal is. */
 function buildAboutMeMarkdown(userContext: UserContext): string {
-  const { profile, proteinTargetG, calorieRangeKcal } = userContext;
+  const { profile, proteinTargetG, calorieRangeKcal, carbsTargetG, fatTargetG, fiberTargetG } = userContext;
   if (!profile) return "Not provided yet.";
 
   const lines: string[] = [];
@@ -77,6 +78,9 @@ function buildAboutMeMarkdown(userContext: UserContext): string {
   }
   if (proteinTargetG) lines.push(`Protein target: ${proteinTargetG}g/day`);
   if (calorieRangeKcal) lines.push(`Calorie range: ${calorieRangeKcal.min}–${calorieRangeKcal.max} kcal/day`);
+  if (carbsTargetG) lines.push(`Carb target: ${carbsTargetG}g/day`);
+  if (fatTargetG) lines.push(`Fat target: ${fatTargetG}g/day`);
+  if (fiberTargetG) lines.push(`Fibre target: ${fiberTargetG}g/day`);
   if (profile.target_weight_kg) lines.push(`Target weight: ${profile.target_weight_kg} kg`);
 
   return lines.length > 0 ? lines.join("\n") : "Not provided yet.";
@@ -92,15 +96,28 @@ Day ${cycleEstimate.cycleDay} of ~${cycleEstimate.cycleLengthDays} · ${CYCLE_PH
 `;
 }
 
+function buildPhotosLine(
+  photoViewsCaptured: PhotoViewType[],
+  photoComparisonNote: string | null,
+): string {
+  if (photoViewsCaptured.length === 0) return "Progress photos: Not captured today";
+
+  const captured = `Progress photos: captured today (${photoViewsCaptured.join(", ")})`;
+  if (!photoComparisonNote) return `${captured} — for my own tracking, not for you to view`;
+
+  return `${captured}. AI vision comparison against my most recent prior photo of each view — factor this into strengths/improvements/coach_summary where relevant:\n${photoComparisonNote}`;
+}
+
 function buildRecoveryContextMarkdown({
   waterLog,
   sleepLog,
   weightLog,
   priorWeight,
   photoViewsCaptured,
+  photoComparisonNote,
 }: Pick<
   BuildPromptInput,
-  "waterLog" | "sleepLog" | "weightLog" | "priorWeight" | "photoViewsCaptured"
+  "waterLog" | "sleepLog" | "weightLog" | "priorWeight" | "photoViewsCaptured" | "photoComparisonNote"
 >): string {
   const waterLine = waterLog
     ? `Water: ${waterLog.glass_count} of ${waterLog.target_glasses} glasses (${((waterLog.glass_count * waterLog.glass_size_ml) / 1000).toFixed(1)} L)`
@@ -121,10 +138,7 @@ function buildRecoveryContextMarkdown({
     weightLine = "Weight: Not logged recently";
   }
 
-  const photosLine =
-    photoViewsCaptured.length > 0
-      ? `Progress photos: captured today (${photoViewsCaptured.join(", ")}) — for my own tracking, not for you to view`
-      : "Progress photos: Not captured today";
+  const photosLine = buildPhotosLine(photoViewsCaptured, photoComparisonNote);
 
   return [waterLine, sleepLine, weightLine, photosLine].join("\n");
 }
@@ -138,6 +152,7 @@ export function buildNightlyReportPrompt({
   weightLog,
   priorWeight,
   photoViewsCaptured,
+  photoComparisonNote,
   userContext,
   weekSoFar,
 }: BuildPromptInput): string {
@@ -157,6 +172,7 @@ export function buildNightlyReportPrompt({
     weightLog,
     priorWeight,
     photoViewsCaptured,
+    photoComparisonNote,
   });
 
   return `# Project Hulk
@@ -195,7 +211,7 @@ Please estimate:
 - Fibre
 - Micronutrients
 - Estimated calorie deficit/surplus, as both a sentence and a signed kcal number (negative = deficit)
-- From the workout log: duration in minutes, calories burned, and the individual exercises with sets/reps if mentioned (best-effort — leave an exercise out if the log genuinely doesn't support a guess)
+- From the workout log: duration in minutes, total calories burned, and the individual exercises with sets/reps if mentioned, each with its own best-effort calories-burned estimate ("calories_burned" per exercise — leave it off an exercise, or leave the exercise out entirely, if the log genuinely doesn't support a guess; the per-exercise numbers don't need to add up exactly to the workout total, both are independent estimates)
 
 Then analyse — weighed against my goal, targets, and training frequency
 under "About Me" above, not generic advice:
@@ -221,6 +237,13 @@ IMPORTANT:
   single day is expected to hit every muscle group — whether my training
   is balanced across muscle groups is a weekly/monthly question, never a
   daily one, so don't factor muscle-group coverage into today's score.
+- For machine/cable exercises specifically (lat pulldown, machine row,
+  face pull, tricep pushdown, and anything else clearly done on a
+  machine or cable stack) always report the weight unit as lbs in
+  workout_exercises detail, even if my log says kg for that exercise —
+  I only ever mean lbs there, regardless of what unit I typed. Leave
+  every dumbbell and barbell weight exactly as I logged it, unit and
+  all — this rule is only for machine/cable exercises.
 
 Return TWO outputs:
 

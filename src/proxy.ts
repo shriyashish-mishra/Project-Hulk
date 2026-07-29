@@ -3,6 +3,32 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_PATHS = ["/login", "/signup", "/reset-password", "/auth/confirm"];
 
+// MCP + OAuth bridge: these authenticate themselves (bearer token /
+// client-secret / PKCE, see src/lib/mcp/) rather than the browser cookie
+// session this proxy checks, and must stay reachable by claude.ai's servers
+// with no cookie at all — unlike PUBLIC_PATHS above, a logged-in browser
+// hitting one of these should NOT be bounced to "/" either, so they skip
+// this proxy entirely rather than going through the public/private branch
+// below. /oauth/authorize is deliberately NOT here — it's a real browser
+// page and should keep the normal redirect-to-login behavior.
+const ALWAYS_ALLOWED_PATHS = [
+  "/.well-known/oauth-authorization-server",
+  "/.well-known/oauth-protected-resource",
+  "/api/oauth/token",
+  "/api/mcp",
+  // Todoist "notepad" capture bridge (src/lib/todoist/). The webhook has no
+  // cookie at all (Todoist's servers call it directly); the callback route
+  // authenticates itself via requireUser() internally regardless. /todoist/connect
+  // and /api/todoist/authorize are deliberately NOT here — same reasoning
+  // as /oauth/authorize above.
+  "/api/todoist/webhook",
+  "/api/todoist/callback",
+  // Home-screen shortcut endpoints (src/lib/quick-log/) — authenticate via a
+  // single bearer token (QUICK_LOG_TOKEN), no cookie at all, called directly
+  // by iOS Shortcuts / Android automation apps.
+  "/api/quick/",
+];
+
 /**
  * UX-only redirect layer — not the security boundary. Every route that
  * reads/writes user data also verifies auth itself (requireUser in
@@ -10,6 +36,10 @@ const PUBLIC_PATHS = ["/login", "/signup", "/reset-password", "/auth/confirm"];
  * level regardless of what happens here.
  */
 export async function proxy(request: NextRequest) {
+  if (ALWAYS_ALLOWED_PATHS.some((path) => request.nextUrl.pathname.startsWith(path))) {
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

@@ -7,12 +7,14 @@ interface NutrientBarProps {
   label: string;
   value: number;
   unit: string;
-  /** Trailing 7-day average, for a "vs your recent average" caption instead of a fixed goal. */
+  /** A real target (from lib/profile/targets.ts) — when present, the bar fills toward this and the caption reads "value / target" instead of a vague fraction of your own history. */
+  target: number | null;
+  /** Trailing 7-day average — still shown as a small secondary line when available, target or not. */
   avg: number | null;
 }
 
-export function NutrientBar({ label, value, unit, avg }: NutrientBarProps) {
-  const max = Math.max(value, avg ?? 0, 1) * 1.15;
+export function NutrientBar({ label, value, unit, target, avg }: NutrientBarProps) {
+  const max = target ?? Math.max(value, avg ?? 0, 1) * 1.15;
   const delta = avg === null ? null : Math.round(value - avg);
 
   return (
@@ -22,6 +24,12 @@ export function NutrientBar({ label, value, unit, avg }: NutrientBarProps) {
         <span className="text-muted-foreground tabular-nums">
           {value}
           <span className="ml-0.5 text-xs">{unit}</span>
+          {target !== null && (
+            <span className="ml-1 text-xs text-muted-foreground/70">
+              / {target}
+              {unit} target
+            </span>
+          )}
         </span>
       </div>
       <ProgressTrack>

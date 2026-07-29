@@ -91,9 +91,11 @@ function optionalExercises(
         const name = field(record, "name");
         if (typeof name !== "string" || !name.trim()) return null;
         const detail = field(record, "detail");
+        const caloriesBurned = optionalNumber(record, "calories_burned");
         return {
           name: name.trim(),
           ...(typeof detail === "string" && detail.trim() ? { detail: detail.trim() } : {}),
+          ...(caloriesBurned !== undefined ? { calories_burned: caloriesBurned } : {}),
         };
       }
       return null;

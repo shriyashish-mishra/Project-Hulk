@@ -1,3 +1,4 @@
+import { formatShortDateWithWeekday } from "@/lib/date";
 import { PHOTO_VIEW_LABEL, PHOTO_VIEW_TYPES, type ProgressPhoto } from "@/lib/photos/types";
 
 function PhotoTile({ label, photo }: { label: string; photo: ProgressPhoto }) {
@@ -9,7 +10,12 @@ function PhotoTile({ label, photo }: { label: string; photo: ProgressPhoto }) {
           <img src={photo.signedUrl} alt="" className="size-full object-cover" />
         )}
       </div>
-      <span className="text-center text-xs text-muted-foreground">{label}</span>
+      <div className="flex flex-col items-center text-center">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <span className="text-[11px] text-muted-foreground/70">
+          {formatShortDateWithWeekday(new Date(`${photo.captured_on}T00:00:00`))}
+        </span>
+      </div>
     </div>
   );
 }
