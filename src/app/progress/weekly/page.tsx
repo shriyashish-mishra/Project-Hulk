@@ -5,6 +5,7 @@ import { DateNav } from "@/components/progress/date-nav";
 import { PeriodSummaryTiles } from "@/components/progress/period-summary-tiles";
 import { ScoreTrendChart } from "@/components/progress/score-trend-chart";
 import { NutritionTrendChart } from "@/components/progress/nutrition-trend-chart";
+import { CalorieBalanceChart } from "@/components/progress/calorie-balance-chart";
 import { ConsistencyTimeline } from "@/components/progress/consistency-timeline";
 import { MuscleBalanceSection } from "@/components/progress/muscle-balance-section";
 import { RecoverySection } from "@/components/progress/recovery-section";
@@ -127,6 +128,10 @@ export default async function ProgressWeeklyPage({
     {
       title: "Nutrition Trend",
       content: <NutritionTrendChart days={days} pointsByDate={pointsByDate} />,
+    },
+    {
+      title: "Calorie Balance",
+      content: <CalorieBalanceChart days={days} pointsByDate={pointsByDate} />,
     },
     {
       title: "Consistency",

@@ -58,6 +58,57 @@ export function parseCalorieBalanceFallback(text: string): number | null {
   return match ? signedCalorieBalance(match[1], text) : null;
 }
 
+const KCAL_PER_KG_BODY_FAT = 7700; // standard approximation for adipose tissue energy density
+
+export interface CalorieBalanceSummary {
+  avgBalanceKcal: number | null;
+  daysWithBalance: number;
+  daysInDeficit: number;
+  netBalanceKcal: number;
+  estFatChangeKg: number;
+  bestDay: { date: string; balanceKcal: number } | null;
+}
+
+/**
+ * Aggregates the per-day calorie balances (already resolved via
+ * `calorie_balance_kcal` or `parseCalorieBalanceFallback` in
+ * `buildTrendPoints`) into the figures the weekly Calorie Balance card
+ * shows. Days with no report or no parseable balance are excluded rather
+ * than treated as zero, so a partially-reported week doesn't dilute the
+ * average toward "no change."
+ */
+export function computeCalorieBalanceSummary(
+  days: string[],
+  pointsByDate: Map<string, DailyTrendPoint>,
+): CalorieBalanceSummary {
+  const balances = days
+    .map((date) => ({ date, balanceKcal: pointsByDate.get(date)?.calorieBalanceKcal ?? null }))
+    .filter((d): d is { date: string; balanceKcal: number } => d.balanceKcal !== null);
+
+  if (balances.length === 0) {
+    return {
+      avgBalanceKcal: null,
+      daysWithBalance: 0,
+      daysInDeficit: 0,
+      netBalanceKcal: 0,
+      estFatChangeKg: 0,
+      bestDay: null,
+    };
+  }
+
+  const netBalanceKcal = balances.reduce((sum, d) => sum + d.balanceKcal, 0);
+  const bestDay = balances.reduce((best, d) => (d.balanceKcal < best.balanceKcal ? d : best));
+
+  return {
+    avgBalanceKcal: Math.round(netBalanceKcal / balances.length),
+    daysWithBalance: balances.length,
+    daysInDeficit: balances.filter((d) => d.balanceKcal <= 0).length,
+    netBalanceKcal,
+    estFatChangeKg: Math.round((Math.abs(netBalanceKcal) / KCAL_PER_KG_BODY_FAT) * 100) / 100,
+    bestDay,
+  };
+}
+
 export function buildTrendPoints(reports: AiDailyReport[]): DailyTrendPoint[] {
   return reports.map((report) => ({
     date: report.report_date,
