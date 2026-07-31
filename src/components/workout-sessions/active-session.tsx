@@ -1,0 +1,154 @@
+"use client";
+
+import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Check, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ExerciseEntryDrawer, type ExerciseFieldValues } from "@/components/workout-templates/exercise-entry-drawer";
+import { ExerciseLibraryPickerDrawer } from "@/components/workout-templates/exercise-library-picker-drawer";
+import type { ExerciseLibraryItem } from "@/lib/exercise-library/types";
+import { addSessionExercise, completeSession, toggleSessionSet, updateSessionExercise } from "@/lib/workout-sessions/actions";
+import { estimateCalories } from "@/lib/workout-sessions/estimate";
+import type { SessionExercise, SessionExerciseInput, WorkoutSessionWithExercises } from "@/lib/workout-sessions/types";
+import { SessionExerciseCard } from "./session-exercise-card";
+import { SessionExerciseEditDrawer } from "./session-exercise-edit-drawer";
+
+function toInput(values: ExerciseFieldValues): SessionExerciseInput {
+  return {
+    sets_planned: values.sets,
+    reps: values.reps,
+    weight: values.weight,
+    weight_unit: values.weightUnit,
+    duration_minutes: values.durationMinutes,
+    incline_percent: values.inclinePercent,
+    speed_kph: values.speedKph,
+    notes: values.notes,
+  };
+}
+
+/** SQLite/Postgres `timestamptz` strings from Supabase are already ISO-parseable, unlike the mobile app's SQLite `datetime('now')` strings — no manual UTC normalization needed here. */
+function elapsedMinutesSince(startedAt: string): number {
+  return Math.max(0, Math.round((Date.now() - new Date(startedAt).getTime()) / 60000));
+}
+
+interface ActiveSessionProps {
+  initialSession: WorkoutSessionWithExercises;
+  exercises: ExerciseLibraryItem[];
+}
+
+/** Screen 3 — Active Workout Session. Also serves the "quick apply a template" case: nothing requires tapping through sets one by one before completing. */
+export function ActiveSession({ initialSession, exercises }: ActiveSessionProps) {
+  const router = useRouter();
+  const [session, setSession] = useState(initialSession);
+  const [elapsedMinutes, setElapsedMinutes] = useState(() => elapsedMinutesSince(initialSession.started_at));
+  const [editingExercise, setEditingExercise] = useState<SessionExercise | null>(null);
+  const [addingExercise, setAddingExercise] = useState<ExerciseLibraryItem | null>(null);
+  const [completing, startCompleting] = useTransition();
+
+  useEffect(() => {
+    if (session.completed_at) return;
+    const interval = setInterval(() => setElapsedMinutes(elapsedMinutesSince(session.started_at)), 15000);
+    return () => clearInterval(interval);
+  }, [session.started_at, session.completed_at]);
+
+  function updateLocalExercise(updated: SessionExercise) {
+    setSession((prev) => ({
+      ...prev,
+      exercises: prev.exercises.map((exercise) => (exercise.id === updated.id ? updated : exercise)),
+    }));
+  }
+
+  async function handleToggleSet(exercise: SessionExercise, setIndex: number) {
+    const updated = await toggleSessionSet(exercise, setIndex);
+    updateLocalExercise(updated);
+  }
+
+  async function handleSaveEdit(exercise: SessionExercise, updates: Parameters<typeof updateSessionExercise>[2]) {
+    const updated = await updateSessionExercise(exercise.id, exercise.session_id, updates);
+    updateLocalExercise(updated);
+  }
+
+  async function handleAddExercise(values: ExerciseFieldValues) {
+    if (!addingExercise) return;
+    const created = await addSessionExercise(session.id, addingExercise.id, toInput(values));
+    setSession((prev) => ({ ...prev, exercises: [...prev.exercises, created] }));
+  }
+
+  function handleComplete() {
+    startCompleting(async () => {
+      await completeSession(session.id);
+      router.push(`/log/${session.logged_on}`);
+    });
+  }
+
+  const exercisesCompletedCount = session.exercises.filter((exercise) =>
+    exercise.category === "cardio"
+      ? exercise.sets_completed > 0
+      : exercise.sets_planned != null && exercise.sets_completed >= exercise.sets_planned,
+  ).length;
+  const estimatedCalories = estimateCalories(session.exercises);
+  const sortedExercises = [...session.exercises].sort((a, b) => a.position - b.position);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-3 gap-2">
+        <div className="flex flex-col items-center gap-0.5 rounded-2xl border border-border bg-card py-3">
+          <span className="text-[15px] font-bold text-foreground">{elapsedMinutes} min</span>
+          <span className="text-[10px] font-medium text-muted-foreground">ELAPSED</span>
+        </div>
+        <div className="flex flex-col items-center gap-0.5 rounded-2xl border border-border bg-card py-3">
+          <span className="text-[15px] font-bold text-foreground">{estimatedCalories}</span>
+          <span className="text-[10px] font-medium text-muted-foreground">KCAL EST.</span>
+        </div>
+        <div className="flex flex-col items-center gap-0.5 rounded-2xl border border-border bg-card py-3">
+          <span className="text-[15px] font-bold text-foreground">
+            {exercisesCompletedCount} / {session.exercises.length}
+          </span>
+          <span className="text-[10px] font-medium text-muted-foreground">EXERCISES</span>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        {sortedExercises.map((exercise) => (
+          <SessionExerciseCard
+            key={exercise.id}
+            exercise={exercise}
+            onPressField={() => setEditingExercise(exercise)}
+            onToggleSet={(setIndex) => handleToggleSet(exercise, setIndex)}
+          />
+        ))}
+      </div>
+
+      <ExerciseLibraryPickerDrawer
+        exercises={exercises}
+        onPick={setAddingExercise}
+        trigger={
+          <button type="button" className="flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border py-3 text-sm font-semibold text-muted-foreground active:opacity-60">
+            <Plus className="size-4" />
+            Add exercise you did
+          </button>
+        }
+      />
+
+      <Button onClick={handleComplete} disabled={completing}>
+        <Check className="size-4" />
+        Complete Workout
+      </Button>
+
+      <SessionExerciseEditDrawer
+        open={editingExercise !== null}
+        onOpenChange={(open) => !open && setEditingExercise(null)}
+        exercise={editingExercise}
+        onSave={(updates) => (editingExercise ? handleSaveEdit(editingExercise, updates) : Promise.resolve())}
+      />
+
+      <ExerciseEntryDrawer
+        open={addingExercise !== null}
+        onOpenChange={(open) => !open && setAddingExercise(null)}
+        exercise={addingExercise}
+        showRest={false}
+        onSave={handleAddExercise}
+      />
+    </div>
+  );
+}

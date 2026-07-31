@@ -59,6 +59,33 @@ export type Database = {
         }
         Relationships: []
       }
+      exercise_library: {
+        Row: {
+          category: string
+          created_at: string
+          default_unit: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          default_unit?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          default_unit?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       food_logs: {
         Row: {
           created_at: string
@@ -242,6 +269,57 @@ export type Database = {
         }
         Relationships: []
       }
+      template_exercises: {
+        Row: {
+          default_duration_minutes: number | null
+          default_incline_percent: number | null
+          default_reps: number | null
+          default_rest_seconds: number | null
+          default_sets: number | null
+          default_speed_kph: number | null
+          default_weight: number | null
+          default_weight_unit: string | null
+          exercise_id: string
+          id: string
+          notes: string | null
+          position: number
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          default_duration_minutes?: number | null
+          default_incline_percent?: number | null
+          default_reps?: number | null
+          default_rest_seconds?: number | null
+          default_sets?: number | null
+          default_speed_kph?: number | null
+          default_weight?: number | null
+          default_weight_unit?: string | null
+          exercise_id: string
+          id?: string
+          notes?: string | null
+          position: number
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          default_duration_minutes?: number | null
+          default_incline_percent?: number | null
+          default_reps?: number | null
+          default_rest_seconds?: number | null
+          default_sets?: number | null
+          default_speed_kph?: number | null
+          default_weight?: number | null
+          default_weight_unit?: string | null
+          exercise_id?: string
+          id?: string
+          notes?: string | null
+          position?: number
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       water_logs: {
         Row: {
           created_at: string
@@ -340,6 +418,117 @@ export type Database = {
           created_at?: string
           id?: string
           raw_text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workout_session_exercises: {
+        Row: {
+          duration_minutes: number | null
+          exercise_id: string
+          id: string
+          incline_percent: number | null
+          notes: string | null
+          position: number
+          reps: number | null
+          session_id: string
+          sets_completed: number
+          sets_planned: number | null
+          speed_kph: number | null
+          user_id: string
+          weight: number | null
+          weight_unit: string | null
+        }
+        Insert: {
+          duration_minutes?: number | null
+          exercise_id: string
+          id?: string
+          incline_percent?: number | null
+          notes?: string | null
+          position: number
+          reps?: number | null
+          session_id: string
+          sets_completed?: number
+          sets_planned?: number | null
+          speed_kph?: number | null
+          user_id: string
+          weight?: number | null
+          weight_unit?: string | null
+        }
+        Update: {
+          duration_minutes?: number | null
+          exercise_id?: string
+          id?: string
+          incline_percent?: number | null
+          notes?: string | null
+          position?: number
+          reps?: number | null
+          session_id?: string
+          sets_completed?: number
+          sets_planned?: number | null
+          speed_kph?: number | null
+          user_id?: string
+          weight?: number | null
+          weight_unit?: string | null
+        }
+        Relationships: []
+      }
+      workout_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          logged_on: string
+          started_at: string
+          template_id: string | null
+          template_name_snapshot: string
+          total_calories: number | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          logged_on: string
+          started_at?: string
+          template_id?: string | null
+          template_name_snapshot: string
+          total_calories?: number | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          logged_on?: string
+          started_at?: string
+          template_id?: string | null
+          template_name_snapshot?: string
+          total_calories?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workout_templates: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

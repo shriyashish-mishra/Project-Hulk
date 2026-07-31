@@ -24,3 +24,17 @@ export async function getWorkoutLogForDate(
   if (error) throw new Error(error.message);
   return data;
 }
+
+/** Most recent logged workouts, newest first — backs the Workouts page's history list. */
+export async function getRecentWorkoutLogs(limit: number, ctx?: AuthContext): Promise<WorkoutLog[]> {
+  const { supabase, user } = ctx ?? (await requireUser());
+  const { data, error } = await supabase
+    .from("workout_logs")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("logged_on", { ascending: false })
+    .limit(limit);
+
+  if (error) throw new Error(error.message);
+  return data;
+}
