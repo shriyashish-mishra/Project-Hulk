@@ -1,6 +1,5 @@
 import { Component, type ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import * as SplashScreen from 'expo-splash-screen';
 
 interface CrashBoundaryProps {
   children: ReactNode;
@@ -15,11 +14,9 @@ interface CrashBoundaryState {
  * Last-resort error boundary for the whole app. Without this, a
  * render-phase throw anywhere in the tree (including from
  * `SQLiteProvider`'s `onInit` re-throwing a migration failure) aborts
- * React's entire first commit — which means `RootLayout`'s own
- * `SplashScreen.hideAsync()` effect never fires either, leaving the
- * native splash on screen forever with no visible error. Built from bare
- * RN primitives (no design-system components) so it still renders even
- * if the crash is inside the design system itself.
+ * React's entire first commit, leaving nothing on screen and no visible
+ * error. Built from bare RN primitives (no design-system components) so
+ * it still renders even if the crash is inside the design system itself.
  */
 export class CrashBoundary extends Component<CrashBoundaryProps, CrashBoundaryState> {
   state: CrashBoundaryState = { error: null, componentStack: null };
@@ -29,7 +26,6 @@ export class CrashBoundary extends Component<CrashBoundaryProps, CrashBoundarySt
   }
 
   componentDidCatch(error: Error, info: { componentStack?: string | null }) {
-    SplashScreen.hideAsync().catch(() => {});
     this.setState({ componentStack: info.componentStack ?? null });
   }
 

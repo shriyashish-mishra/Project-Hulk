@@ -8,8 +8,7 @@ import {
 } from '@expo-google-fonts/poppins';
 import { Stack, ThemeProvider, type Theme } from 'expo-router';
 import { SQLiteProvider, type SQLiteDatabase } from 'expo-sqlite';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 // eslint-disable-next-line no-restricted-imports -- diagnostic overlay must render with zero design-system dependency, in case that's what's broken
 import { Text, View } from 'react-native';
 
@@ -17,8 +16,6 @@ import { CrashBoundary } from '@/components/CrashBoundary';
 import { ToastHost } from '@/components/dialog';
 import { colors } from '@/core/theme';
 import { DATABASE_NAME, runMigrations } from '@/core/storage';
-
-SplashScreen.preventAutoHideAsync();
 
 /**
  * Belt-and-suspenders alongside `CrashBoundary`: React error boundaries
@@ -30,7 +27,6 @@ SplashScreen.preventAutoHideAsync();
 if (typeof ErrorUtils !== 'undefined') {
   const previousHandler = ErrorUtils.getGlobalHandler();
   ErrorUtils.setGlobalHandler((error, isFatal) => {
-    SplashScreen.hideAsync().catch(() => {});
     previousHandler?.(error, isFatal);
   });
 }
@@ -62,10 +58,8 @@ const projectHulkTheme: Theme = {
 /**
  * TEMPORARY diagnostic overlay — always rendered, on top of everything,
  * using only bare RN primitives (no custom font, no design system) so it
- * stays visible even if something below it hangs or fails to paint. The
- * app was hanging on the native splash screen with no visible error, so
- * this pins down exactly which stage (fonts / DB init / tab mount) is
- * the one that never completes. Remove once the real cause is found.
+ * stays visible even if something below it hangs or fails to paint.
+ * Remove once the real cause of the launch hang is found.
  */
 function StatusOverlay({ text }: { text: string }) {
   return (
@@ -92,6 +86,10 @@ function StatusOverlay({ text }: { text: string }) {
  * Root Stack — its only screens are the `(tabs)` group (the app's real
  * navigation, defined in `app/(tabs)/_layout.tsx` via `NativeTabs`) and any
  * modal/detail routes that should cover the tab bar, like `showcase`.
+ *
+ * No native splash screen — removed entirely (along with the
+ * `reactCompiler` experiment in `app.json`) while tracking down a launch
+ * hang, so there's nothing hiding whatever state the app is actually in.
  */
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
@@ -104,14 +102,6 @@ export default function RootLayout() {
   const [dbStage, setDbStage] = useState('not started');
   const [dbError, setDbError] = useState<string | null>(null);
   const [tabsMounted, setTabsMounted] = useState(false);
-
-  // Hides the native splash the instant JS starts running, regardless of
-  // font/DB state — otherwise the splash visually hides this exact
-  // diagnostic overlay for however long fonts/DB take, which is the gap
-  // that made the previous build's crash boundary invisible.
-  useEffect(() => {
-    SplashScreen.hideAsync().catch(() => {});
-  }, []);
 
   async function handleDbInit(db: SQLiteDatabase) {
     setDbStage('running migrations');
