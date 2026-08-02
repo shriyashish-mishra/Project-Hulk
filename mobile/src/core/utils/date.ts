@@ -37,21 +37,21 @@ export function formatShortDateWithWeekday(dateStr: string): string {
   return `${formatShortDate(dateStr)} (${formatWeekdayShort(dateStr)})`;
 }
 
-/** e.g. "August 2026" — for a month-view header. */
+/** e.g. "August 2026" — for a month-view header. Accepts any `YYYY-MM...` string (a full `YYYY-MM-DD` or bare `YYYY-MM`) since callers pass both. */
 export function formatMonthLabel(monthStr: string): string {
-  return new Date(`${monthStr}-01T00:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  return new Date(`${monthStr.slice(0, 7)}-01T00:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 }
 
-/** The first day of the month a given date falls in, as `YYYY-MM-DD`. */
+/** The first day of the month a given date falls in, as `YYYY-MM-DD`. The canonical "month string" format throughout this app — `shiftMonth` below returns the same shape, never the bare `YYYY-MM` `formatMonthLabel` alone would also accept. */
 export function getMonthStart(dateStr: string): string {
   return `${dateStr.slice(0, 7)}-01`;
 }
 
-/** Shifts a `YYYY-MM` month string by `delta` months (negative to go back), returning the same `YYYY-MM` format. */
+/** Shifts a month by `delta` months (negative to go back). Takes and returns `getMonthStart`'s `YYYY-MM-01` shape, so round-tripping through this never drifts format from the value a screen's state started with. */
 export function shiftMonth(monthStr: string, delta: number): string {
   const [year, month] = monthStr.split('-').map(Number);
   const date = new Date(year, month - 1 + delta, 1);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
 }
 
 /** Monday of the week a given date falls in, as `YYYY-MM-DD` — weeks run Monday-Sunday throughout this app, matching the web app's convention. */
