@@ -11,11 +11,27 @@ import { SQLiteProvider } from 'expo-sqlite';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 
+import { CrashBoundary } from '@/components/CrashBoundary';
 import { ToastHost } from '@/components/dialog';
 import { colors } from '@/core/theme';
 import { DATABASE_NAME, runMigrations } from '@/core/storage';
 
 SplashScreen.preventAutoHideAsync();
+
+/**
+ * Belt-and-suspenders alongside `CrashBoundary`: React error boundaries
+ * only catch render-phase throws, not errors from timers, unawaited
+ * promises, or native-module callbacks. This surfaces those too, since
+ * the alternative in a release build is a silent hang with nothing on
+ * screen and nothing in reach without a USB/network debugging setup.
+ */
+if (typeof ErrorUtils !== 'undefined') {
+  const previousHandler = ErrorUtils.getGlobalHandler();
+  ErrorUtils.setGlobalHandler((error, isFatal) => {
+    SplashScreen.hideAsync().catch(() => {});
+    previousHandler?.(error, isFatal);
+  });
+}
 
 /**
  * Single dark theme, always — the web app has no light mode either (see
@@ -66,11 +82,13 @@ export default function RootLayout() {
   }
 
   return (
-    <SQLiteProvider databaseName={DATABASE_NAME} onInit={runMigrations}>
-      <ThemeProvider value={projectHulkTheme}>
-        <Stack screenOptions={{ headerShown: false }} />
-        <ToastHost />
-      </ThemeProvider>
-    </SQLiteProvider>
+    <CrashBoundary>
+      <SQLiteProvider databaseName={DATABASE_NAME} onInit={runMigrations}>
+        <ThemeProvider value={projectHulkTheme}>
+          <Stack screenOptions={{ headerShown: false }} />
+          <ToastHost />
+        </ThemeProvider>
+      </SQLiteProvider>
+    </CrashBoundary>
   );
 }
