@@ -2,6 +2,7 @@
   "expo": {
     "name": "mobile",
     "slug": "mobile",
+    "owner": "shriyashish",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -12,6 +13,7 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.shriyashish.projecthulk",
       "adaptiveIcon": {
         "backgroundColor": "#060606",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -38,6 +40,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2fc7ea13-9b82-403c-b6c7-9bc1a385930b"
+      }
     }
   }
 }

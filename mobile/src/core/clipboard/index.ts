@@ -7,4 +7,5 @@ import * as Clipboard from 'expo-clipboard';
  */
 export const clipboard = {
   copy: (text: string) => Clipboard.setStringAsync(text),
+  paste: () => Clipboard.getStringAsync(),
 };
