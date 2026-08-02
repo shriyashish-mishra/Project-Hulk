@@ -10,11 +10,20 @@ import { exportBackup } from '@/core/backup';
 import { clipboard } from '@/core/clipboard';
 import { CycleSheet } from '@/features/cycle/components';
 import { useCycleSettings } from '@/features/cycle/hooks';
+import { ProfileSheet } from '@/features/profile/components';
+import { useProfile } from '@/features/profile/hooks';
+
+function formatTargetsSummary(targets: ReturnType<typeof useProfile>['targets']): string {
+  if (!targets?.calorieRangeKcal) return 'Fill in your goal, height, and activity level to see targets.';
+  return `${targets.calorieRangeKcal.min}–${targets.calorieRangeKcal.max} kcal · ${targets.proteinTargetG}g protein/day`;
+}
 
 export default function SettingsScreen() {
   const db = useSQLiteContext();
   const { enabled, loading, setEnabled } = useCycleSettings();
+  const { targets } = useProfile();
   const [cycleSheetVisible, setCycleSheetVisible] = useState(false);
+  const [profileSheetVisible, setProfileSheetVisible] = useState(false);
   const [importSheetVisible, setImportSheetVisible] = useState(false);
   const [exporting, setExporting] = useState(false);
 
@@ -31,6 +40,17 @@ export default function SettingsScreen() {
 
   return (
     <ScrollScreen edges={['top', 'left', 'right']}>
+      <Section title="Profile & Targets">
+        <Row justify="space-between" align="center">
+          <Column gap="xs" style={{ flex: 1 }}>
+            <Body>{formatTargetsSummary(targets)}</Body>
+          </Column>
+          <Button variant="secondary" size="sm" onPress={() => setProfileSheetVisible(true)}>
+            Edit
+          </Button>
+        </Row>
+      </Section>
+
       <Section title="Backup & Restore">
         <Body color="mutedForeground">
           Moving to a new install of the app? Export copies everything (except progress photo images)
@@ -77,6 +97,7 @@ export default function SettingsScreen() {
       </Section>
 
       <CycleSheet visible={cycleSheetVisible} onClose={() => setCycleSheetVisible(false)} />
+      <ProfileSheet visible={profileSheetVisible} onClose={() => setProfileSheetVisible(false)} />
       <ImportBackupSheet visible={importSheetVisible} onClose={() => setImportSheetVisible(false)} />
     </ScrollScreen>
   );

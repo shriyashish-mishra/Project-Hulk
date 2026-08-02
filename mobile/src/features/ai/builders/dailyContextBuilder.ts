@@ -4,6 +4,7 @@ import { CycleService } from '@/features/cycle/services';
 import { MEAL_TYPES } from '@/features/food/types';
 import { FoodService } from '@/features/food/services';
 import { JournalService } from '@/features/journal/services';
+import { ProfileService } from '@/features/profile/services';
 import { SleepService } from '@/features/sleep/services';
 import { WaterService } from '@/features/water/services';
 import { WeightService } from '@/features/weight/services';
@@ -26,7 +27,7 @@ function countWords(text: string): number {
  * know where any of it came from.
  */
 export async function buildDailyHealthContext(db: SQLiteDatabase, date: string): Promise<DailyHealthContext> {
-  const [journalContent, mealsByType, waterSummary, workoutLog, weightHistory, sleepLog, cycleEnabled] =
+  const [journalContent, mealsByType, waterSummary, workoutLog, weightHistory, sleepLog, cycleEnabled, targets] =
     await Promise.all([
       JournalService.getEditableContent(db, date),
       FoodService.getMealsForDate(db, date),
@@ -35,6 +36,7 @@ export async function buildDailyHealthContext(db: SQLiteDatabase, date: string):
       WeightService.getHistoryWithTrend(db),
       SleepService.getSleepForDate(db, date),
       CycleService.isEnabled(db),
+      ProfileService.getTargets(db),
     ]);
 
   const meals: MealContext[] = [];
@@ -81,6 +83,17 @@ export async function buildDailyHealthContext(db: SQLiteDatabase, date: string):
     weight: {
       latestKg: weightHistory.history[0]?.weightKg ?? null,
       trend: weightHistory.trend,
+    },
+    targets: {
+      primaryGoal: targets.profile?.primaryGoal ?? null,
+      activityLevel: targets.profile?.activityLevel ?? null,
+      trainingFrequency: targets.profile?.trainingFrequency ?? null,
+      proteinTargetG: targets.proteinTargetG,
+      calorieRangeKcal: targets.calorieRangeKcal,
+      carbsTargetG: targets.carbsTargetG,
+      fatTargetG: targets.fatTargetG,
+      fiberTargetG: targets.fiberTargetG,
+      targetWeightKg: targets.profile?.targetWeightKg ?? null,
     },
   };
 

@@ -1,9 +1,10 @@
 import type { MealType } from '@/features/food/types';
+import type { ActivityLevel, PrimaryGoal, TrainingFrequency } from '@/features/profile/types';
 import type { SleepQuality } from '@/features/sleep/types';
 import type { TrendDirection } from '@/features/weight/services';
 
-/** Bumped whenever this shape changes — stored alongside every report so a future prompt/parser upgrade never has to guess what an old context looked like. */
-export const CONTEXT_VERSION = 'v1';
+/** Bumped whenever this shape changes — stored alongside every report so a future prompt/parser upgrade never has to guess what an old context looked like. v2 adds `targets`, grounding the report against real goal/macro targets instead of nothing. */
+export const CONTEXT_VERSION = 'v2';
 
 export interface JournalContext {
   text: string;
@@ -57,6 +58,25 @@ export interface CycleContext {
 }
 
 /**
+ * Structured facts about who's asking, from the local `profile` table plus
+ * derived targets — the AI interprets them, it never has to guess a goal
+ * or invent a target. Every field is `null` until the user fills in enough
+ * of their profile to compute it (see `ProfileService.getTargets`) —
+ * absence, not a fabricated number, is how "not set up yet" is expressed.
+ */
+export interface TargetsContext {
+  primaryGoal: PrimaryGoal | null;
+  activityLevel: ActivityLevel | null;
+  trainingFrequency: TrainingFrequency | null;
+  proteinTargetG: number | null;
+  calorieRangeKcal: { min: number; max: number } | null;
+  carbsTargetG: number | null;
+  fatTargetG: number | null;
+  fiberTargetG: number | null;
+  targetWeightKg: number | null;
+}
+
+/**
  * The complete, versioned daily snapshot handed to the prompt builder.
  * Assembled once per report by `buildDailyHealthContext` from every
  * feature's own service — never from a repository or SQLite directly.
@@ -73,5 +93,6 @@ export interface DailyHealthContext {
   activity: ActivityContext;
   recovery: RecoveryContext;
   weight: WeightContext;
+  targets: TargetsContext;
   cycle?: CycleContext;
 }

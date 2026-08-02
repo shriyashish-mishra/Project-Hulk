@@ -281,6 +281,57 @@ const MIGRATIONS: Migration[] = [
         ('Incline Walk', 'cardio', 'kg');
     `,
   },
+  {
+    version: 7,
+    up: `
+      -- A local, single-user equivalent of the web app's "profiles" table
+      -- (minus account-specific fields) — feeds the same target
+      -- calculations (protein/calorie/macro/fiber) the web app uses, so
+      -- the AI report and Progress tab can be grounded against real
+      -- targets instead of nothing. A singleton, same pattern as
+      -- cycle_settings: fixed id=1, seeded once, updated in place.
+      -- Every field nullable and fills in progressively — unlike the web
+      -- app's onboarding, nothing here gates using the rest of the app.
+      CREATE TABLE profile (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        display_name TEXT,
+        date_of_birth TEXT,
+        biological_sex TEXT CHECK (biological_sex IN ('female', 'male')),
+        height_cm REAL,
+        primary_goal TEXT CHECK (primary_goal IN ('lose_fat', 'build_muscle', 'recomposition', 'maintain')),
+        activity_level TEXT CHECK (activity_level IN ('sedentary', 'light', 'moderate', 'active', 'very_active')),
+        training_frequency TEXT CHECK (training_frequency IN ('0_1', '2_3', '4_5', '6_plus')),
+        target_weight_kg REAL,
+        protein_target_g REAL,
+        units_preference TEXT NOT NULL DEFAULT 'metric' CHECK (units_preference IN ('metric', 'imperial')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      INSERT INTO profile (id) VALUES (1);
+    `,
+  },
+  {
+    version: 8,
+    up: `
+      -- Additive schema-v2 fields for ai_reports, matching the structured
+      -- data the web app's AI report has always captured (estimated_calories,
+      -- protein/carbs/fat/fiber, calorie balance, muscles trained,
+      -- per-exercise detail) that this table never had. Every new column
+      -- is nullable: existing v1 rows are untouched and keep working
+      -- exactly as before, they just won't have these fields.
+      ALTER TABLE ai_reports ADD COLUMN estimated_calories INTEGER;
+      ALTER TABLE ai_reports ADD COLUMN protein_g INTEGER;
+      ALTER TABLE ai_reports ADD COLUMN carbs_g INTEGER;
+      ALTER TABLE ai_reports ADD COLUMN fat_g INTEGER;
+      ALTER TABLE ai_reports ADD COLUMN fiber_g INTEGER;
+      ALTER TABLE ai_reports ADD COLUMN calorie_balance_text TEXT;
+      ALTER TABLE ai_reports ADD COLUMN calorie_balance_kcal INTEGER;
+      -- JSON-encoded arrays, same convention as the existing wins/improvements columns.
+      ALTER TABLE ai_reports ADD COLUMN muscles_trained TEXT;
+      ALTER TABLE ai_reports ADD COLUMN workout_duration_min INTEGER;
+      ALTER TABLE ai_reports ADD COLUMN workout_calories_burned INTEGER;
+      ALTER TABLE ai_reports ADD COLUMN workout_exercises TEXT;
+    `,
+  },
 ];
 
 /**

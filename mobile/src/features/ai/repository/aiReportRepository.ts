@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-import type { AIReport, AIReportContent } from '../types';
+import type { AIReport, AIReportContent, AIReportExercise } from '../types';
 
 interface AIReportRow {
   id: number;
@@ -19,6 +19,17 @@ interface AIReportRow {
   tomorrow_suggestions: string;
   raw_response: string;
   created_at: string;
+  estimated_calories: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_g: number | null;
+  fiber_g: number | null;
+  calorie_balance_text: string | null;
+  calorie_balance_kcal: number | null;
+  muscles_trained: string | null;
+  workout_duration_min: number | null;
+  workout_calories_burned: number | null;
+  workout_exercises: string | null;
 }
 
 function parseJsonArray(value: string): string[] {
@@ -27,6 +38,16 @@ function parseJsonArray(value: string): string[] {
     return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
   } catch {
     return [];
+  }
+}
+
+function parseExercises(value: string | null): AIReportExercise[] | undefined {
+  if (!value) return undefined;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : undefined;
+  } catch {
+    return undefined;
   }
 }
 
@@ -50,6 +71,17 @@ function mapRow(row: AIReportRow): AIReport {
     tomorrowSuggestions: parseJsonArray(row.tomorrow_suggestions),
     rawResponse: row.raw_response,
     createdAt: row.created_at,
+    estimatedCalories: row.estimated_calories ?? undefined,
+    proteinG: row.protein_g ?? undefined,
+    carbsG: row.carbs_g ?? undefined,
+    fatG: row.fat_g ?? undefined,
+    fiberG: row.fiber_g ?? undefined,
+    calorieBalanceText: row.calorie_balance_text ?? undefined,
+    calorieBalanceKcal: row.calorie_balance_kcal ?? undefined,
+    musclesTrained: row.muscles_trained ? parseJsonArray(row.muscles_trained) : undefined,
+    workoutDurationMin: row.workout_duration_min ?? undefined,
+    workoutCaloriesBurned: row.workout_calories_burned ?? undefined,
+    workoutExercises: parseExercises(row.workout_exercises),
   };
 }
 
@@ -66,8 +98,11 @@ export async function saveReport(
       report_date, context_version, prompt_version, summary,
       nutrition_score, activity_score, recovery_score,
       wins, improvements, nutrition_feedback, workout_feedback, recovery_feedback,
-      tomorrow_suggestions, raw_response
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      tomorrow_suggestions, raw_response,
+      estimated_calories, protein_g, carbs_g, fat_g, fiber_g,
+      calorie_balance_text, calorie_balance_kcal, muscles_trained,
+      workout_duration_min, workout_calories_burned, workout_exercises
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     date,
     contextVersion,
     promptVersion,
@@ -82,6 +117,17 @@ export async function saveReport(
     content.recoveryFeedback,
     JSON.stringify(content.tomorrowSuggestions),
     content.rawResponse,
+    content.estimatedCalories ?? null,
+    content.proteinG ?? null,
+    content.carbsG ?? null,
+    content.fatG ?? null,
+    content.fiberG ?? null,
+    content.calorieBalanceText ?? null,
+    content.calorieBalanceKcal ?? null,
+    content.musclesTrained ? JSON.stringify(content.musclesTrained) : null,
+    content.workoutDurationMin ?? null,
+    content.workoutCaloriesBurned ?? null,
+    content.workoutExercises ? JSON.stringify(content.workoutExercises) : null,
   );
   const row = await db.getFirstAsync<AIReportRow>('SELECT * FROM ai_reports WHERE id = ?', result.lastInsertRowId);
   if (!row) {

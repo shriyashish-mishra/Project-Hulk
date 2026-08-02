@@ -1,8 +1,8 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { buildDailyHealthContext } from '../builders';
-import { parseDailyReportV1 } from '../parser';
-import { buildDailyReportPromptV1 } from '../prompts';
+import { parseDailyReportV2 } from '../parser';
+import { buildDailyReportPromptV2 } from '../prompts';
 import {
   deleteReport as deleteReportRow,
   getLatestReportForDate,
@@ -33,7 +33,7 @@ export const AIReportService = {
   /** Builds today's context and turns it into the exact text to hand to Claude. Read-only — nothing is saved until a response comes back. */
   async prepareReport(db: SQLiteDatabase, date: string): Promise<ClaudePromptPackage> {
     const context = await buildDailyHealthContext(db, date);
-    return buildDailyReportPromptV1(context);
+    return buildDailyReportPromptV2(context);
   },
 
   /** Parses what the user pasted back and saves it — the only place an `ai_reports` row is written. */
@@ -43,7 +43,7 @@ export const AIReportService = {
     promptPackage: ClaudePromptPackage,
     rawResponse: string,
   ): Promise<SubmitReportResponseResult> {
-    const { content, parseWarnings } = parseDailyReportV1(rawResponse);
+    const { content, parseWarnings } = parseDailyReportV2(rawResponse);
     const report = await saveReport(db, date, promptPackage.contextVersion, promptPackage.promptVersion, content);
     return { report, parseWarnings };
   },
