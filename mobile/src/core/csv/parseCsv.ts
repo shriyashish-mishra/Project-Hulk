@@ -10,7 +10,14 @@
  * Returns rows of raw string cells, header row included as row 0 — no
  * column-name mapping here, that's the importer's job.
  */
-export function parseCsv(text: string): string[][] {
+export function parseCsv(rawText: string): string[][] {
+  // Strip a leading UTF-8 BOM if present — common when a CSV has passed
+  // through Excel/Google Sheets or certain text editors on save. Left
+  // in place, it silently glues itself onto the first header name (e.g.
+  // "Date" becomes "﻿Date"), which then fails to match anywhere
+  // and makes every single row look invalid.
+  const text = rawText.charCodeAt(0) === 0xfeff ? rawText.slice(1) : rawText;
+
   const rows: string[][] = [];
   let row: string[] = [];
   let field = '';
