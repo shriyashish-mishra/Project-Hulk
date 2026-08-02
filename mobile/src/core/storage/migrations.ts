@@ -335,9 +335,26 @@ const MIGRATIONS: Migration[] = [
 ];
 
 /**
+ * Whether a failed migration statement means "this exact change already
+ * exists in the schema" rather than a real problem. This app uses WAL
+ * mode, and Android's Auto Backup can snapshot a WAL-mode database
+ * between its DDL being checkpointed and its `PRAGMA user_version` bump
+ * being durable — a fresh install can then restore a file whose schema
+ * is ahead of what `user_version` reports, making an already-applied
+ * migration look unapplied and fail with "already exists" on re-run.
+ */
+function isAlreadyAppliedError(message: string): boolean {
+  return /already exists|duplicate column name|UNIQUE constraint failed/i.test(message);
+}
+
+/**
  * Applies every migration newer than the database's current
  * `user_version`, in order. Pass this directly as `SQLiteProvider`'s
  * `onInit` — it runs once, before any screen can query the database.
+ *
+ * Each migration's statements run individually (not as one multi-statement
+ * `execAsync` call) so that one statement already being applied doesn't
+ * abort the rest of that migration's — otherwise-unapplied — statements.
  */
 export async function runMigrations(db: SQLiteDatabase): Promise<void> {
   await db.execAsync('PRAGMA journal_mode = WAL');
@@ -347,7 +364,21 @@ export async function runMigrations(db: SQLiteDatabase): Promise<void> {
 
   for (const migration of MIGRATIONS) {
     if (migration.version <= currentVersion) continue;
-    await db.execAsync(migration.up);
+
+    const statements = migration.up
+      .split(';')
+      .map((statement) => statement.trim())
+      .filter((statement) => statement.length > 0);
+
+    for (const statement of statements) {
+      try {
+        await db.execAsync(`${statement};`);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (!isAlreadyAppliedError(message)) throw error;
+      }
+    }
+
     await db.execAsync(`PRAGMA user_version = ${migration.version}`);
     currentVersion = migration.version;
   }
