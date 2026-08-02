@@ -8,6 +8,7 @@ import { toast } from '@/components/dialog';
 import { ImportBackupSheet } from '@/components/backup';
 import { exportBackup } from '@/core/backup';
 import { clipboard } from '@/core/clipboard';
+import { ImportReportsCsvSheet } from '@/features/ai/components';
 import { CycleSheet } from '@/features/cycle/components';
 import { useCycleSettings } from '@/features/cycle/hooks';
 import { ProfileSheet } from '@/features/profile/components';
@@ -25,6 +26,7 @@ export default function SettingsScreen() {
   const [cycleSheetVisible, setCycleSheetVisible] = useState(false);
   const [profileSheetVisible, setProfileSheetVisible] = useState(false);
   const [importSheetVisible, setImportSheetVisible] = useState(false);
+  const [csvImportSheetVisible, setCsvImportSheetVisible] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   async function handleExport() {
@@ -66,6 +68,16 @@ export default function SettingsScreen() {
         </Row>
       </Section>
 
+      <Section title="Report History">
+        <Body color="mutedForeground">
+          Have past reports on the web app? Export them as a CSV from /report/export there, then bring them into
+          your Progress history here.
+        </Body>
+        <Button variant="secondary" onPress={() => setCsvImportSheetVisible(true)}>
+          Import Reports (CSV)
+        </Button>
+      </Section>
+
       <Section title="Health">
         <Row justify="space-between" align="center">
           <Column gap="xs" style={{ flex: 1 }}>
@@ -99,6 +111,7 @@ export default function SettingsScreen() {
       <CycleSheet visible={cycleSheetVisible} onClose={() => setCycleSheetVisible(false)} />
       <ProfileSheet visible={profileSheetVisible} onClose={() => setProfileSheetVisible(false)} />
       <ImportBackupSheet visible={importSheetVisible} onClose={() => setImportSheetVisible(false)} />
+      <ImportReportsCsvSheet visible={csvImportSheetVisible} onClose={() => setCsvImportSheetVisible(false)} />
     </ScrollScreen>
   );
 }
