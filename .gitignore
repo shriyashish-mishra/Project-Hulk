@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# one-off script output — can contain exported personal health data
+/scripts/output/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
