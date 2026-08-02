@@ -29,6 +29,15 @@ export async function getRecentPhotos(db: SQLiteDatabase, limit: number): Promis
   return rows.map(mapRow);
 }
 
+/** Every photo captured on one exact date, all view types — backs the Journal dashboard's Photos row for a specific day, distinct from `getRecentPhotos`'s date-agnostic recent-grid view. */
+export async function getPhotosForDate(db: SQLiteDatabase, date: string): Promise<ProgressPhoto[]> {
+  const rows = await db.getAllAsync<ProgressPhotoRow>(
+    'SELECT * FROM progress_photos WHERE captured_on = ? ORDER BY id ASC',
+    date,
+  );
+  return rows.map(mapRow);
+}
+
 export async function getPhotoById(db: SQLiteDatabase, id: number): Promise<ProgressPhoto | null> {
   const row = await db.getFirstAsync<ProgressPhotoRow>('SELECT * FROM progress_photos WHERE id = ?', id);
   return row ? mapRow(row) : null;

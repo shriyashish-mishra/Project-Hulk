@@ -9,14 +9,19 @@ import { WaterHistorySheet } from './WaterHistorySheet';
 
 const QUICK_ADD_AMOUNTS_ML = [250, 500];
 
+export interface WaterQuickActionCardProps {
+  date?: string;
+}
+
 /**
- * Self-contained home-screen widget — reads and writes today's water log
- * without any props. Stays inline rather than behind a `Sheet` like
- * Food/Workout/Sleep: logging water needs to take under two seconds, and
- * an extra tap-to-open step would work against that.
+ * Self-contained dashboard widget — reads and writes one day's water log.
+ * Stays inline rather than behind a `Sheet` like Food/Workout/Sleep:
+ * logging water needs to take under two seconds, and an extra
+ * tap-to-open step would work against that — mirrors web's one exception
+ * to its row-opens-drawer pattern.
  */
-export function WaterQuickActionCard() {
-  const { totalMl, goalMl, entries, addWater, undoLast, setGoal } = useWaterLog();
+export function WaterQuickActionCard({ date }: WaterQuickActionCardProps) {
+  const { totalMl, goalMl, entries, addWater, undoLast, setGoal } = useWaterLog(date);
   const [historyVisible, setHistoryVisible] = useState(false);
 
   async function handleAdd(amountMl: number) {

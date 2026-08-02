@@ -7,3 +7,4 @@ export * from './feedback';
 export * from './dialog';
 export * from './dataviz';
 export * from './icon/Icon';
+export * from './navigation';

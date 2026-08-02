@@ -40,7 +40,7 @@ export default function ActiveWorkoutSessionScreen() {
 
   async function handleComplete() {
     await complete();
-    router.replace('/');
+    router.replace('/workouts');
   }
 
   if (loading || !session) {

@@ -8,11 +8,12 @@ import { useWorkoutLog } from '../hooks';
 export interface WorkoutSheetProps {
   visible: boolean;
   onClose: () => void;
+  date?: string;
 }
 
-/** Workout entry — type, duration, and a free-text note. Opens straight into whatever was already saved for today, if anything. */
-export function WorkoutSheet({ visible, onClose }: WorkoutSheetProps) {
-  const { workoutLog, loading, saveWorkout } = useWorkoutLog();
+/** Workout entry — type, duration, and a free-text note. Opens straight into whatever was already saved for that day, if anything. */
+export function WorkoutSheet({ visible, onClose, date }: WorkoutSheetProps) {
+  const { workoutLog, loading, saveWorkout } = useWorkoutLog(date);
   const [saving, setSaving] = useState(false);
   const [workoutType, setWorkoutType] = useState('');
   const [durationText, setDurationText] = useState('');

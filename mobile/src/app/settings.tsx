@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 
-import { Button, Column, Row, ScrollScreen, Section } from '@/components';
-import { Body, Caption } from '@/components/typography';
+import { Button, Column, Icon, Row, ScrollScreen, Section } from '@/components';
+import { Body, Caption, Title } from '@/components/typography';
 import { toast } from '@/components/dialog';
 import { ImportBackupSheet } from '@/components/backup';
 import { exportBackup } from '@/core/backup';
@@ -19,6 +19,11 @@ function formatTargetsSummary(targets: ReturnType<typeof useProfile>['targets'])
   return `${targets.calorieRangeKcal.min}–${targets.calorieRangeKcal.max} kcal · ${targets.proteinTargetG}g protein/day`;
 }
 
+/**
+ * A stack route (pushed from the gear icon on Journal/Progress headers),
+ * not a bottom tab — matches web's Settings/Profile being reached via a
+ * header avatar icon rather than a nav destination.
+ */
 export default function SettingsScreen() {
   const db = useSQLiteContext();
   const { enabled, loading, setEnabled } = useCycleSettings();
@@ -41,7 +46,18 @@ export default function SettingsScreen() {
   }
 
   return (
-    <ScrollScreen edges={['top', 'left', 'right']}>
+    <ScrollScreen>
+      <Row align="center" gap="sm">
+        <Button
+          variant="ghost"
+          size="sm"
+          onPress={() => router.back()}
+          accessibilityLabel="Back"
+          leftIcon={<Icon name="chevronLeft" size={22} />}
+        />
+        <Title style={{ fontSize: 24 }}>Settings</Title>
+      </Row>
+
       <Section title="Profile & Targets">
         <Row justify="space-between" align="center">
           <Column gap="xs" style={{ flex: 1 }}>

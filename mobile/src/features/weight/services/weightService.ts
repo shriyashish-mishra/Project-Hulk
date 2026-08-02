@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-import { getLatestWeightLog, getWeightHistory, upsertWeightLog } from '../repository';
+import { getLatestWeightLog, getWeightHistory, getWeightLogForDate, upsertWeightLog } from '../repository';
 import type { WeightLog } from '../types';
 
 const HISTORY_LIMIT = 30;
@@ -38,6 +38,10 @@ function computeTrend(history: WeightLog[]): WeightTrend | null {
 export const WeightService = {
   async getLatest(db: SQLiteDatabase): Promise<WeightLog | null> {
     return getLatestWeightLog(db);
+  },
+
+  async getForDate(db: SQLiteDatabase, date: string): Promise<WeightLog | null> {
+    return getWeightLogForDate(db, date);
   },
 
   async getHistoryWithTrend(db: SQLiteDatabase): Promise<WeightHistoryWithTrend> {

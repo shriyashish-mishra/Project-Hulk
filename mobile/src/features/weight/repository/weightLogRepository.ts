@@ -13,11 +13,17 @@ function mapRow(row: WeightLogRow): WeightLog {
   return { id: row.id, measuredOn: row.measured_on, weightKg: row.weight_kg, createdAt: row.created_at };
 }
 
-/** Most recent weigh-in, for the home screen's "today's summary" — falls back to whatever was last logged if today has no entry. */
+/** Most recent weigh-in overall — used wherever "current weight" feeds a calculation (targets, trends), regardless of whether today itself has an entry. */
 export async function getLatestWeightLog(db: SQLiteDatabase): Promise<WeightLog | null> {
   const row = await db.getFirstAsync<WeightLogRow>(
     'SELECT * FROM weight_logs ORDER BY measured_on DESC LIMIT 1',
   );
+  return row ? mapRow(row) : null;
+}
+
+/** The entry for one exact date, or `null` if that day has none — distinct from `getLatestWeightLog`, which returns the most recent entry regardless of date. Backs the Journal dashboard's Weight row, which must show "not logged" for a day with no entry even if a more recent one exists. */
+export async function getWeightLogForDate(db: SQLiteDatabase, date: string): Promise<WeightLog | null> {
+  const row = await db.getFirstAsync<WeightLogRow>('SELECT * FROM weight_logs WHERE measured_on = ?', date);
   return row ? mapRow(row) : null;
 }
 

@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-import { addPhoto, deletePhotoRow, getPhotoById, getRecentPhotos, updatePhotoViewType } from '../repository';
+import { addPhoto, deletePhotoRow, getPhotoById, getPhotosForDate, getRecentPhotos, updatePhotoViewType } from '../repository';
 import type { PhotoViewType, ProgressPhoto } from '../types';
 import { deletePhotoFile, persistPhotoFile } from './photoStorage';
 
@@ -10,6 +10,10 @@ const RECENT_PHOTOS_LIMIT = 60;
 export const ProgressPhotoService = {
   async getRecentPhotos(db: SQLiteDatabase): Promise<ProgressPhoto[]> {
     return getRecentPhotos(db, RECENT_PHOTOS_LIMIT);
+  },
+
+  async getPhotosForDate(db: SQLiteDatabase, date: string): Promise<ProgressPhoto[]> {
+    return getPhotosForDate(db, date);
   },
 
   async savePhoto(db: SQLiteDatabase, date: string, viewType: PhotoViewType, sourceUri: string): Promise<ProgressPhoto> {

@@ -12,8 +12,10 @@ import { AIReportSummary } from './AIReportSummary';
 export interface AIReportSheetProps {
   visible: boolean;
   onClose: () => void;
-  /** Built by Home right before opening this sheet — `null` only for the brief moment before that finishes. */
+  /** Built by the caller right before opening this sheet — `null` only for the brief moment before that finishes. */
   promptPackage: ClaudePromptPackage | null;
+  /** The same date `promptPackage` was built for — must match, or the saved report lands on the wrong day. */
+  date?: string;
 }
 
 interface SubmittedResult {
@@ -22,12 +24,14 @@ interface SubmittedResult {
 }
 
 /**
- * The paste-back half of the report flow: Home already built the prompt,
- * copied it, and opened the share sheet before this ever appears. All
- * that's left is pasting Claude's reply back in and saving it.
+ * The paste-back half of the report flow: the caller already built the
+ * prompt, copied it, and opened the share sheet before this ever
+ * appears. All that's left is pasting Claude's reply back in and saving
+ * it — to `date`, so a backfilled day's report doesn't silently land on
+ * today.
  */
-export function AIReportSheet({ visible, onClose, promptPackage }: AIReportSheetProps) {
-  const { submitResponse } = useAIReport();
+export function AIReportSheet({ visible, onClose, promptPackage, date }: AIReportSheetProps) {
+  const { submitResponse } = useAIReport(date);
   const [responseDraft, setResponseDraft] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<SubmittedResult | null>(null);

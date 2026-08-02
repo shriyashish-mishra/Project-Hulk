@@ -157,3 +157,13 @@ export async function getRecentReports(db: SQLiteDatabase, limit: number): Promi
 export async function deleteReport(db: SQLiteDatabase, id: number): Promise<void> {
   await db.runAsync('DELETE FROM ai_reports WHERE id = ?', id);
 }
+
+/** Every report whose `report_date` falls within `[startDate, endDate]` inclusive — backs the Progress Weekly/Monthly views, which need a real window rather than a fixed row count. */
+export async function getReportsInRange(db: SQLiteDatabase, startDate: string, endDate: string): Promise<AIReport[]> {
+  const rows = await db.getAllAsync<AIReportRow>(
+    'SELECT * FROM ai_reports WHERE report_date >= ? AND report_date <= ? ORDER BY report_date ASC',
+    startDate,
+    endDate,
+  );
+  return rows.map(mapRow);
+}

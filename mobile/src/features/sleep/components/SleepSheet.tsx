@@ -11,13 +11,14 @@ import { formatDuration, isValidTimeFormat } from '../utils';
 export interface SleepSheetProps {
   visible: boolean;
   onClose: () => void;
+  date?: string;
 }
 
 const TIME_FORMAT_ERROR = 'Use 24-hour HH:MM, e.g. 22:30';
 
 /** Bedtime, wake time, and a quality rating — duration is derived, never entered by hand. */
-export function SleepSheet({ visible, onClose }: SleepSheetProps) {
-  const { sleepLog, loading, saveSleep } = useSleepLog();
+export function SleepSheet({ visible, onClose, date }: SleepSheetProps) {
+  const { sleepLog, loading, saveSleep } = useSleepLog(date);
   const [saving, setSaving] = useState(false);
   const [bedtime, setBedtime] = useState('');
   const [wakeTime, setWakeTime] = useState('');

@@ -6,37 +6,38 @@ import { WeightService } from '../services';
 import type { WeightLog } from '../types';
 
 export interface UseWeightLogResult {
-  latestWeightLog: WeightLog | null;
+  /** The entry for this exact date, or `null` if that day has none. */
+  weightLog: WeightLog | null;
   loading: boolean;
   saveWeight: (weightKg: number) => Promise<void>;
+  /** Re-fetches without a fresh mount — for a sibling `WeightSheet` instance (its own hook instance) that just saved a weigh-in this caller needs to reflect. */
+  refresh: () => void;
 }
 
-/** The most recent weigh-in (weight isn't logged daily), plus a quick action to log today's. */
-export function useWeightLog(): UseWeightLogResult {
+/** Backs the Journal dashboard's Weight row — one specific date's entry, same shape and date-parameterization as `useSleepLog`/`useFoodLog`. */
+export function useWeightLog(date: string = getTodayDateString()): UseWeightLogResult {
   const db = useSQLiteContext();
-  const [latestWeightLog, setLatestWeightLog] = useState<WeightLog | null>(null);
+  const [weightLog, setWeightLog] = useState<WeightLog | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
-    WeightService.getLatest(db).then((log) => {
-      if (!cancelled) {
-        setLatestWeightLog(log);
-        setLoading(false);
-      }
+  const refresh = useCallback(() => {
+    WeightService.getForDate(db, date).then((log) => {
+      setWeightLog(log);
+      setLoading(false);
     });
-    return () => {
-      cancelled = true;
-    };
-  }, [db]);
+  }, [db, date]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
 
   const saveWeight = useCallback(
     async (weightKg: number) => {
-      const updated = await WeightService.saveWeight(db, getTodayDateString(), weightKg);
-      setLatestWeightLog(updated);
+      const saved = await WeightService.saveWeight(db, date, weightKg);
+      setWeightLog(saved);
     },
-    [db],
+    [db, date],
   );
 
-  return { latestWeightLog, loading, saveWeight };
+  return { weightLog, loading, saveWeight, refresh };
 }

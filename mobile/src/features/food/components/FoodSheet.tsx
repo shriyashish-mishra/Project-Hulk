@@ -7,11 +7,12 @@ import { MealEntryRow } from './MealEntryRow';
 export interface FoodSheetProps {
   visible: boolean;
   onClose: () => void;
+  date?: string;
 }
 
-/** All four meal slots for today in one place — matches "meal type grouping" rather than four separate flows. */
-export function FoodSheet({ visible, onClose }: FoodSheetProps) {
-  const { mealsByType, loading, saveMeal, deleteMeal } = useFoodLog();
+/** All four meal slots for one day in one place — matches "meal type grouping" rather than four separate flows. */
+export function FoodSheet({ visible, onClose, date }: FoodSheetProps) {
+  const { mealsByType, loading, saveMeal, deleteMeal } = useFoodLog(date);
 
   return (
     <Sheet visible={visible} title="Food" onClose={onClose}>

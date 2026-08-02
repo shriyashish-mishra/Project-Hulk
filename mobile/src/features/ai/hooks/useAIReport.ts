@@ -15,6 +15,8 @@ export interface UseAIReportResult {
     promptPackage: ClaudePromptPackage,
     rawResponse: string,
   ) => Promise<{ report: AIReport; parseWarnings: string[] }>;
+  /** Re-fetches without a fresh mount — for a sibling `AIReportSheet` instance (its own hook instance) that just saved a report this caller needs to reflect. */
+  refresh: () => void;
 }
 
 /** Powers the "Generate Today's Report" flow — the AI feature's only public hook. */
@@ -22,20 +24,19 @@ export function useAIReport(date: string = getTodayDateString()): UseAIReportRes
   const db = useSQLiteContext();
   const [latestReport, setLatestReport] = useState<AIReport | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(() => {
+    AIReportService.getLatestReport(db, date).then((report) => {
+      setLatestReport(report);
+      setLoading(false);
+    });
+  }, [db, date]);
+
   const [preparing, setPreparing] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-    AIReportService.getLatestReport(db, date).then((report) => {
-      if (!cancelled) {
-        setLatestReport(report);
-        setLoading(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [db, date]);
+    refresh();
+  }, [refresh]);
 
   const prepareReport = useCallback(async () => {
     setPreparing(true);
@@ -55,5 +56,5 @@ export function useAIReport(date: string = getTodayDateString()): UseAIReportRes
     [db, date],
   );
 
-  return { latestReport, loading, preparing, prepareReport, submitResponse };
+  return { latestReport, loading, preparing, prepareReport, submitResponse, refresh };
 }

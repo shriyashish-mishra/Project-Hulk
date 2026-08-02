@@ -7,6 +7,7 @@ import {
   deleteReport as deleteReportRow,
   getLatestReportForDate,
   getRecentReports,
+  getReportsInRange,
   saveReport,
 } from '../repository';
 import type { AIReport, AIReportScores, ClaudePromptPackage } from '../types';
@@ -50,6 +51,11 @@ export const AIReportService = {
 
   async getLatestReport(db: SQLiteDatabase, date: string): Promise<AIReport | null> {
     return getLatestReportForDate(db, date);
+  },
+
+  /** Every report in a real date window — used by Progress Weekly/Monthly, which need an actual range rather than `getRecentReports`'s fixed row count. */
+  async getReportsForRange(db: SQLiteDatabase, startDate: string, endDate: string): Promise<AIReport[]> {
+    return getReportsInRange(db, startDate, endDate);
   },
 
   /** Bounded history for the Insights screen — never a full scan of every report ever generated. */

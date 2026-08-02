@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 
-import { addDays, getTodayDateString } from '@/core/utils';
+import { addDays } from '@/core/utils';
 import { AIReportService } from '@/features/ai/services';
 import type { AIReport } from '@/features/ai/types';
 import { ProfileService, type ProfileTargets } from '@/features/profile/services';
 import { computeRegionCounts, type MuscleRegion } from '../utils/muscleRegions';
 
-const WEEK_LENGTH_DAYS = 7;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export interface DayCalorieBalance {
   date: string;
@@ -17,49 +17,61 @@ export interface DayCalorieBalance {
 
 export interface ProgressInsights {
   loading: boolean;
-  todayReport: AIReport | null;
+  /** The report for `focusDate` specifically (Daily view's report-detail), or `null` if that day has none. */
+  focusReport: AIReport | null;
+  /** Every report in the window, oldest first — lets Weekly/Monthly compute their own score-average tiles without a second query. */
+  reports: AIReport[];
   targets: ProfileTargets | null;
   regionCounts: Map<MuscleRegion, number>;
   musclesTrainedByDay: string[][];
-  weekCalorieBalance: DayCalorieBalance[];
+  calorieBalance: DayCalorieBalance[];
 }
 
 /**
- * Aggregates the last 7 days of AI reports plus profile targets into
- * exactly what the Progress screen's muscle map, nutrient bars, and
- * calorie-balance row need — the mobile equivalent of the web app's
- * `lib/progress/stats.ts`, condensed onto one scrolling screen instead of
- * separate day/week routes.
+ * Aggregates every AI report in `[windowStart, windowEnd]` plus profile
+ * targets into what Progress's muscle map, nutrient bars, and
+ * calorie-balance row need — generalized from a single hardcoded "last 7
+ * days" so Daily (a one-day window), Weekly (7 days), and Monthly (a
+ * calendar month) can all share this one hook, matching the web app's
+ * `lib/progress/stats.ts` computed per-period instead of once for "today."
  */
-export function useProgressInsights(): ProgressInsights {
+export function useProgressInsights(
+  windowStart: string,
+  windowEnd: string,
+  focusDate: string = windowEnd,
+): ProgressInsights {
   const db = useSQLiteContext();
   const [loading, setLoading] = useState(true);
-  const [todayReport, setTodayReport] = useState<AIReport | null>(null);
+  const [windowReports, setWindowReports] = useState<AIReport[]>([]);
   const [targets, setTargets] = useState<ProfileTargets | null>(null);
-  const [weekReports, setWeekReports] = useState<AIReport[]>([]);
 
   useEffect(() => {
-    const today = getTodayDateString();
-    const weekStart = addDays(today, -(WEEK_LENGTH_DAYS - 1));
-
-    Promise.all([AIReportService.getRecentReports(db), ProfileService.getTargets(db)]).then(
-      ([recentReports, resolvedTargets]) => {
-        const withinWeek = recentReports.filter((report) => report.date >= weekStart && report.date <= today);
-        setWeekReports(withinWeek);
-        setTodayReport(withinWeek.find((report) => report.date === today) ?? recentReports[0] ?? null);
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
+    Promise.all([AIReportService.getReportsForRange(db, windowStart, windowEnd), ProfileService.getTargets(db)]).then(
+      ([reports, resolvedTargets]) => {
+        if (cancelled) return;
+        setWindowReports(reports);
         setTargets(resolvedTargets);
         setLoading(false);
       },
     );
-  }, [db]);
+    return () => {
+      cancelled = true;
+    };
+  }, [db, windowStart, windowEnd]);
 
-  const musclesTrainedByDay = weekReports.map((report) => report.musclesTrained ?? []);
+  const focusReport = windowReports.find((report) => report.date === focusDate) ?? null;
+  const musclesTrainedByDay = windowReports.map((report) => report.musclesTrained ?? []);
   const regionCounts = computeRegionCounts(musclesTrainedByDay);
 
-  const today = getTodayDateString();
-  const weekCalorieBalance: DayCalorieBalance[] = Array.from({ length: WEEK_LENGTH_DAYS }, (_, index) => {
-    const date = addDays(today, index - (WEEK_LENGTH_DAYS - 1));
-    const report = weekReports.find((r) => r.date === date);
+  const dayCount =
+    Math.round((new Date(`${windowEnd}T00:00:00`).getTime() - new Date(`${windowStart}T00:00:00`).getTime()) / DAY_MS) +
+    1;
+  const calorieBalance: DayCalorieBalance[] = Array.from({ length: dayCount }, (_, index) => {
+    const date = addDays(windowStart, index);
+    const report = windowReports.find((r) => r.date === date);
     return {
       date,
       balanceKcal: report?.calorieBalanceKcal ?? null,
@@ -67,5 +79,5 @@ export function useProgressInsights(): ProgressInsights {
     };
   });
 
-  return { loading, todayReport, targets, regionCounts, musclesTrainedByDay, weekCalorieBalance };
+  return { loading, focusReport, reports: windowReports, targets, regionCounts, musclesTrainedByDay, calorieBalance };
 }

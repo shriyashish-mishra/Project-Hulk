@@ -18,25 +18,17 @@ export default function TabsLayout() {
       iconColor={{ default: colors.mutedForeground, selected: colors.primary }}
       backgroundColor={colors.card}
     >
-      <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={ICON_SOURCES.home.ios} md={ICON_SOURCES.home.android} />
-      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="journal">
         <NativeTabs.Trigger.Label>Journal</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={ICON_SOURCES.journal.ios} md={ICON_SOURCES.journal.android} />
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="workouts">
+        <NativeTabs.Trigger.Label>Workouts</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={ICON_SOURCES.dumbbell.ios} md={ICON_SOURCES.dumbbell.android} />
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="progress">
         <NativeTabs.Trigger.Label>Progress</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={ICON_SOURCES.progress.ios} md={ICON_SOURCES.progress.android} />
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="insights">
-        <NativeTabs.Trigger.Label>Insights</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={ICON_SOURCES.insights.ios} md={ICON_SOURCES.insights.android} />
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="settings">
-        <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={ICON_SOURCES.settings.ios} md={ICON_SOURCES.settings.android} />
       </NativeTabs.Trigger>
     </NativeTabs>
   );
