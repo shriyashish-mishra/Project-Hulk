@@ -11,21 +11,25 @@ import { getExerciseProgressSummary, getRecentlyTrainedExercises } from "@/lib/w
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 interface WorkoutProgressPageProps {
+  /** Keyed by exercise name (URL-encoded), not id — a report-only exercise has no `exercise_id` to key by. */
   searchParams: Promise<{ exercise?: string }>;
 }
 
 /**
  * Per-exercise progression — not a generic analytics dashboard, scoped
- * to exercises the user already trains inside their templates. Section
- * order follows the spec exactly: picker → overview → chart →
- * recommendation → personal records → session history → insight.
+ * to exercises the user already trains inside their templates (plus any
+ * exercise a past AI report recorded a weight for, even if it was never
+ * added to the structured library). Section order follows the spec
+ * exactly: picker → overview → chart → recommendation → personal
+ * records → session history → insight.
  */
 export default async function WorkoutProgressPage({ searchParams }: WorkoutProgressPageProps) {
   await requireOnboardedUser();
   const { exercise: exerciseParam } = await searchParams;
+  const selectedName = exerciseParam ? decodeURIComponent(exerciseParam).toLowerCase() : null;
 
   const exercises = await getRecentlyTrainedExercises();
-  const selected = exercises.find((exercise) => exercise.exercise_id === exerciseParam) ?? exercises[0] ?? null;
+  const selected = exercises.find((exercise) => exercise.name.toLowerCase() === selectedName) ?? exercises[0] ?? null;
   const summary = selected ? await getExerciseProgressSummary(selected) : null;
 
   return (
@@ -42,7 +46,7 @@ export default async function WorkoutProgressPage({ searchParams }: WorkoutProgr
           Complete a workout session with a strength exercise to start seeing progression here.
         </p>
       ) : (
-        <ExercisePickerStrip exercises={exercises} selectedExerciseId={selected?.exercise_id ?? ""} />
+        <ExercisePickerStrip exercises={exercises} selectedExerciseName={selected?.name ?? ""} />
       )}
 
       {summary && (

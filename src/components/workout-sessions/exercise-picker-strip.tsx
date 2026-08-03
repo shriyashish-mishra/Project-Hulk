@@ -4,19 +4,20 @@ import type { RecentExercise } from "@/lib/workout-sessions/exercise-progress";
 
 interface ExercisePickerStripProps {
   exercises: RecentExercise[];
-  selectedExerciseId: string;
+  /** Matched case-insensitively — a report-only exercise has no `exercise_id` to key by, so name is the one identifier every exercise always has. */
+  selectedExerciseName: string;
 }
 
-/** Horizontal chip strip — every strength exercise ever completed, most recently trained first, selected one bordered mint. Plain links (`?exercise=id`) rather than client state, matching this page's server-rendered pattern. */
-export function ExercisePickerStrip({ exercises, selectedExerciseId }: ExercisePickerStripProps) {
+/** Horizontal chip strip — every strength exercise ever completed or mentioned with a weight in a report, most recently trained first, selected one bordered mint. Plain links (`?exercise=name`) rather than client state, matching this page's server-rendered pattern. */
+export function ExercisePickerStrip({ exercises, selectedExerciseName }: ExercisePickerStripProps) {
   return (
     <div className="flex gap-2 overflow-x-auto pb-1">
       {exercises.map((exercise) => {
-        const selected = exercise.exercise_id === selectedExerciseId;
+        const selected = exercise.name.toLowerCase() === selectedExerciseName.toLowerCase();
         return (
           <Link
-            key={exercise.exercise_id}
-            href={`/workouts/progress?exercise=${exercise.exercise_id}`}
+            key={exercise.name}
+            href={`/workouts/progress?exercise=${encodeURIComponent(exercise.name)}`}
             className={cn(
               "shrink-0 rounded-2xl border px-3.5 py-2.5 text-sm font-semibold transition-colors",
               selected
