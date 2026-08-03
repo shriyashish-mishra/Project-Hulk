@@ -27,12 +27,6 @@ export async function getWorkoutLogForDate(db: SQLiteDatabase, date: string): Pr
   return row ? mapRow(row) : null;
 }
 
-/** Most recent daily workout-log entries, newest first — backs the Workouts hub's "Recent Workouts" section, distinct from the template-based `workout_sessions` table. */
-export async function getRecentWorkoutLogs(db: SQLiteDatabase, limit: number): Promise<WorkoutLog[]> {
-  const rows = await db.getAllAsync<WorkoutLogRow>('SELECT * FROM workout_logs ORDER BY logged_on DESC LIMIT ?', limit);
-  return rows.map(mapRow);
-}
-
 /** One entry per day — logging again replaces the day's entry rather than appending. */
 export async function upsertWorkoutLog(
   db: SQLiteDatabase,

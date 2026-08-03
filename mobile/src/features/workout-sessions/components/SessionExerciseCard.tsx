@@ -7,13 +7,15 @@ export interface SessionExerciseCardProps {
   /** Opens the shared weight/reps (or duration/incline/speed) edit sheet for this exercise. */
   onPressField: () => void;
   onToggleSet: (setIndex: number) => void;
+  /** Renders the field chips and set dots as plain, non-pressable views — the completed-session detail view reuses this card without letting anything be edited. */
+  readOnly?: boolean;
 }
 
-function SetDot({ done, onPress }: { done: boolean; onPress: () => void }) {
+function SetDot({ done, onPress, readOnly = false }: { done: boolean; onPress: () => void; readOnly?: boolean }) {
   return (
     <Card
-      pressable
-      onPress={onPress}
+      pressable={!readOnly}
+      onPress={readOnly ? undefined : onPress}
       padding="none"
       accessibilityLabel={done ? 'Mark set incomplete' : 'Mark set complete'}
       style={{
@@ -49,7 +51,7 @@ function FieldChip({ label, value, suffix }: { label: string; value: number | nu
 }
 
 /** Screen 3's per-exercise card — editable weight/reps (or duration/incline/speed) and tappable set-completion dots. Cardio exercises get a single dot standing in for "done." */
-export function SessionExerciseCard({ exercise, onPressField, onToggleSet }: SessionExerciseCardProps) {
+export function SessionExerciseCard({ exercise, onPressField, onToggleSet, readOnly = false }: SessionExerciseCardProps) {
   const isCardio = exercise.category === 'cardio';
   const setsPlanned = exercise.setsPlanned ?? 0;
   const isDone = isCardio ? exercise.setsCompleted > 0 : setsPlanned > 0 && exercise.setsCompleted >= setsPlanned;
@@ -89,7 +91,7 @@ export function SessionExerciseCard({ exercise, onPressField, onToggleSet }: Ses
           )}
         </Row>
 
-        <Card pressable onPress={onPressField} padding="none" style={{ backgroundColor: 'transparent' }}>
+        <Card pressable={!readOnly} onPress={readOnly ? undefined : onPressField} padding="none" style={{ backgroundColor: 'transparent' }}>
           {isCardio ? (
             <Row gap="sm">
               <FieldChip label="Min" value={exercise.durationMinutes} />
@@ -106,13 +108,13 @@ export function SessionExerciseCard({ exercise, onPressField, onToggleSet }: Ses
 
         {isCardio ? (
           <Row>
-            <SetDot done={exercise.setsCompleted > 0} onPress={() => onToggleSet(0)} />
+            <SetDot done={exercise.setsCompleted > 0} onPress={() => onToggleSet(0)} readOnly={readOnly} />
           </Row>
         ) : (
           setsPlanned > 0 && (
             <Row gap="sm">
               {Array.from({ length: setsPlanned }, (_, index) => (
-                <SetDot key={index} done={index < exercise.setsCompleted} onPress={() => onToggleSet(index)} />
+                <SetDot key={index} done={index < exercise.setsCompleted} onPress={() => onToggleSet(index)} readOnly={readOnly} />
               ))}
             </Row>
           )

@@ -4,23 +4,22 @@ import { useSQLiteContext } from 'expo-sqlite';
 
 import { Body, Button, Caption, Card, Column, Icon, Row, ScrollScreen, Section, Title } from '@/components';
 import { colors } from '@/core/theme';
-import { formatShortDateWithWeekday } from '@/core/utils';
-import { WeightTrendCard } from '@/features/weight/components';
-import { useRecentWorkoutLogs } from '@/features/workout/hooks';
+import { WorkoutsTabs } from '@/features/workouts/components';
 import { WorkoutSessionService } from '@/features/workout-sessions/services';
 import { useWorkoutTemplates } from '@/features/workout-templates/hooks';
 
 const NEW_TEMPLATE_DEFAULT_NAME = 'New Template';
 
 /**
- * The Workouts tab's hub — mirrors web's `/workouts`: saved templates,
- * weight progression, and recent daily-log workouts, all reachable
- * without going through the Journal dashboard first.
+ * The Workouts tab's Templates page — mirrors web's `/workouts`. Body
+ * weight and daily-log sections that used to live here are gone: body
+ * weight is already covered by the Progress tab's Daily/Weekly/Monthly
+ * views (this was accidental duplication from the earlier IA redesign),
+ * and the free-text daily log wasn't needed here either.
  */
 export default function WorkoutsHubScreen() {
   const db = useSQLiteContext();
   const { templates, loading, createTemplate } = useWorkoutTemplates();
-  const { workoutLogs: recentWorkouts, loading: recentLoading } = useRecentWorkoutLogs();
   const [creating, setCreating] = useState(false);
   const [startingId, setStartingId] = useState<number | null>(null);
 
@@ -47,6 +46,7 @@ export default function WorkoutsHubScreen() {
   return (
     <ScrollScreen>
       <Title>Workouts</Title>
+      <WorkoutsTabs />
 
       <Section title="Templates">
         {!loading && templates.length === 0 && (
@@ -96,29 +96,6 @@ export default function WorkoutsHubScreen() {
         >
           New Template
         </Button>
-      </Section>
-
-      <Section title="Weight Progression">
-        <WeightTrendCard />
-      </Section>
-
-      <Section title="Recent Workouts">
-        {!recentLoading && recentWorkouts.length === 0 && (
-          <Caption color="mutedForeground">Log a workout from the Journal dashboard to see it here.</Caption>
-        )}
-        <Column gap="sm">
-          {recentWorkouts.map((log) => (
-            <Card key={log.id}>
-              <Row justify="space-between" align="center">
-                <Column gap="xs">
-                  <Body weight="semiBold">{log.workoutType || 'Workout'}</Body>
-                  <Caption color="mutedForeground">{formatShortDateWithWeekday(log.loggedOn)}</Caption>
-                </Column>
-                {log.durationMinutes != null && <Caption color="mutedForeground">{log.durationMinutes} min</Caption>}
-              </Row>
-            </Card>
-          ))}
-        </Column>
       </Section>
     </ScrollScreen>
   );
