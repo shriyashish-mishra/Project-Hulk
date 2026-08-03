@@ -7,7 +7,8 @@ import { InsightBanner } from "@/components/workout-sessions/insight-banner";
 import { PersonalRecordsRow } from "@/components/workout-sessions/personal-records-row";
 import { ProgressionChart } from "@/components/workout-sessions/progression-chart";
 import { RecommendationCard } from "@/components/workout-sessions/recommendation-card";
-import { getExerciseProgressSummary, getRecentlyTrainedExercises } from "@/lib/workout-sessions/exercise-progress";
+import { RecommendationsOverview } from "@/components/workout-sessions/recommendations-overview";
+import { getAllExerciseRecommendations, getExerciseProgressSummary } from "@/lib/workout-sessions/exercise-progress";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 interface WorkoutProgressPageProps {
@@ -19,16 +20,17 @@ interface WorkoutProgressPageProps {
  * Per-exercise progression — not a generic analytics dashboard, scoped
  * to exercises the user already trains inside their templates (plus any
  * exercise a past AI report recorded a weight for, even if it was never
- * added to the structured library). Section order follows the spec
- * exactly: picker → overview → chart → recommendation → personal
- * records → session history → insight.
+ * added to the structured library). Section order: recommendations
+ * overview (increase vs. hold, at a glance) → picker → overview → chart
+ * → recommendation → personal records → session history → insight.
  */
 export default async function WorkoutProgressPage({ searchParams }: WorkoutProgressPageProps) {
   await requireOnboardedUser();
   const { exercise: exerciseParam } = await searchParams;
   const selectedName = exerciseParam ? decodeURIComponent(exerciseParam).toLowerCase() : null;
 
-  const exercises = await getRecentlyTrainedExercises();
+  const recommendations = await getAllExerciseRecommendations();
+  const exercises = recommendations.map((r) => r.exercise);
   const selected = exercises.find((exercise) => exercise.name.toLowerCase() === selectedName) ?? exercises[0] ?? null;
   const summary = selected ? await getExerciseProgressSummary(selected) : null;
 
@@ -46,7 +48,10 @@ export default async function WorkoutProgressPage({ searchParams }: WorkoutProgr
           Complete a workout session with a strength exercise to start seeing progression here.
         </p>
       ) : (
-        <ExercisePickerStrip exercises={exercises} selectedExerciseName={selected?.name ?? ""} />
+        <>
+          <RecommendationsOverview summaries={recommendations} selectedExerciseName={selected?.name ?? ""} />
+          <ExercisePickerStrip exercises={exercises} selectedExerciseName={selected?.name ?? ""} />
+        </>
       )}
 
       {summary && (

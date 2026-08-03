@@ -92,6 +92,12 @@ export async function importAiReport(
   revalidatePath("/report");
   revalidatePath(`/report/${reportDate}`);
   revalidatePath("/progress");
+  // Workout Progress merges past reports' workout_exercises into its
+  // history/trend/recommendation, so a newly imported report needs to
+  // invalidate these too, not just the report/progress pages.
+  revalidatePath("/workouts");
+  revalidatePath("/workouts/history");
+  revalidatePath("/workouts/progress");
 
   return { ...data, parsed_json: parsed as AiReportJson };
 }

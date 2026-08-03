@@ -347,15 +347,17 @@ function computeRecommendation(history: ExerciseHistoryEntry[], unit: WeightUnit
 
   const last3 = usable.slice(0, TREND_WINDOW);
   const currentWeight = last3[0].weight;
+  const increment = unit === "kg" ? KG_INCREMENT : LBS_INCREMENT;
+  const potentialNextWeight = Number((currentWeight + increment).toFixed(1));
+
   const sameWeight = last3.every((entry) => entry.weight === currentWeight);
   const setsComplete = last3.every((entry) => entry.sets_completed >= (entry.sets_planned ?? entry.sets_completed));
   const highReps = last3.every((entry) => entry.reps !== null && entry.reps >= HIGH_REP_THRESHOLD);
 
   if (sameWeight && setsComplete && highReps) {
-    const increment = unit === "kg" ? KG_INCREMENT : LBS_INCREMENT;
     return {
       action: "increase",
-      next_weight: Number((currentWeight + increment).toFixed(1)),
+      next_weight: potentialNextWeight,
       confidence: "high",
       reason: "Target reps achieved consistently for 3 sessions",
     };
@@ -365,7 +367,9 @@ function computeRecommendation(history: ExerciseHistoryEntry[], unit: WeightUnit
     action: "hold",
     next_weight: currentWeight,
     confidence: "medium",
-    reason: "Target reps not consistently completed",
+    // Always names the target that unlocks the next increase — "hold" on
+    // its own doesn't tell you what to aim for next session.
+    reason: `Increase to ${potentialNextWeight}${unit} once you complete all sets at ${HIGH_REP_THRESHOLD}+ reps for 3 sessions in a row`,
   };
 }
 
@@ -419,7 +423,9 @@ function computeInsight(
   if (recommendation.action === "increase" && recommendation.next_weight !== null) {
     sentences.push(`Ready to progress to ${formatWeight(recommendation.next_weight, unit)} next session.`);
   } else if (recommendation.confidence !== "low") {
-    sentences.push("Hold at the current weight until reps are more consistent.");
+    // Reuses the recommendation's own reason rather than a generic line —
+    // it already names the exact target that unlocks the next increase.
+    sentences.push(`${recommendation.reason}.`);
   }
 
   return sentences.join(" ");
@@ -450,4 +456,22 @@ export async function getExerciseProgressSummary(
   const insight = computeInsight(history, exercise.name, trend, recommendation, aiFeedbackHint);
 
   return { exercise, history, trend, personal_records: personalRecords, recommendation, insight };
+}
+
+export interface ExerciseRecommendationSummary {
+  exercise: RecentExercise;
+  recommendation: WeightRecommendation;
+}
+
+/** Every recently-trained exercise's recommendation at a glance — powers the Progress page's "Ready to Increase" / "Hold Steady" grouping, so the user doesn't have to click through each exercise one at a time to see what needs attention. */
+export async function getAllExerciseRecommendations(ctx?: AuthContext): Promise<ExerciseRecommendationSummary[]> {
+  const resolvedCtx = ctx ?? (await requireUser());
+  const exercises = await getRecentlyTrainedExercises(resolvedCtx);
+
+  return Promise.all(
+    exercises.map(async (exercise) => {
+      const history = await getExerciseHistory(exercise, resolvedCtx);
+      return { exercise, recommendation: computeRecommendation(history, exercise.default_unit) };
+    }),
+  );
 }

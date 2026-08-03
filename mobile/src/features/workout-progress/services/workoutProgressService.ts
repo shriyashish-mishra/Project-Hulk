@@ -80,15 +80,17 @@ function computeRecommendation(history: ExerciseHistoryEntry[], unit: WeightUnit
 
   const last3 = usable.slice(0, TREND_WINDOW);
   const currentWeight = last3[0].weight;
+  const increment = unit === 'kg' ? KG_INCREMENT : LBS_INCREMENT;
+  const potentialNextWeight = Number((currentWeight + increment).toFixed(1));
+
   const sameWeight = last3.every((entry) => entry.weight === currentWeight);
   const setsComplete = last3.every((entry) => entry.setsCompleted >= (entry.setsPlanned ?? entry.setsCompleted));
   const highReps = last3.every((entry) => entry.reps !== null && entry.reps >= HIGH_REP_THRESHOLD);
 
   if (sameWeight && setsComplete && highReps) {
-    const increment = unit === 'kg' ? KG_INCREMENT : LBS_INCREMENT;
     return {
       action: 'increase',
-      nextWeight: Number((currentWeight + increment).toFixed(1)),
+      nextWeight: potentialNextWeight,
       confidence: 'high',
       reason: 'Target reps achieved consistently for 3 sessions',
     };
@@ -98,7 +100,9 @@ function computeRecommendation(history: ExerciseHistoryEntry[], unit: WeightUnit
     action: 'hold',
     nextWeight: currentWeight,
     confidence: 'medium',
-    reason: 'Target reps not consistently completed',
+    // Always names the target that unlocks the next increase — "hold" on
+    // its own doesn't tell you what to aim for next session.
+    reason: `Increase to ${potentialNextWeight}${unit} once you complete all sets at ${HIGH_REP_THRESHOLD}+ reps for 3 sessions in a row`,
   };
 }
 
