@@ -31,6 +31,14 @@ function elapsedMinutesSince(startedAt: string): number {
   return Math.max(0, Math.round((Date.now() - new Date(startedAt).getTime()) / 60000));
 }
 
+function durationMinutesBetween(startedAt: string, completedAt: string): number {
+  return Math.max(1, Math.round((new Date(completedAt).getTime() - new Date(startedAt).getTime()) / 60000));
+}
+
+function formatSessionDate(value: string): string {
+  return new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
 interface ActiveSessionProps {
   initialSession: WorkoutSessionWithExercises;
   exercises: ExerciseLibraryItem[];
@@ -86,6 +94,10 @@ export function ActiveSession({ initialSession, exercises }: ActiveSessionProps)
       ? exercise.sets_completed > 0
       : exercise.sets_planned != null && exercise.sets_completed >= exercise.sets_planned,
   ).length;
+  const isCompleted = session.completed_at !== null;
+  const durationMinutes = isCompleted
+    ? durationMinutesBetween(session.started_at, session.completed_at as string)
+    : elapsedMinutes;
   const estimatedCalories = estimateCalories(session.exercises);
   const sortedExercises = [...session.exercises].sort((a, b) => a.position - b.position);
 
@@ -93,12 +105,12 @@ export function ActiveSession({ initialSession, exercises }: ActiveSessionProps)
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-3 gap-2">
         <div className="flex flex-col items-center gap-0.5 rounded-2xl border border-border bg-card py-3">
-          <span className="text-[15px] font-bold text-foreground">{elapsedMinutes} min</span>
-          <span className="text-[10px] font-medium text-muted-foreground">ELAPSED</span>
+          <span className="text-[15px] font-bold text-foreground">{durationMinutes} min</span>
+          <span className="text-[10px] font-medium text-muted-foreground">{isCompleted ? "DURATION" : "ELAPSED"}</span>
         </div>
         <div className="flex flex-col items-center gap-0.5 rounded-2xl border border-border bg-card py-3">
-          <span className="text-[15px] font-bold text-foreground">{estimatedCalories}</span>
-          <span className="text-[10px] font-medium text-muted-foreground">KCAL EST.</span>
+          <span className="text-[15px] font-bold text-foreground">{session.total_calories ?? estimatedCalories}</span>
+          <span className="text-[10px] font-medium text-muted-foreground">KCAL</span>
         </div>
         <div className="flex flex-col items-center gap-0.5 rounded-2xl border border-border bg-card py-3">
           <span className="text-[15px] font-bold text-foreground">
@@ -115,25 +127,34 @@ export function ActiveSession({ initialSession, exercises }: ActiveSessionProps)
             exercise={exercise}
             onPressField={() => setEditingExercise(exercise)}
             onToggleSet={(setIndex) => handleToggleSet(exercise, setIndex)}
+            readOnly={isCompleted}
           />
         ))}
       </div>
 
-      <ExerciseLibraryPickerDrawer
-        exercises={exercises}
-        onPick={setAddingExercise}
-        trigger={
-          <button type="button" className="flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border py-3 text-sm font-semibold text-muted-foreground active:opacity-60">
-            <Plus className="size-4" />
-            Add exercise you did
-          </button>
-        }
-      />
+      {isCompleted ? (
+        <p className="text-center text-sm text-muted-foreground">
+          Completed {formatSessionDate(session.completed_at as string)}
+        </p>
+      ) : (
+        <>
+          <ExerciseLibraryPickerDrawer
+            exercises={exercises}
+            onPick={setAddingExercise}
+            trigger={
+              <button type="button" className="flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border py-3 text-sm font-semibold text-muted-foreground active:opacity-60">
+                <Plus className="size-4" />
+                Add exercise you did
+              </button>
+            }
+          />
 
-      <Button onClick={handleComplete} disabled={completing}>
-        <Check className="size-4" />
-        Complete Workout
-      </Button>
+          <Button onClick={handleComplete} disabled={completing}>
+            <Check className="size-4" />
+            Complete Workout
+          </Button>
+        </>
+      )}
 
       <SessionExerciseEditDrawer
         open={editingExercise !== null}

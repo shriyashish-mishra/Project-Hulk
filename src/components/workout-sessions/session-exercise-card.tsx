@@ -6,6 +6,8 @@ interface SessionExerciseCardProps {
   exercise: SessionExercise;
   onPressField: () => void;
   onToggleSet: (setIndex: number) => void;
+  /** Renders the field chips and set dots as plain, non-interactive elements — the completed-session detail view reuses this card without letting anything be edited. */
+  readOnly?: boolean;
 }
 
 function FieldChip({ label, value, suffix }: { label: string; value: number | null; suffix?: string }) {
@@ -17,15 +19,17 @@ function FieldChip({ label, value, suffix }: { label: string; value: number | nu
   );
 }
 
-function SetDot({ done, onClick }: { done: boolean; onClick: () => void }) {
+function SetDot({ done, onClick, readOnly = false }: { done: boolean; onClick: () => void; readOnly?: boolean }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={readOnly ? undefined : onClick}
+      disabled={readOnly}
       aria-label={done ? "Mark set incomplete" : "Mark set complete"}
       className={cn(
         "flex size-[22px] shrink-0 items-center justify-center rounded-full border-[1.5px] transition-colors",
         done ? "border-primary bg-primary" : "border-border bg-transparent",
+        readOnly && "pointer-events-none",
       )}
     >
       {done && <Check className="size-3 text-primary-foreground" strokeWidth={3} />}
@@ -34,7 +38,7 @@ function SetDot({ done, onClick }: { done: boolean; onClick: () => void }) {
 }
 
 /** Screen 3's per-exercise card — editable weight/reps (or duration/incline/speed) and tappable set-completion dots. Cardio exercises get a single dot standing in for "done." */
-export function SessionExerciseCard({ exercise, onPressField, onToggleSet }: SessionExerciseCardProps) {
+export function SessionExerciseCard({ exercise, onPressField, onToggleSet, readOnly = false }: SessionExerciseCardProps) {
   const isCardio = exercise.category === "cardio";
   const setsPlanned = exercise.sets_planned ?? 0;
   const isDone = isCardio ? exercise.sets_completed > 0 : setsPlanned > 0 && exercise.sets_completed >= setsPlanned;
@@ -65,7 +69,12 @@ export function SessionExerciseCard({ exercise, onPressField, onToggleSet }: Ses
         )}
       </div>
 
-      <button type="button" onClick={onPressField} className="flex gap-2 text-left active:opacity-70">
+      <button
+        type="button"
+        onClick={readOnly ? undefined : onPressField}
+        disabled={readOnly}
+        className={cn("flex gap-2 text-left active:opacity-70", readOnly && "pointer-events-none")}
+      >
         {isCardio ? (
           <>
             <FieldChip label="Min" value={exercise.duration_minutes} />
@@ -82,13 +91,13 @@ export function SessionExerciseCard({ exercise, onPressField, onToggleSet }: Ses
 
       {isCardio ? (
         <div className="flex">
-          <SetDot done={exercise.sets_completed > 0} onClick={() => onToggleSet(0)} />
+          <SetDot done={exercise.sets_completed > 0} onClick={() => onToggleSet(0)} readOnly={readOnly} />
         </div>
       ) : (
         setsPlanned > 0 && (
           <div className="flex gap-1.5">
             {Array.from({ length: setsPlanned }, (_, index) => (
-              <SetDot key={index} done={index < exercise.sets_completed} onClick={() => onToggleSet(index)} />
+              <SetDot key={index} done={index < exercise.sets_completed} onClick={() => onToggleSet(index)} readOnly={readOnly} />
             ))}
           </div>
         )

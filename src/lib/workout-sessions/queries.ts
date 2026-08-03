@@ -3,7 +3,7 @@ import type { ExerciseLibraryItem } from "@/lib/exercise-library/types";
 import { requireUser } from "@/lib/supabase/auth";
 import type { Database } from "@/lib/supabase/database.types";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-import type { SessionExercise, WorkoutSessionWithExercises } from "./types";
+import type { SessionExercise, WorkoutSession, WorkoutSessionWithExercises } from "./types";
 
 interface AuthContext {
   supabase: SupabaseClient<Database>;
@@ -65,4 +65,21 @@ export async function getSessionWithExercises(
   });
 
   return { ...session, exercises };
+}
+
+const COMPLETED_SESSIONS_LIMIT = 100;
+
+/** Every completed session, newest first — backs the Workouts "History" tab. */
+export async function listCompletedSessions(ctx?: AuthContext): Promise<WorkoutSession[]> {
+  const { supabase, user } = ctx ?? (await requireUser());
+  const { data, error } = await supabase
+    .from("workout_sessions")
+    .select("*")
+    .eq("user_id", user.id)
+    .not("completed_at", "is", null)
+    .order("completed_at", { ascending: false })
+    .limit(COMPLETED_SESSIONS_LIMIT);
+
+  if (error) throw new Error(error.message);
+  return data;
 }
