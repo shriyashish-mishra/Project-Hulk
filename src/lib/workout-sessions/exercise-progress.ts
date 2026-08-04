@@ -287,26 +287,59 @@ const HIGH_REP_THRESHOLD = 15;
 const RECENT_REPORTS_TO_SCAN = 5;
 
 /**
- * The next weight up that's actually stocked as a real dumbbell/plate/
- * machine-stack increment, not just "add a fixed amount" — a flat +1kg
- * recommendation from a base like 7.5kg lands on 8.5kg, which no
- * commercial dumbbell rack carries. Lbs-based exercises are always
- * machine/cable work in this app's exercise library (see the
- * machine-detection rule in the AI report prompt), and weight stacks
- * commonly step by 5lb, which is already realistic as a flat increment.
- * Kg-based exercises are dumbbell/plate work, which commonly runs whole
- * numbers below 10kg and 2kg steps at/above 10kg — a half-kg current
- * weight (a common "bridge" dumbbell, e.g. 7.5kg) rounds up to the next
- * whole kg first rather than adding a fixed delta on top of it.
+ * Real equipment tables (commercial Indian gyms — dumbbells step by
+ * 2.5kg, not 1kg; kettlebells and plates run their own irregular
+ * sequences) so a recommendation always lands on a weight that's
+ * actually stocked, not just "current + a fixed amount." Extended
+ * beyond each table's explicit top end by repeating its last step.
  */
-function nextRealisticWeight(current: number, unit: WeightUnit): number {
-  if (unit === "lbs") {
-    return current + 5;
+const DUMBBELL_WEIGHTS_KG = [2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 27.5, 30, 32.5, 35, 40];
+const KETTLEBELL_WEIGHTS_KG = [4, 6, 8, 10, 12, 16, 20, 24, 28, 32];
+const PLATE_WEIGHTS_KG = [1.25, 2.5, 5, 10, 15, 20];
+/** 1 slate on a standard selectorized machine stack. */
+const MACHINE_STACK_STEP_KG = 5;
+const MACHINE_STACK_STEP_LBS = 5;
+
+type EquipmentType = "dumbbell" | "kettlebell" | "plate" | "machine";
+
+/**
+ * Guesses equipment from the exercise name plus a free-text hint (its
+ * most recent logged detail, when one exists) — this app's exercise
+ * library has no dedicated equipment field. Lbs-unit exercises are
+ * always machine/cable work by this app's own convention (see the
+ * machine-detection rule in the AI report prompt); everything else
+ * defaults to dumbbell, the most common free-weight case in this app's
+ * actual exercise names (curls, presses, pullovers, raises).
+ */
+function detectEquipmentType(exerciseName: string, hintText: string | null, unit: WeightUnit): EquipmentType {
+  if (unit === "lbs") return "machine";
+  const haystack = `${exerciseName} ${hintText ?? ""}`.toLowerCase();
+  if (haystack.includes("kettlebell")) return "kettlebell";
+  if (haystack.includes("plate")) return "plate";
+  if (haystack.includes("machine") || haystack.includes("cable") || haystack.includes("stack")) return "machine";
+  return "dumbbell";
+}
+
+/** First table value strictly above `current`, or `current` plus the table's own last step once past its explicit top end. */
+function nextFromSequence(current: number, sequence: number[]): number {
+  const next = sequence.find((weight) => weight > current + 0.01);
+  if (next !== undefined) return next;
+  const lastStep = sequence.length >= 2 ? sequence[sequence.length - 1] - sequence[sequence.length - 2] : sequence[0];
+  return Number((current + lastStep).toFixed(2));
+}
+
+function nextRealisticWeight(current: number, unit: WeightUnit, exerciseName: string, hintText: string | null): number {
+  switch (detectEquipmentType(exerciseName, hintText, unit)) {
+    case "kettlebell":
+      return nextFromSequence(current, KETTLEBELL_WEIGHTS_KG);
+    case "plate":
+      return nextFromSequence(current, PLATE_WEIGHTS_KG);
+    case "machine":
+      return current + (unit === "lbs" ? MACHINE_STACK_STEP_LBS : MACHINE_STACK_STEP_KG);
+    case "dumbbell":
+    default:
+      return nextFromSequence(current, DUMBBELL_WEIGHTS_KG);
   }
-  if (current % 1 !== 0) {
-    return Math.ceil(current);
-  }
-  return current + (current >= 10 ? 2 : 1);
 }
 
 /**
@@ -360,7 +393,11 @@ function computePersonalRecords(history: ExerciseHistoryEntry[]): PersonalRecord
  * means "hold," and fewer than three entries means there isn't enough
  * signal to recommend anything.
  */
-function computeRecommendation(history: ExerciseHistoryEntry[], unit: WeightUnit): WeightRecommendation {
+function computeRecommendation(
+  history: ExerciseHistoryEntry[],
+  unit: WeightUnit,
+  exerciseName: string,
+): WeightRecommendation {
   const usable = history.filter((entry): entry is ExerciseHistoryEntry & { weight: number } => entry.weight !== null);
   if (usable.length < TREND_WINDOW) {
     return { action: "hold", next_weight: null, confidence: "low", reason: "Not enough session history yet" };
@@ -368,7 +405,7 @@ function computeRecommendation(history: ExerciseHistoryEntry[], unit: WeightUnit
 
   const last3 = usable.slice(0, TREND_WINDOW);
   const currentWeight = last3[0].weight;
-  const potentialNextWeight = nextRealisticWeight(currentWeight, unit);
+  const potentialNextWeight = nextRealisticWeight(currentWeight, unit, exerciseName, last3[0].raw_detail);
 
   const sameWeight = last3.every((entry) => entry.weight === currentWeight);
   const setsComplete = last3.every((entry) => entry.sets_completed >= (entry.sets_planned ?? entry.sets_completed));
@@ -471,7 +508,7 @@ export async function getExerciseProgressSummary(
   const history = await getExerciseHistory(exercise, resolvedCtx);
   const trend = computeTrend(history);
   const personalRecords = computePersonalRecords(history);
-  const recommendation = computeRecommendation(history, exercise.default_unit);
+  const recommendation = computeRecommendation(history, exercise.default_unit, exercise.name);
   const aiFeedbackHint = await findAiFeedbackHint(exercise.name, resolvedCtx);
   const insight = computeInsight(history, exercise.name, trend, recommendation, aiFeedbackHint);
 
@@ -491,7 +528,7 @@ export async function getAllExerciseRecommendations(ctx?: AuthContext): Promise<
   return Promise.all(
     exercises.map(async (exercise) => {
       const history = await getExerciseHistory(exercise, resolvedCtx);
-      return { exercise, recommendation: computeRecommendation(history, exercise.default_unit) };
+      return { exercise, recommendation: computeRecommendation(history, exercise.default_unit, exercise.name) };
     }),
   );
 }
