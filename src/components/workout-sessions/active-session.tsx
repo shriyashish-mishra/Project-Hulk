@@ -9,6 +9,7 @@ import { ExerciseLibraryPickerDrawer } from "@/components/workout-templates/exer
 import type { ExerciseLibraryItem } from "@/lib/exercise-library/types";
 import { addSessionExercise, completeSession, toggleSessionSet, updateSessionExercise } from "@/lib/workout-sessions/actions";
 import { estimateCalories } from "@/lib/workout-sessions/estimate";
+import type { SessionWeightSuggestion } from "@/lib/workout-sessions/exercise-progress";
 import type { SessionExercise, SessionExerciseInput, WorkoutSessionWithExercises } from "@/lib/workout-sessions/types";
 import { SessionExerciseCard } from "./session-exercise-card";
 import { SessionExerciseEditDrawer } from "./session-exercise-edit-drawer";
@@ -42,10 +43,12 @@ function formatSessionDate(value: string): string {
 interface ActiveSessionProps {
   initialSession: WorkoutSessionWithExercises;
   exercises: ExerciseLibraryItem[];
+  /** Keyed by session_exercise id — flags exercises whose pre-filled weight already reflects a Hulk-computed bump/ease from the last time this template was completed. */
+  weightSuggestions?: Record<string, SessionWeightSuggestion>;
 }
 
 /** Screen 3 — Active Workout Session. Also serves the "quick apply a template" case: nothing requires tapping through sets one by one before completing. */
-export function ActiveSession({ initialSession, exercises }: ActiveSessionProps) {
+export function ActiveSession({ initialSession, exercises, weightSuggestions = {} }: ActiveSessionProps) {
   const router = useRouter();
   const [session, setSession] = useState(initialSession);
   const [elapsedMinutes, setElapsedMinutes] = useState(() => elapsedMinutesSince(initialSession.started_at));
@@ -128,6 +131,7 @@ export function ActiveSession({ initialSession, exercises }: ActiveSessionProps)
             onPressField={() => setEditingExercise(exercise)}
             onToggleSet={(setIndex) => handleToggleSet(exercise, setIndex)}
             readOnly={isCompleted}
+            weightSuggestion={weightSuggestions[exercise.id]}
           />
         ))}
       </div>

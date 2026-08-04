@@ -2,6 +2,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { getTodayDateString } from '@/core/utils';
 import { WorkoutService } from '@/features/workout/services';
+import { WorkoutProgressService } from '@/features/workout-progress/services';
 import { WorkoutTemplateService } from '@/features/workout-templates/services';
 import {
   addSessionExercise,
@@ -91,6 +92,7 @@ export const WorkoutSessionService = {
   async completeWorkout(db: SQLiteDatabase, session: WorkoutSessionWithExercises, elapsedMinutes: number): Promise<void> {
     const totalCalories = estimateCalories(session.exercises);
     await completeSession(db, session.id, totalCalories);
+    await WorkoutProgressService.applyRecommendationsToTemplate(db, session);
 
     const canonicalText = buildCanonicalWorkoutText(session.templateNameSnapshot, session.exercises);
     await WorkoutService.saveWorkout(db, session.loggedOn, {

@@ -1,5 +1,6 @@
-import { Body, Card, Column, Icon, Label, Row } from '@/components';
+import { Body, Caption, Card, Column, Icon, Label, Row } from '@/components';
 import { colors, radius, spacing } from '@/core/theme';
+import type { SessionWeightSuggestion } from '@/features/workout-progress/types';
 import type { SessionExercise } from '../types';
 
 export interface SessionExerciseCardProps {
@@ -9,6 +10,8 @@ export interface SessionExerciseCardProps {
   onToggleSet: (setIndex: number) => void;
   /** Renders the field chips and set dots as plain, non-pressable views — the completed-session detail view reuses this card without letting anything be edited. */
   readOnly?: boolean;
+  /** Present when this exercise's pre-filled weight is a Hulk-computed bump/ease from last time — surfaces why the number changed, not just that it did. */
+  weightSuggestion?: SessionWeightSuggestion;
 }
 
 function SetDot({ done, onPress, readOnly = false }: { done: boolean; onPress: () => void; readOnly?: boolean }) {
@@ -51,7 +54,13 @@ function FieldChip({ label, value, suffix }: { label: string; value: number | nu
 }
 
 /** Screen 3's per-exercise card — editable weight/reps (or duration/incline/speed) and tappable set-completion dots. Cardio exercises get a single dot standing in for "done." */
-export function SessionExerciseCard({ exercise, onPressField, onToggleSet, readOnly = false }: SessionExerciseCardProps) {
+export function SessionExerciseCard({
+  exercise,
+  onPressField,
+  onToggleSet,
+  readOnly = false,
+  weightSuggestion,
+}: SessionExerciseCardProps) {
   const isCardio = exercise.category === 'cardio';
   const setsPlanned = exercise.setsPlanned ?? 0;
   const isDone = isCardio ? exercise.setsCompleted > 0 : setsPlanned > 0 && exercise.setsCompleted >= setsPlanned;
@@ -90,6 +99,33 @@ export function SessionExerciseCard({ exercise, onPressField, onToggleSet, readO
             </Row>
           )}
         </Row>
+
+        {weightSuggestion && (
+          <Row
+            align="center"
+            gap="xs"
+            style={{
+              alignSelf: 'flex-start',
+              backgroundColor: weightSuggestion.action === 'increase' ? `${colors.primary}26` : `${colors.warning}26`,
+              paddingHorizontal: 8,
+              paddingVertical: 3,
+              borderRadius: radius.full,
+            }}
+          >
+            <Icon
+              name={weightSuggestion.action === 'increase' ? 'arrowUp' : 'arrowDown'}
+              size={11}
+              color={weightSuggestion.action === 'increase' ? colors.primary : colors.warning}
+            />
+            <Caption
+              weight="semiBold"
+              color={weightSuggestion.action === 'increase' ? 'primary' : 'warning'}
+              style={{ fontSize: 11 }}
+            >
+              Hulk suggests {weightSuggestion.action === 'increase' ? 'increasing' : 'decreasing'} weight
+            </Caption>
+          </Row>
+        )}
 
         <Card pressable={!readOnly} onPress={readOnly ? undefined : onPressField} padding="none" style={{ backgroundColor: 'transparent' }}>
           {isCardio ? (

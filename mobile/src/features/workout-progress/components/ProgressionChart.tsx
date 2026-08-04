@@ -18,7 +18,7 @@ export function ProgressionChart({ history, recommendation }: ProgressionChartPr
     .map((entry) => ({ value: entry.weight, label: formatSessionShortDate(entry.completedAt) }));
 
   const projected: LineChartPoint[] =
-    recommendation.action === 'increase' && recommendation.nextWeight !== null
+    recommendation.action !== 'hold' && recommendation.nextWeight !== null
       ? [{ value: recommendation.nextWeight, label: 'Next' }]
       : [];
 

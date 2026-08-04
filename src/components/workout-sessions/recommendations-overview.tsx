@@ -38,17 +38,33 @@ function ExerciseLink({
  */
 export function RecommendationsOverview({ summaries, selectedExerciseName }: RecommendationsOverviewProps) {
   const increasing = summaries.filter((s) => s.recommendation.action === "increase");
+  const decreasing = summaries.filter((s) => s.recommendation.action === "decrease");
   const holding = summaries.filter((s) => s.recommendation.action === "hold" && s.recommendation.confidence !== "low");
 
-  if (increasing.length === 0 && holding.length === 0) return null;
+  if (increasing.length === 0 && decreasing.length === 0 && holding.length === 0) return null;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-4 sm:grid-cols-3">
       {increasing.length > 0 && (
         <div className="rounded-2xl border border-border bg-card p-4">
           <h3 className="mb-2 text-sm font-semibold text-primary">Ready to Increase</h3>
           <ul className="flex flex-col gap-0.5">
             {increasing.map((summary) => (
+              <ExerciseLink
+                key={summary.exercise.name}
+                summary={summary}
+                selected={summary.exercise.name.toLowerCase() === selectedExerciseName.toLowerCase()}
+                valueLabel={`→ ${summary.recommendation.next_weight}${summary.exercise.default_unit}`}
+              />
+            ))}
+          </ul>
+        </div>
+      )}
+      {decreasing.length > 0 && (
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <h3 className="mb-2 text-sm font-semibold text-warning">Ease Off</h3>
+          <ul className="flex flex-col gap-0.5">
+            {decreasing.map((summary) => (
               <ExerciseLink
                 key={summary.exercise.name}
                 summary={summary}

@@ -36,10 +36,17 @@ export interface PersonalRecords {
 export type RecommendationConfidence = 'low' | 'medium' | 'high';
 
 export interface WeightRecommendation {
-  action: 'increase' | 'hold';
+  action: 'increase' | 'decrease' | 'hold';
   nextWeight: number | null;
   confidence: RecommendationConfidence;
   reason: string;
+}
+
+/** A Hulk-computed bump/ease already baked into a session exercise's pre-filled weight — see `WorkoutProgressService.getSessionWeightSuggestions`. */
+export interface SessionWeightSuggestion {
+  action: 'increase' | 'decrease';
+  previousWeight: number;
+  nextWeight: number;
 }
 
 export interface ExerciseProgressSummary {

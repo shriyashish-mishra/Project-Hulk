@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import type { RecommendationConfidence, WeightRecommendation } from "@/lib/workout-sessions/exercise-progress";
 import type { WeightUnit } from "@/lib/exercise-library/types";
 
@@ -18,16 +19,27 @@ export function RecommendationCard({ recommendation, unit }: RecommendationCardP
   const headline =
     recommendation.action === "increase" && recommendation.next_weight !== null
       ? `Increase to ${recommendation.next_weight}${unit} next session`
-      : recommendation.next_weight !== null
-        ? `Stay at ${recommendation.next_weight}${unit}`
-        : "Not enough data yet";
+      : recommendation.action === "decrease" && recommendation.next_weight !== null
+        ? `Decrease to ${recommendation.next_weight}${unit} next session`
+        : recommendation.next_weight !== null
+          ? `Stay at ${recommendation.next_weight}${unit}`
+          : "Not enough data yet";
 
   return (
     <div className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-4">
       <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
         Next Weight Recommendation
       </span>
-      <p className={recommendation.action === "increase" ? "text-lg font-bold text-primary" : "text-lg font-bold text-foreground"}>
+      <p
+        className={cn(
+          "text-lg font-bold",
+          recommendation.action === "increase"
+            ? "text-primary"
+            : recommendation.action === "decrease"
+              ? "text-warning"
+              : "text-foreground",
+        )}
+      >
         {headline}
       </p>
       <div className="flex items-center justify-between gap-3">

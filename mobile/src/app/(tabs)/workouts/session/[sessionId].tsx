@@ -36,6 +36,7 @@ export default function WorkoutSessionScreen() {
     elapsedMinutes,
     estimatedCalories,
     exercisesCompletedCount,
+    weightSuggestions,
     updateExercise,
     toggleSet,
     complete,
@@ -85,6 +86,7 @@ export default function WorkoutSessionScreen() {
             onPressField={() => setEditingExercise(exercise)}
             onToggleSet={(setIndex) => toggleSet(exercise, setIndex)}
             readOnly={isCompleted}
+            weightSuggestion={weightSuggestions[exercise.id]}
           />
         ))}
       </Column>

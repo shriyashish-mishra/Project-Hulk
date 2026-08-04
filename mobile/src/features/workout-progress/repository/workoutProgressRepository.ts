@@ -100,6 +100,32 @@ export async function getExerciseSessionHistory(
   return rows.map(mapHistoryRow);
 }
 
+/**
+ * Writes a Hulk-computed increase/decrease straight onto the originating
+ * template's default weight, mirroring `template_exercises`' own
+ * `touchTemplate` convention inline rather than reaching into the
+ * workout-templates feature's repository — this module already crosses
+ * into `workout_sessions`/`exercise_library` directly above, so one more
+ * shared-table statement here matches the existing pattern rather than
+ * adding a new cross-feature service dependency.
+ */
+export async function applyTemplateExerciseWeight(
+  db: SQLiteDatabase,
+  templateId: number,
+  exerciseId: number,
+  weight: number,
+): Promise<void> {
+  const row = await db.getFirstAsync<{ id: number; default_weight: number | null }>(
+    'SELECT id, default_weight FROM template_exercises WHERE template_id = ? AND exercise_id = ?',
+    templateId,
+    exerciseId,
+  );
+  if (!row || row.default_weight === weight) return;
+
+  await db.runAsync('UPDATE template_exercises SET default_weight = ? WHERE id = ?', weight, row.id);
+  await db.runAsync(`UPDATE workout_templates SET updated_at = datetime('now') WHERE id = ?`, templateId);
+}
+
 const COMPLETED_SESSIONS_LIMIT = 100;
 
 /** Every completed session, newest first — backs the Workouts "History" tab. */

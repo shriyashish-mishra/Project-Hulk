@@ -8,6 +8,7 @@ import { getLocalDateString } from "@/lib/date";
 import { saveWorkoutLog } from "@/lib/workout-logs/actions";
 import { buildCanonicalWorkoutText } from "./canonical-text";
 import { estimateCalories } from "./estimate";
+import { applyRecommendationsToTemplate } from "./exercise-progress";
 import { mapSessionExerciseRow, getSessionWithExercises } from "./queries";
 import type { SessionExercise, SessionExerciseInput, SessionExerciseUpdate, WorkoutSessionWithExercises } from "./types";
 
@@ -144,6 +145,8 @@ export async function completeSession(sessionId: string): Promise<void> {
     .eq("id", sessionId)
     .eq("user_id", user.id);
   if (error) throw new Error(error.message);
+
+  await applyRecommendationsToTemplate(session, { supabase, user });
 
   const canonicalText = buildCanonicalWorkoutText(session.template_name_snapshot, session.exercises);
   await saveWorkoutLog(canonicalText, session.logged_on, { supabase, user });

@@ -20,15 +20,19 @@ export function RecommendationCard({ recommendation, unit }: RecommendationCardP
   const headline =
     recommendation.action === 'increase' && recommendation.nextWeight !== null
       ? `Increase to ${recommendation.nextWeight}${unit} next session`
-      : recommendation.nextWeight !== null
-        ? `Stay at ${recommendation.nextWeight}${unit}`
-        : 'Not enough data yet';
+      : recommendation.action === 'decrease' && recommendation.nextWeight !== null
+        ? `Decrease to ${recommendation.nextWeight}${unit} next session`
+        : recommendation.nextWeight !== null
+          ? `Stay at ${recommendation.nextWeight}${unit}`
+          : 'Not enough data yet';
+  const headlineColor =
+    recommendation.action === 'increase' ? 'primary' : recommendation.action === 'decrease' ? 'warning' : 'foreground';
 
   return (
     <Card>
       <Column gap="sm">
         <Label color="mutedForeground">Next Weight Recommendation</Label>
-        <Subtitle color={recommendation.action === 'increase' ? 'primary' : 'foreground'}>{headline}</Subtitle>
+        <Subtitle color={headlineColor}>{headline}</Subtitle>
         <Row justify="space-between" align="center">
           <Body color="mutedForeground">{recommendation.reason}</Body>
           <Row

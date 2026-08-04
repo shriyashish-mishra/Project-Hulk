@@ -4,7 +4,9 @@ import { getRecentAiReports } from "@/lib/nightly-report/queries";
 import type { WorkoutExercise } from "@/lib/nightly-report/types";
 import { requireUser } from "@/lib/supabase/auth";
 import type { Database } from "@/lib/supabase/database.types";
+import { touchTemplate } from "@/lib/workout-templates/queries";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import type { WorkoutSessionWithExercises } from "./types";
 
 interface AuthContext {
   supabase: SupabaseClient<Database>;
@@ -60,7 +62,7 @@ export interface PersonalRecords {
 
 export type RecommendationConfidence = "low" | "medium" | "high";
 export interface WeightRecommendation {
-  action: "increase" | "hold";
+  action: "increase" | "decrease" | "hold";
   next_weight: number | null;
   confidence: RecommendationConfidence;
   reason: string;
@@ -284,6 +286,8 @@ const TREND_WINDOW = 3;
 const FLAT_THRESHOLD = 0.5;
 /** Matches the spec's own worked example ("4 sets of 15+ reps") — a fixed heuristic, not per-exercise configurable in v1. */
 const HIGH_REP_THRESHOLD = 15;
+/** Below this, at the same weight for 3 straight sessions, reads as "too heavy" rather than "still building up" — most strength/hypertrophy work targets 6-15 reps. */
+const LOW_REP_THRESHOLD = 6;
 const RECENT_REPORTS_TO_SCAN = 5;
 
 /**
@@ -342,6 +346,27 @@ function nextRealisticWeight(current: number, unit: WeightUnit, exerciseName: st
   }
 }
 
+/** First table value strictly below `current`, or the table's smallest entry once at/under its explicit floor — never suggests dropping below what's actually stocked. */
+function prevFromSequence(current: number, sequence: number[]): number {
+  const prev = [...sequence].reverse().find((weight) => weight < current - 0.01);
+  return prev ?? sequence[0];
+}
+
+function prevRealisticWeight(current: number, unit: WeightUnit, exerciseName: string, hintText: string | null): number {
+  const step = unit === "lbs" ? MACHINE_STACK_STEP_LBS : MACHINE_STACK_STEP_KG;
+  switch (detectEquipmentType(exerciseName, hintText, unit)) {
+    case "kettlebell":
+      return prevFromSequence(current, KETTLEBELL_WEIGHTS_KG);
+    case "plate":
+      return prevFromSequence(current, PLATE_WEIGHTS_KG);
+    case "machine":
+      return Math.max(step, current - step);
+    case "dumbbell":
+    default:
+      return prevFromSequence(current, DUMBBELL_WEIGHTS_KG);
+  }
+}
+
 /**
  * Latest entry vs. up to `TREND_WINDOW` entries back — deliberately
  * simple, mirroring the weight-tracking trend elsewhere in this app: not
@@ -388,10 +413,11 @@ function computePersonalRecords(history: ExerciseHistoryEntry[]): PersonalRecord
 /**
  * Rule-based, computed entirely from local history (sessions and parsed
  * report mentions alike) — never a live AI call. Looks at the last three
- * entries: consistent high reps at the same weight, sets fully
- * completed, means "add weight next time"; anything less consistent
- * means "hold," and fewer than three entries means there isn't enough
- * signal to recommend anything.
+ * entries: consistent high reps at the same weight with sets fully
+ * completed means "add weight next time"; consistently failing sets at
+ * low reps at the same weight means the opposite — "this is too heavy,
+ * ease off." Anything less consistent means "hold," and fewer than
+ * three entries means there isn't enough signal to recommend anything.
  */
 function computeRecommendation(
   history: ExerciseHistoryEntry[],
@@ -406,10 +432,13 @@ function computeRecommendation(
   const last3 = usable.slice(0, TREND_WINDOW);
   const currentWeight = last3[0].weight;
   const potentialNextWeight = nextRealisticWeight(currentWeight, unit, exerciseName, last3[0].raw_detail);
+  const potentialPrevWeight = prevRealisticWeight(currentWeight, unit, exerciseName, last3[0].raw_detail);
 
   const sameWeight = last3.every((entry) => entry.weight === currentWeight);
   const setsComplete = last3.every((entry) => entry.sets_completed >= (entry.sets_planned ?? entry.sets_completed));
   const highReps = last3.every((entry) => entry.reps !== null && entry.reps >= HIGH_REP_THRESHOLD);
+  const failingSets = last3.every((entry) => entry.sets_completed < (entry.sets_planned ?? entry.sets_completed));
+  const lowReps = last3.every((entry) => entry.reps !== null && entry.reps <= LOW_REP_THRESHOLD);
 
   if (sameWeight && setsComplete && highReps) {
     return {
@@ -417,6 +446,15 @@ function computeRecommendation(
       next_weight: potentialNextWeight,
       confidence: "high",
       reason: "Target reps achieved consistently for 3 sessions",
+    };
+  }
+
+  if (sameWeight && failingSets && lowReps) {
+    return {
+      action: "decrease",
+      next_weight: potentialPrevWeight,
+      confidence: "high",
+      reason: "Sets and reps have dropped consistently for 3 sessions",
     };
   }
 
@@ -479,6 +517,8 @@ function computeInsight(
 
   if (recommendation.action === "increase" && recommendation.next_weight !== null) {
     sentences.push(`Ready to progress to ${formatWeight(recommendation.next_weight, unit)} next session.`);
+  } else if (recommendation.action === "decrease" && recommendation.next_weight !== null) {
+    sentences.push(`Consider easing to ${formatWeight(recommendation.next_weight, unit)} next session.`);
   } else if (recommendation.confidence !== "low") {
     // Reuses the recommendation's own reason rather than a generic line —
     // it already names the exact target that unlocks the next increase.
@@ -531,4 +571,109 @@ export async function getAllExerciseRecommendations(ctx?: AuthContext): Promise<
       return { exercise, recommendation: computeRecommendation(history, exercise.default_unit, exercise.name) };
     }),
   );
+}
+
+/**
+ * Right after a session finishes, feeds its own just-completed sets back
+ * into the recommendation engine and writes any resulting increase/
+ * decrease straight onto the originating template's default weight — so
+ * the next time this template starts a session, the pre-filled weight
+ * already reflects Hulk's call instead of whatever was lifted last time.
+ * Ad-hoc sessions (no `template_id`) are left untouched, and an exercise
+ * that isn't actually on that template (e.g. added mid-session) is
+ * silently skipped rather than created.
+ */
+export async function applyRecommendationsToTemplate(
+  session: WorkoutSessionWithExercises,
+  ctx?: AuthContext,
+): Promise<void> {
+  if (!session.template_id) return;
+  const resolvedCtx = ctx ?? (await requireUser());
+  const { supabase, user } = resolvedCtx;
+  const templateId = session.template_id;
+
+  for (const sessionExercise of session.exercises) {
+    if (sessionExercise.category !== "strength" || sessionExercise.weight_unit === null) continue;
+
+    const recentExercise: RecentExercise = {
+      exercise_id: sessionExercise.exercise_id,
+      name: sessionExercise.exercise_name,
+      default_unit: sessionExercise.weight_unit,
+      last_completed_at: new Date().toISOString(),
+    };
+    const history = await getExerciseHistory(recentExercise, resolvedCtx);
+    const recommendation = computeRecommendation(history, sessionExercise.weight_unit, sessionExercise.exercise_name);
+    if (recommendation.action === "hold" || recommendation.next_weight === null) continue;
+
+    const { data: templateExercise, error: findError } = await supabase
+      .from("template_exercises")
+      .select("id, default_weight")
+      .eq("template_id", templateId)
+      .eq("exercise_id", sessionExercise.exercise_id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (findError) throw new Error(findError.message);
+    if (!templateExercise || templateExercise.default_weight === recommendation.next_weight) continue;
+
+    const { error: updateError } = await supabase
+      .from("template_exercises")
+      .update({ default_weight: recommendation.next_weight })
+      .eq("id", templateExercise.id);
+    if (updateError) throw new Error(updateError.message);
+
+    await touchTemplate(supabase, templateId, user.id);
+  }
+}
+
+export interface SessionWeightSuggestion {
+  action: "increase" | "decrease";
+  previous_weight: number;
+  next_weight: number;
+}
+
+/**
+ * Flags exercises in an in-progress session whose pre-filled weight
+ * already reflects a Hulk-computed bump/ease applied to the template
+ * when the prior session on it was completed — so the badge shown here
+ * always agrees with `applyRecommendationsToTemplate`, without needing
+ * to persist the reason anywhere: recomputing the same recommendation
+ * from history (which never includes this still-uncompleted session)
+ * and checking it against the exercise's current weight is enough.
+ */
+export async function getSessionWeightSuggestions(
+  session: WorkoutSessionWithExercises,
+  ctx?: AuthContext,
+): Promise<Record<string, SessionWeightSuggestion>> {
+  const resolvedCtx = ctx ?? (await requireUser());
+  const result: Record<string, SessionWeightSuggestion> = {};
+
+  for (const sessionExercise of session.exercises) {
+    if (sessionExercise.category !== "strength" || sessionExercise.weight === null || sessionExercise.weight_unit === null) {
+      continue;
+    }
+
+    const recentExercise: RecentExercise = {
+      exercise_id: sessionExercise.exercise_id,
+      name: sessionExercise.exercise_name,
+      default_unit: sessionExercise.weight_unit,
+      last_completed_at: session.started_at,
+    };
+    const history = await getExerciseHistory(recentExercise, resolvedCtx);
+    const lastLifted = history.find((entry) => entry.weight !== null)?.weight ?? null;
+    if (lastLifted === null || lastLifted === sessionExercise.weight) continue;
+
+    const recommendation = computeRecommendation(history, sessionExercise.weight_unit, sessionExercise.exercise_name);
+    if (
+      (recommendation.action === "increase" || recommendation.action === "decrease") &&
+      recommendation.next_weight === sessionExercise.weight
+    ) {
+      result[sessionExercise.id] = {
+        action: recommendation.action,
+        previous_weight: lastLifted,
+        next_weight: sessionExercise.weight,
+      };
+    }
+  }
+
+  return result;
 }

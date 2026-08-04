@@ -41,7 +41,7 @@ export function ProgressionChart({ history, recommendation }: ProgressionChartPr
     }),
   );
 
-  if (recommendation.action === "increase" && recommendation.next_weight !== null) {
+  if (recommendation.action !== "hold" && recommendation.next_weight !== null) {
     const last = data[data.length - 1];
     last.projected = last.actual;
     data.push({ label: "Next", actual: null, projected: recommendation.next_weight });

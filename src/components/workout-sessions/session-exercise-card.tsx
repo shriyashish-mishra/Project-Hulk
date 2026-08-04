@@ -1,5 +1,6 @@
-import { Check, Dumbbell, Waves } from "lucide-react";
+import { Check, Dumbbell, TrendingDown, TrendingUp, Waves } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { SessionWeightSuggestion } from "@/lib/workout-sessions/exercise-progress";
 import type { SessionExercise } from "@/lib/workout-sessions/types";
 
 interface SessionExerciseCardProps {
@@ -8,6 +9,8 @@ interface SessionExerciseCardProps {
   onToggleSet: (setIndex: number) => void;
   /** Renders the field chips and set dots as plain, non-interactive elements — the completed-session detail view reuses this card without letting anything be edited. */
   readOnly?: boolean;
+  /** Present when this exercise's pre-filled weight is a Hulk-computed bump/ease from last time — surfaces why the number changed, not just that it did. */
+  weightSuggestion?: SessionWeightSuggestion;
 }
 
 function FieldChip({ label, value, suffix }: { label: string; value: number | null; suffix?: string }) {
@@ -38,7 +41,13 @@ function SetDot({ done, onClick, readOnly = false }: { done: boolean; onClick: (
 }
 
 /** Screen 3's per-exercise card — editable weight/reps (or duration/incline/speed) and tappable set-completion dots. Cardio exercises get a single dot standing in for "done." */
-export function SessionExerciseCard({ exercise, onPressField, onToggleSet, readOnly = false }: SessionExerciseCardProps) {
+export function SessionExerciseCard({
+  exercise,
+  onPressField,
+  onToggleSet,
+  readOnly = false,
+  weightSuggestion,
+}: SessionExerciseCardProps) {
   const isCardio = exercise.category === "cardio";
   const setsPlanned = exercise.sets_planned ?? 0;
   const isDone = isCardio ? exercise.sets_completed > 0 : setsPlanned > 0 && exercise.sets_completed >= setsPlanned;
@@ -68,6 +77,22 @@ export function SessionExerciseCard({ exercise, onPressField, onToggleSet, readO
           </span>
         )}
       </div>
+
+      {weightSuggestion && (
+        <span
+          className={cn(
+            "inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+            weightSuggestion.action === "increase" ? "bg-primary/15 text-primary" : "bg-warning/15 text-warning",
+          )}
+        >
+          {weightSuggestion.action === "increase" ? (
+            <TrendingUp className="size-3" />
+          ) : (
+            <TrendingDown className="size-3" />
+          )}
+          Hulk suggests {weightSuggestion.action === "increase" ? "increasing" : "decreasing"} weight
+        </span>
+      )}
 
       <button
         type="button"

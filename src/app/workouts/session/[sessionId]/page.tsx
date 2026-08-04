@@ -3,6 +3,7 @@ import { BackLink } from "@/components/ui/back-link";
 import { Card, CardContent } from "@/components/ui/card";
 import { ActiveSession } from "@/components/workout-sessions/active-session";
 import { getExerciseLibrary } from "@/lib/exercise-library/queries";
+import { getSessionWeightSuggestions } from "@/lib/workout-sessions/exercise-progress";
 import { getSessionWithExercises } from "@/lib/workout-sessions/queries";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
@@ -17,6 +18,10 @@ export default async function ActiveSessionPage({ params }: ActiveSessionPagePro
   const [session, exercises] = await Promise.all([getSessionWithExercises(sessionId), getExerciseLibrary()]);
   if (!session) notFound();
 
+  // Only meaningful while the session is still in progress — once
+  // completed, the weight shown is history, not a suggestion.
+  const weightSuggestions = session.completed_at ? {} : await getSessionWeightSuggestions(session);
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -26,7 +31,7 @@ export default async function ActiveSessionPage({ params }: ActiveSessionPagePro
       </div>
       <Card>
         <CardContent>
-          <ActiveSession initialSession={session} exercises={exercises} />
+          <ActiveSession initialSession={session} exercises={exercises} weightSuggestions={weightSuggestions} />
         </CardContent>
       </Card>
     </div>

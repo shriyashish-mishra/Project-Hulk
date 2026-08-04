@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 
+import { WorkoutProgressService } from '@/features/workout-progress/services';
+import type { SessionWeightSuggestion } from '@/features/workout-progress/types';
 import { WorkoutSessionService } from '../services';
 import type { SessionExercise, SessionExerciseUpdate, WorkoutSessionWithExercises } from '../types';
 
@@ -10,6 +12,8 @@ export interface UseWorkoutSessionResult {
   elapsedMinutes: number;
   estimatedCalories: number;
   exercisesCompletedCount: number;
+  /** Keyed by session_exercise id — flags exercises whose pre-filled weight already reflects a Hulk-computed bump/ease from the last time this template was completed. */
+  weightSuggestions: Record<number, SessionWeightSuggestion>;
   updateExercise: (exercise: SessionExercise, updates: SessionExerciseUpdate) => Promise<void>;
   toggleSet: (exercise: SessionExercise, setIndex: number) => Promise<void>;
   complete: () => Promise<void>;
@@ -28,11 +32,15 @@ export function useWorkoutSession(sessionId: number): UseWorkoutSessionResult {
   const [loading, setLoading] = useState(true);
   const [elapsedMinutes, setElapsedMinutes] = useState(0);
   const [completing, setCompleting] = useState(false);
+  const [weightSuggestions, setWeightSuggestions] = useState<Record<number, SessionWeightSuggestion>>({});
 
   const refresh = useCallback(() => {
-    WorkoutSessionService.getSession(db, sessionId).then((result) => {
+    WorkoutSessionService.getSession(db, sessionId).then(async (result) => {
       setSession(result);
       setLoading(false);
+      // Only meaningful while still in progress — once completed, the
+      // weight shown is history, not a suggestion.
+      setWeightSuggestions(result && !result.completedAt ? await WorkoutProgressService.getSessionWeightSuggestions(db, result) : {});
     });
   }, [db, sessionId]);
 
@@ -94,6 +102,7 @@ export function useWorkoutSession(sessionId: number): UseWorkoutSessionResult {
     elapsedMinutes,
     estimatedCalories,
     exercisesCompletedCount,
+    weightSuggestions,
     updateExercise,
     toggleSet,
     complete,
