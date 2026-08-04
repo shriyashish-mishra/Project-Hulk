@@ -10,6 +10,7 @@ import { PhotosRow } from "@/components/photos/photos-row";
 import { CycleRow } from "@/components/cycle/cycle-row";
 import { NightlyReportCard } from "@/components/nightly-report/nightly-report-card";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
+import { getExerciseLibrary } from "@/lib/exercise-library/queries";
 import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getFoodPresets } from "@/lib/food-presets/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
@@ -39,6 +40,7 @@ export default async function LogDatePage({ params }: LogDatePageProps) {
     foodPresets,
     workoutLog,
     workoutPresets,
+    exercises,
     waterLog,
     sleepLog,
     weightLog,
@@ -48,6 +50,7 @@ export default async function LogDatePage({ params }: LogDatePageProps) {
     getFoodPresets(),
     getWorkoutLogForDate(date),
     getWorkoutPresets(),
+    getExerciseLibrary(),
     getWaterLogForDate(date),
     getSleepLogForDate(date),
     getWeightLogForDate(date),
@@ -79,6 +82,7 @@ export default async function LogDatePage({ params }: LogDatePageProps) {
             loggedOn={date}
             initialLog={workoutLog}
             initialPresets={workoutPresets}
+            exercises={exercises}
           />
         </CardContent>
       </Card>

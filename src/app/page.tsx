@@ -12,6 +12,7 @@ import { WeightRow } from "@/components/weight/weight-row";
 import { PhotosRow } from "@/components/photos/photos-row";
 import { CycleRow } from "@/components/cycle/cycle-row";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
+import { getExerciseLibrary } from "@/lib/exercise-library/queries";
 import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getFoodPresets } from "@/lib/food-presets/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
@@ -31,6 +32,7 @@ export default async function TodayPage() {
     foodPresets,
     workoutLog,
     workoutPresets,
+    exercises,
     streaks,
     waterLog,
     sleepLog,
@@ -41,6 +43,7 @@ export default async function TodayPage() {
     getFoodPresets(),
     getWorkoutLogForDate(loggedOn),
     getWorkoutPresets(),
+    getExerciseLibrary(),
     getStreakSummary(loggedOn),
     getWaterLogForDate(loggedOn),
     getSleepLogForDate(loggedOn),
@@ -91,6 +94,7 @@ export default async function TodayPage() {
             loggedOn={loggedOn}
             initialLog={workoutLog}
             initialPresets={workoutPresets}
+            exercises={exercises}
           />
         </CardContent>
       </Card>

@@ -71,11 +71,12 @@ export function CalorieBalanceChart({ days, pointsByDate }: CalorieBalanceChartP
 
   const isNetDeficit = summary.netBalanceKcal <= 0;
   const consistency = summary.daysInDeficit / summary.daysWithBalance;
-  const message = isNetDeficit
-    ? consistency >= 0.8
-      ? { text: "You're on track! Keep up the great work.", detail: "Consistency is the key to results." }
-      : { text: "Averaging a deficit, but a few days slipped into surplus.", detail: "Small, steady deficits compound more than occasional big ones." }
-    : { text: "You're averaging a surplus this week.", detail: "Fine for a build phase — just make sure it's an intentional one." };
+  const message =
+    isNetDeficit && consistency >= 0.8
+      ? null
+      : isNetDeficit
+        ? { text: "Averaging a deficit, but a few days slipped into surplus.", detail: "Small, steady deficits compound more than occasional big ones." }
+        : { text: "You're averaging a surplus this week.", detail: "Fine for a build phase — just make sure it's an intentional one." };
 
   return (
     <div className="flex flex-col gap-4">
@@ -222,12 +223,14 @@ export function CalorieBalanceChart({ days, pointsByDate }: CalorieBalanceChartP
         </span>
       </div>
 
-      <div className="flex flex-col gap-0.5 border-t border-border pt-3">
-        <p className={cn("text-sm font-semibold", isNetDeficit ? "text-success" : "text-warning")}>
-          {message.text}
-        </p>
-        <p className="text-xs text-muted-foreground">{message.detail}</p>
-      </div>
+      {message && (
+        <div className="flex flex-col gap-0.5 border-t border-border pt-3">
+          <p className={cn("text-sm font-semibold", isNetDeficit ? "text-success" : "text-warning")}>
+            {message.text}
+          </p>
+          <p className="text-xs text-muted-foreground">{message.detail}</p>
+        </div>
+      )}
     </div>
   );
 }

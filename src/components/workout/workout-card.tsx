@@ -8,6 +8,7 @@ import {
   deleteWorkoutPreset,
   updateWorkoutPreset,
 } from "@/lib/workout-presets/actions";
+import type { ExerciseLibraryItem } from "@/lib/exercise-library/types";
 import type { WorkoutLog } from "@/lib/workout-logs/types";
 import type { WorkoutPreset } from "@/lib/workout-presets/types";
 import { WorkoutFormDrawer } from "./workout-form-drawer";
@@ -16,9 +17,10 @@ interface WorkoutCardProps {
   loggedOn: string;
   initialLog: WorkoutLog | null;
   initialPresets: WorkoutPreset[];
+  exercises: ExerciseLibraryItem[];
 }
 
-export function WorkoutCard({ loggedOn, initialLog, initialPresets }: WorkoutCardProps) {
+export function WorkoutCard({ loggedOn, initialLog, initialPresets, exercises }: WorkoutCardProps) {
   const [log, setLog] = useState(initialLog);
   const [presets, setPresets] = useState(initialPresets);
   const [, startTransition] = useTransition();
@@ -74,6 +76,7 @@ export function WorkoutCard({ loggedOn, initialLog, initialPresets }: WorkoutCar
     <WorkoutFormDrawer
       initialLog={log}
       presets={presets}
+      exercises={exercises}
       onSubmit={handleSave}
       onDelete={log ? handleClear : undefined}
       onCreatePreset={handleCreatePreset}

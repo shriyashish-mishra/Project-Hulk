@@ -17,9 +17,29 @@ const TREND_WINDOW = 3;
 const FLAT_THRESHOLD = 0.5;
 /** Matches the spec's own worked example ("4 sets of 15+ reps") — a fixed heuristic, not per-exercise configurable in v1. */
 const HIGH_REP_THRESHOLD = 15;
-const KG_INCREMENT = 1;
-const LBS_INCREMENT = 5;
 const RECENT_REPORTS_TO_SCAN = 5;
+
+/**
+ * The next weight up that's actually stocked as a real dumbbell/plate/
+ * machine-stack increment, not just "add a fixed amount" — a flat +1kg
+ * recommendation from a base like 7.5kg lands on 8.5kg, which no
+ * commercial dumbbell rack carries. Lbs-based exercises in this app are
+ * machine/cable work, and weight stacks commonly step by 5lb, which is
+ * already realistic as a flat increment. Kg-based exercises are
+ * dumbbell/plate work, which commonly runs whole numbers below 10kg and
+ * 2kg steps at/above 10kg — a half-kg current weight (a common "bridge"
+ * dumbbell, e.g. 7.5kg) rounds up to the next whole kg first rather than
+ * adding a fixed delta on top of it.
+ */
+function nextRealisticWeight(current: number, unit: WeightUnit): number {
+  if (unit === 'lbs') {
+    return current + 5;
+  }
+  if (current % 1 !== 0) {
+    return Math.ceil(current);
+  }
+  return current + (current >= 10 ? 2 : 1);
+}
 
 /**
  * Latest completed session vs. up to `TREND_WINDOW` sessions back —
@@ -80,8 +100,7 @@ function computeRecommendation(history: ExerciseHistoryEntry[], unit: WeightUnit
 
   const last3 = usable.slice(0, TREND_WINDOW);
   const currentWeight = last3[0].weight;
-  const increment = unit === 'kg' ? KG_INCREMENT : LBS_INCREMENT;
-  const potentialNextWeight = Number((currentWeight + increment).toFixed(1));
+  const potentialNextWeight = nextRealisticWeight(currentWeight, unit);
 
   const sameWeight = last3.every((entry) => entry.weight === currentWeight);
   const setsComplete = last3.every((entry) => entry.setsCompleted >= (entry.setsPlanned ?? entry.setsCompleted));

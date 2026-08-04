@@ -12,11 +12,12 @@ export interface SessionExerciseInput {
   notes: string | null;
 }
 
-/** Any subset of a session exercise's live, editable fields — the edit drawer updates weight/reps or duration/incline/speed, and toggling a set updates `sets_completed` alone. */
+/** Any subset of a session exercise's live, editable fields — the edit drawer updates weight/reps/sets or duration/incline/speed, and toggling a set updates `sets_completed` alone. */
 export interface SessionExerciseUpdate {
   weight?: number | null;
   weight_unit?: WeightUnit | null;
   reps?: number | null;
+  sets_planned?: number | null;
   sets_completed?: number;
   duration_minutes?: number | null;
   incline_percent?: number | null;

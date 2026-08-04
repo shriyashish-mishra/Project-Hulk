@@ -16,7 +16,7 @@ interface SessionExerciseEditDrawerProps {
   onSave: (updates: SessionExerciseUpdate) => Promise<void>;
 }
 
-/** Screen 3's lightweight live edit — weight+reps for strength, duration/incline/speed for cardio. No sets/rest here: sets are tracked via the dots and rest isn't edited mid-session. */
+/** Screen 3's lightweight live edit — sets/weight/reps for strength, duration/incline/speed for cardio. Rest isn't edited mid-session (it only ever mattered between sets while planning the template). */
 export function SessionExerciseEditDrawer({ open, onOpenChange, exercise, onSave }: SessionExerciseEditDrawerProps) {
   const [sessionKey, setSessionKey] = useState(0);
 
@@ -46,6 +46,7 @@ function EditBody({
   onDone: () => void;
 }) {
   const isCardio = exercise.category === "cardio";
+  const [sets, setSets] = useState(exercise.sets_planned != null ? String(exercise.sets_planned) : "");
   const [weight, setWeight] = useState(exercise.weight != null ? String(exercise.weight) : "");
   const [unit, setUnit] = useState<WeightUnit>(exercise.weight_unit ?? "kg");
   const [reps, setReps] = useState(exercise.reps != null ? String(exercise.reps) : "");
@@ -68,6 +69,7 @@ function EditBody({
           });
         } else {
           await onSave({
+            sets_planned: sets.trim() ? Number(sets) : null,
             weight: weight.trim() ? Number(weight) : null,
             weight_unit: weight.trim() ? unit : null,
             reps: reps.trim() ? Number(reps) : null,
@@ -103,7 +105,15 @@ function EditBody({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label>Sets</Label>
+              <Input type="number" inputMode="numeric" value={sets} onChange={(e) => setSets(e.target.value)} placeholder="4" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>Reps</Label>
+              <Input type="number" inputMode="numeric" value={reps} onChange={(e) => setReps(e.target.value)} placeholder="20" />
+            </div>
             <div className="flex flex-col gap-1.5">
               <Label>Weight</Label>
               <Input type="number" inputMode="decimal" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="7.5" />
@@ -117,10 +127,6 @@ function EditBody({
                   </Button>
                 ))}
               </div>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label>Reps</Label>
-              <Input type="number" inputMode="numeric" value={reps} onChange={(e) => setReps(e.target.value)} placeholder="20" />
             </div>
           </div>
         )}
