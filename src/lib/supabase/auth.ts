@@ -17,21 +17,23 @@ type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 const getCachedSupabaseClient = cache(async () => createClient());
 
 /**
- * supabase.auth.getUser() makes a real network round-trip to Supabase's
- * Auth server every time it's called (it re-validates the JWT server-side,
- * unlike reading a session from cookies). requireUser() is called
- * independently by dozens of query/action functions, and a single page
- * load fans out into many of them in parallel — without memoization, that
- * was one Auth-server round-trip PER CALL, all firing concurrently on
- * every navigation. React's cache() dedupes calls with identical arguments
- * within one request, so this now costs exactly one round-trip per
- * request no matter how many functions call requireUser().
+ * getClaims() verifies the JWT locally (WebCrypto + a cached JWKS lookup)
+ * instead of round-tripping to the Auth server like getUser() does — the
+ * same fix proxy.ts already applies for this exact reason. requireUser()
+ * is called by nearly every server action and page in the app (a single
+ * click can be one Server Action invocation, i.e. one fresh request, so
+ * cache() below only dedupes calls *within* that one request — it can't
+ * save the round-trip itself). Every real call site only ever reads
+ * `user.id`, which is exactly the JWT's `sub` claim, so no call site loses
+ * anything by getting a minimal `{ id }` object instead of the full
+ * `getUser()`-fetched profile record. RLS (auth.uid() = user_id) is the
+ * real security boundary regardless of which of these two methods
+ * produced the id used to build a request.
  */
 const getCachedAuthUser = cache(async () => {
   const supabase = await getCachedSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ? ({ id: data.claims.sub } as User) : null;
   return { supabase, user };
 });
 
