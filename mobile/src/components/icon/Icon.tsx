@@ -35,6 +35,7 @@ const ICONS = {
   arrowUp: { ios: 'arrow.up', android: 'arrow_upward', web: 'arrow_upward' },
   arrowDown: { ios: 'arrow.down', android: 'arrow_downward', web: 'arrow_downward' },
   flame: { ios: 'flame.fill', android: 'local_fire_department', web: 'local_fire_department' },
+  bookmark: { ios: 'bookmark', android: 'bookmark', web: 'bookmark' },
   clock: { ios: 'clock', android: 'schedule', web: 'schedule' },
   edit: { ios: 'pencil', android: 'edit', web: 'edit' },
 } as const;

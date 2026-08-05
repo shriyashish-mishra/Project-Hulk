@@ -332,6 +332,26 @@ const MIGRATIONS: Migration[] = [
       ALTER TABLE ai_reports ADD COLUMN workout_exercises TEXT;
     `,
   },
+  {
+    version: 9,
+    up: `
+      -- Saved/reusable free-text blobs, matching the web app's food_presets
+      -- and workout_presets tables (minus user_id — single-user local DB).
+      -- Picking one appends its raw_text into whatever log entry is open,
+      -- it never gets parsed or validated beyond "not blank."
+      CREATE TABLE food_presets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        raw_text TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE TABLE workout_presets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        raw_text TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+    `,
+  },
 ];
 
 /**
