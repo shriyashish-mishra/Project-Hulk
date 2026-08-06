@@ -22,6 +22,7 @@ const CHROMELESS_PATHS = [
   "/onboarding",
   "/terms",
   "/privacy",
+  "/welcome",
 ];
 
 export function BottomNav() {

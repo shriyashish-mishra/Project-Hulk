@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/reset-password", "/auth/confirm"];
+const PUBLIC_PATHS = ["/login", "/signup", "/reset-password", "/auth/confirm", "/welcome"];
 
 // MCP + OAuth bridge: these authenticate themselves (bearer token /
 // client-secret / PKCE, see src/lib/mcp/) rather than the browser cookie
@@ -81,7 +81,11 @@ export async function proxy(request: NextRequest) {
 
   if (!claims && !isPublicPath) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    // The bare root is the marketing entry point for a signed-out visitor,
+    // not a deep link — send them to the landing page, not straight to a
+    // login wall. Any other protected URL (e.g. a bookmarked /workouts
+    // link) still goes to /login so it can return them there after signing in.
+    url.pathname = request.nextUrl.pathname === "/" ? "/welcome" : "/login";
     return NextResponse.redirect(url);
   }
 
