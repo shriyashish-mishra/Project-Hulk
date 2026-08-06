@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getExercisesByIds } from "@/lib/exercise-library/queries";
-import { getTemplateWithExercises } from "@/lib/workout-templates/queries";
+import { getTemplateWithExercises, touchTemplate } from "@/lib/workout-templates/queries";
 import { requireUser } from "@/lib/supabase/auth";
 import { getLocalDateString } from "@/lib/date";
 import { saveWorkoutLog } from "@/lib/workout-logs/actions";
@@ -116,6 +116,47 @@ export async function updateSessionExercise(
 
   revalidateSession(sessionId);
   return mapSessionExerciseRow(data, exercise);
+}
+
+/**
+ * The one-tap "no, keep it at X" next to a "Hulk suggests" badge — reverts
+ * both this session's own weight AND the template's default_weight back to
+ * what was actually lifted last time, fully undoing what
+ * `applyRecommendationsToTemplate` silently wrote after the prior session
+ * completed. Without the template half of this, the same "wrong" weight
+ * would just come back the next time this template starts a session.
+ */
+export async function revertSuggestedWeight(
+  sessionExerciseId: string,
+  sessionId: string,
+  templateId: string | null,
+  exerciseId: string,
+  previousWeight: number,
+): Promise<SessionExercise> {
+  const updated = await updateSessionExercise(sessionExerciseId, sessionId, { weight: previousWeight });
+
+  if (templateId) {
+    const { supabase, user } = await requireUser();
+    const { data: templateExercise, error: findError } = await supabase
+      .from("template_exercises")
+      .select("id")
+      .eq("template_id", templateId)
+      .eq("exercise_id", exerciseId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (findError) throw new Error(findError.message);
+
+    if (templateExercise) {
+      const { error: updateError } = await supabase
+        .from("template_exercises")
+        .update({ default_weight: previousWeight })
+        .eq("id", templateExercise.id);
+      if (updateError) throw new Error(updateError.message);
+      await touchTemplate(supabase, templateId, user.id);
+    }
+  }
+
+  return updated;
 }
 
 /** Tapping a filled dot undoes back to it; tapping an empty one marks up through it — so finishing sets in order isn't required. */

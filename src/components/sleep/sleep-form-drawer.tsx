@@ -18,6 +18,8 @@ interface SleepFormDrawerProps {
   initialLog?: SleepLog | null;
   onSubmit: (durationMinutes: number) => Promise<void>;
   onDelete?: () => Promise<void>;
+  /** Opens the drawer immediately on mount — for deep links like "/more"'s Sleep shortcut, which should open this drawer directly rather than just landing on the Today page. */
+  defaultOpen?: boolean;
 }
 
 export function SleepFormDrawer({
@@ -25,8 +27,9 @@ export function SleepFormDrawer({
   initialLog,
   onSubmit,
   onDelete,
+  defaultOpen = false,
 }: SleepFormDrawerProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [sessionKey, setSessionKey] = useState(0);
 
   function handleOpenChange(next: boolean) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Minus, Plus } from "lucide-react";
 import { setGlassCount } from "@/lib/water/actions";
 import { cn } from "@/lib/utils";
@@ -9,14 +9,26 @@ import type { WaterLog } from "@/lib/water/types";
 interface WaterRowProps {
   loggedOn: string;
   initialLog: WaterLog | null;
+  /** There's no drawer to open here (this row is already inline) — deep links like "/more"'s Water shortcut instead scroll to and briefly highlight this row, so the link still visibly lands somewhere instead of just returning to Today. */
+  autoFocus?: boolean;
 }
 
 /** Explicit +/− buttons — unambiguous, no guessing whether a dot is tappable. */
-export function WaterRow({ loggedOn, initialLog }: WaterRowProps) {
+export function WaterRow({ loggedOn, initialLog, autoFocus }: WaterRowProps) {
   const [count, setCount] = useState(initialLog?.glass_count ?? 0);
   const glassSizeMl = initialLog?.glass_size_ml ?? 250;
   const target = initialLog?.target_glasses ?? 8;
   const [, startTransition] = useTransition();
+  const [highlighted, setHighlighted] = useState(false);
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!autoFocus) return;
+    rowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setHighlighted(true);
+    const timeout = setTimeout(() => setHighlighted(false), 1500);
+    return () => clearTimeout(timeout);
+  }, [autoFocus]);
 
   const liters = (count * glassSizeMl) / 1000;
   const dotCount = Math.max(target, count);
@@ -36,7 +48,13 @@ export function WaterRow({ loggedOn, initialLog }: WaterRowProps) {
   }
 
   return (
-    <div className="flex flex-col gap-3 py-4">
+    <div
+      ref={rowRef}
+      className={cn(
+        "flex flex-col gap-3 rounded-xl py-4 transition-colors duration-500",
+        highlighted && "bg-primary/10",
+      )}
+    >
       <div className="flex items-center justify-between">
         <span className="text-base font-semibold text-foreground">Water</span>
         <div className="flex items-center gap-3">

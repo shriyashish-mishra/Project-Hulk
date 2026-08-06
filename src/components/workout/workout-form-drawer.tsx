@@ -16,9 +16,13 @@ import { PresetPickerDrawer } from "@/components/presets/preset-picker-drawer";
 import { ExerciseEntryDrawer, type ExerciseFieldValues } from "@/components/workout-templates/exercise-entry-drawer";
 import { ExerciseLibraryPickerDrawer } from "@/components/workout-templates/exercise-library-picker-drawer";
 import type { ExerciseLibraryItem } from "@/lib/exercise-library/types";
+import { countMatchingWorkoutLogs } from "@/lib/workout-logs/actions";
 import type { WorkoutLog } from "@/lib/workout-logs/types";
 import type { WorkoutPreset } from "@/lib/workout-presets/types";
 import { parsePresetExercises } from "@/lib/workout-presets/format";
+
+/** Below this, "you've logged this a few times" would fire on plain coincidence rather than a real repeat habit. */
+const PRESET_NUDGE_THRESHOLD = 3;
 
 /**
  * Same block shape `parsePresetExercises` already reads (name line, then
@@ -155,6 +159,9 @@ function WorkoutFormBody({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [enteringExercise, setEnteringExercise] = useState<ExerciseLibraryItem | null>(null);
+  /** Set to the just-saved text once it's been logged `PRESET_NUDGE_THRESHOLD`+ times and isn't already a preset — swaps the form for a one-tap "save as preset?" prompt instead of just closing. */
+  const [presetNudgeText, setPresetNudgeText] = useState<string | null>(null);
+  const [savingPresetNudge, setSavingPresetNudge] = useState(false);
 
   function handlePickPreset(presetText: string) {
     setRawText((prev) => (prev.trim() ? `${prev}\n${presetText}` : presetText));
@@ -182,11 +189,34 @@ function WorkoutFormBody({
     startTransition(async () => {
       try {
         await onSubmit(rawText);
-        onDone();
+
+        const trimmed = rawText.trim();
+        const alreadyPreset = presets.some((preset) => preset.raw_text.trim() === trimmed);
+        const matchCount = alreadyPreset ? 0 : await countMatchingWorkoutLogs(trimmed);
+        if (matchCount >= PRESET_NUDGE_THRESHOLD) {
+          setPresetNudgeText(trimmed);
+        } else {
+          onDone();
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong.");
       }
     });
+  }
+
+  async function handleSavePresetNudge() {
+    if (!presetNudgeText) return;
+    setSavingPresetNudge(true);
+    try {
+      await onCreatePreset(presetNudgeText);
+      onDone();
+    } catch {
+      // Saving the entry itself already succeeded — a failed preset save
+      // just means the nudge silently goes away rather than blocking exit.
+      onDone();
+    } finally {
+      setSavingPresetNudge(false);
+    }
   }
 
   function handleClear() {
@@ -200,6 +230,30 @@ function WorkoutFormBody({
         setError(err instanceof Error ? err.message : "Failed to clear.");
       }
     });
+  }
+
+  if (presetNudgeText) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col">
+        <DrawerHeader className="pt-2">
+          <DrawerTitle className="text-2xl font-bold tracking-tight">Save as a preset?</DrawerTitle>
+        </DrawerHeader>
+        <div className="flex flex-col gap-2 px-5 py-5">
+          <p className="text-sm text-muted-foreground">
+            You&rsquo;ve logged this exact workout {PRESET_NUDGE_THRESHOLD}+ times. Save it as a preset so it&rsquo;s
+            one tap from &ldquo;Saved&rdquo; next time.
+          </p>
+        </div>
+        <DrawerFooter className="flex-col gap-2 px-5 pb-6">
+          <Button onClick={handleSavePresetNudge} disabled={savingPresetNudge}>
+            Save as Preset
+          </Button>
+          <Button type="button" variant="ghost" size="sm" disabled={savingPresetNudge} onClick={onDone}>
+            No thanks
+          </Button>
+        </DrawerFooter>
+      </div>
+    );
   }
 
   return (

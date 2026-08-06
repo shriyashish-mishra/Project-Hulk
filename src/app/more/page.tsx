@@ -23,10 +23,10 @@ const QUICK_LINKS = [
     description: "Add or edit meals and workout for any date.",
   },
   {
-    href: "/",
+    href: "/?open=weight",
     icon: Scale,
     label: "Weight",
-    description: "Log today's weight from the Daily Signals row.",
+    description: "Log today's weight.",
   },
   {
     href: "/photos",
@@ -35,16 +35,16 @@ const QUICK_LINKS = [
     description: "Front, side, and back views over time.",
   },
   {
-    href: "/",
+    href: "/?open=sleep",
     icon: Moon,
     label: "Sleep",
-    description: "Log last night's duration from Daily Signals.",
+    description: "Log last night's duration.",
   },
   {
-    href: "/",
+    href: "/?open=water",
     icon: Droplet,
     label: "Water",
-    description: "Log today's glasses from Daily Signals.",
+    description: "Log today's glasses.",
   },
   {
     href: "/report/export",

@@ -7,7 +7,13 @@ import { Button } from "@/components/ui/button";
 import { ExerciseEntryDrawer, type ExerciseFieldValues } from "@/components/workout-templates/exercise-entry-drawer";
 import { ExerciseLibraryPickerDrawer } from "@/components/workout-templates/exercise-library-picker-drawer";
 import type { ExerciseLibraryItem } from "@/lib/exercise-library/types";
-import { addSessionExercise, completeSession, toggleSessionSet, updateSessionExercise } from "@/lib/workout-sessions/actions";
+import {
+  addSessionExercise,
+  completeSession,
+  revertSuggestedWeight,
+  toggleSessionSet,
+  updateSessionExercise,
+} from "@/lib/workout-sessions/actions";
 import { estimateCalories } from "@/lib/workout-sessions/estimate";
 import type { SessionWeightSuggestion } from "@/lib/workout-sessions/exercise-progress";
 import type { SessionExercise, SessionExerciseInput, WorkoutSessionWithExercises } from "@/lib/workout-sessions/types";
@@ -55,6 +61,8 @@ export function ActiveSession({ initialSession, exercises, weightSuggestions = {
   const [editingExercise, setEditingExercise] = useState<SessionExercise | null>(null);
   const [addingExercise, setAddingExercise] = useState<ExerciseLibraryItem | null>(null);
   const [completing, startCompleting] = useTransition();
+  /** Exercises whose "Hulk suggests" badge has been dismissed this session — the badge itself is server-computed from history, so a lightweight local dismiss set is enough to hide it after reverting rather than needing it re-derived. */
+  const [dismissedSuggestionIds, setDismissedSuggestionIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (session.completed_at) return;
@@ -77,6 +85,18 @@ export function ActiveSession({ initialSession, exercises, weightSuggestions = {
   async function handleSaveEdit(exercise: SessionExercise, updates: Parameters<typeof updateSessionExercise>[2]) {
     const updated = await updateSessionExercise(exercise.id, exercise.session_id, updates);
     updateLocalExercise(updated);
+  }
+
+  async function handleRevertSuggestion(exercise: SessionExercise, previousWeight: number) {
+    const updated = await revertSuggestedWeight(
+      exercise.id,
+      exercise.session_id,
+      session.template_id,
+      exercise.exercise_id,
+      previousWeight,
+    );
+    updateLocalExercise(updated);
+    setDismissedSuggestionIds((prev) => new Set(prev).add(exercise.id));
   }
 
   async function handleAddExercise(values: ExerciseFieldValues) {
@@ -131,7 +151,8 @@ export function ActiveSession({ initialSession, exercises, weightSuggestions = {
             onPressField={() => setEditingExercise(exercise)}
             onToggleSet={(setIndex) => handleToggleSet(exercise, setIndex)}
             readOnly={isCompleted}
-            weightSuggestion={weightSuggestions[exercise.id]}
+            weightSuggestion={dismissedSuggestionIds.has(exercise.id) ? undefined : weightSuggestions[exercise.id]}
+            onRevertSuggestion={(previousWeight) => handleRevertSuggestion(exercise, previousWeight)}
           />
         ))}
       </div>

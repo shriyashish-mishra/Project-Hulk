@@ -11,6 +11,8 @@ interface SessionExerciseCardProps {
   readOnly?: boolean;
   /** Present when this exercise's pre-filled weight is a Hulk-computed bump/ease from last time — surfaces why the number changed, not just that it did. */
   weightSuggestion?: SessionWeightSuggestion;
+  /** Reverts both this session's weight and the template's default back to `weightSuggestion.previous_weight` — a one-tap "no, keep it at X" for when the heuristic misfires (e.g. one bad night's sleep tanking reps for 3 sessions). */
+  onRevertSuggestion?: (previousWeight: number) => void;
 }
 
 function FieldChip({ label, value, suffix }: { label: string; value: number | null; suffix?: string }) {
@@ -47,6 +49,7 @@ export function SessionExerciseCard({
   onToggleSet,
   readOnly = false,
   weightSuggestion,
+  onRevertSuggestion,
 }: SessionExerciseCardProps) {
   const isCardio = exercise.category === "cardio";
   const setsPlanned = exercise.sets_planned ?? 0;
@@ -79,19 +82,28 @@ export function SessionExerciseCard({
       </div>
 
       {weightSuggestion && (
-        <span
+        <div
           className={cn(
-            "inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+            "flex w-fit items-center gap-1.5 rounded-full py-0.5 pr-1 pl-2 text-[11px] font-semibold",
             weightSuggestion.action === "increase" ? "bg-primary/15 text-primary" : "bg-warning/15 text-warning",
           )}
         >
           {weightSuggestion.action === "increase" ? (
-            <TrendingUp className="size-3" />
+            <TrendingUp className="size-3 shrink-0" />
           ) : (
-            <TrendingDown className="size-3" />
+            <TrendingDown className="size-3 shrink-0" />
           )}
-          Hulk suggests {weightSuggestion.action === "increase" ? "increasing" : "decreasing"} weight
-        </span>
+          <span>Hulk suggests {weightSuggestion.action === "increase" ? "increasing" : "decreasing"} weight</span>
+          {onRevertSuggestion && (
+            <button
+              type="button"
+              onClick={() => onRevertSuggestion(weightSuggestion.previous_weight)}
+              className="shrink-0 rounded-full bg-background/60 px-1.5 py-0.5 text-[10px] font-bold underline-offset-2 active:opacity-60"
+            >
+              Undo
+            </button>
+          )}
+        </div>
       )}
 
       <button

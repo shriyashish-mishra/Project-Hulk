@@ -24,7 +24,13 @@ import { getWeightLogForDate } from "@/lib/weight/queries";
 import { getUserContext } from "@/lib/profile/context";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
-export default async function TodayPage() {
+interface TodayPageProps {
+  /** `open` deep-links "/more"'s Weight/Sleep/Water shortcuts straight into the relevant row instead of just landing here and leaving the user to find it. */
+  searchParams: Promise<{ open?: string }>;
+}
+
+export default async function TodayPage({ searchParams }: TodayPageProps) {
+  const { open } = await searchParams;
   const { user } = await requireOnboardedUser();
   const loggedOn = getLocalDateString();
   const [
@@ -105,9 +111,9 @@ export default async function TodayPage() {
         </p>
         <Card className="animate-fade-up" style={{ animationDelay: "60ms" }}>
           <CardContent className="divide-y divide-border">
-            <WaterRow loggedOn={loggedOn} initialLog={waterLog} />
-            <SleepRow loggedOn={loggedOn} initialLog={sleepLog} />
-            <WeightRow loggedOn={loggedOn} initialLog={weightLog} />
+            <WaterRow loggedOn={loggedOn} initialLog={waterLog} autoFocus={open === "water"} />
+            <SleepRow loggedOn={loggedOn} initialLog={sleepLog} autoOpen={open === "sleep"} />
+            <WeightRow loggedOn={loggedOn} initialLog={weightLog} autoOpen={open === "weight"} />
             <PhotosRow loggedOn={loggedOn} />
             {isFemale && (
               <CycleRow

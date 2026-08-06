@@ -9,9 +9,10 @@ import { SleepFormDrawer } from "./sleep-form-drawer";
 interface SleepRowProps {
   loggedOn: string;
   initialLog: SleepLog | null;
+  autoOpen?: boolean;
 }
 
-export function SleepRow({ loggedOn, initialLog }: SleepRowProps) {
+export function SleepRow({ loggedOn, initialLog, autoOpen }: SleepRowProps) {
   const [log, setLog] = useState(initialLog);
   const [, startTransition] = useTransition();
 
@@ -48,6 +49,7 @@ export function SleepRow({ loggedOn, initialLog }: SleepRowProps) {
       initialLog={log}
       onSubmit={handleSave}
       onDelete={log ? handleClear : undefined}
+      defaultOpen={autoOpen}
       trigger={
         <button
           type="button"

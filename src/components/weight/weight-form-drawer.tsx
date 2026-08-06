@@ -18,6 +18,8 @@ interface WeightFormDrawerProps {
   initialLog?: WeightLog | null;
   onSubmit: (weightKg: number) => Promise<void>;
   onDelete?: () => Promise<void>;
+  /** Opens the drawer immediately on mount — for deep links like "/more"'s Weight shortcut, which should open this drawer directly rather than just landing on the Today page. */
+  defaultOpen?: boolean;
 }
 
 export function WeightFormDrawer({
@@ -25,8 +27,9 @@ export function WeightFormDrawer({
   initialLog,
   onSubmit,
   onDelete,
+  defaultOpen = false,
 }: WeightFormDrawerProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [sessionKey, setSessionKey] = useState(0);
 
   function handleOpenChange(next: boolean) {

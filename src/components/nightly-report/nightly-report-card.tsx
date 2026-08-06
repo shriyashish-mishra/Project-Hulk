@@ -1,9 +1,13 @@
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getLocalDateString } from "@/lib/date";
+import { getLocalDateString, getLocalHour } from "@/lib/date";
 import { getAiReportForDate } from "@/lib/nightly-report/queries";
 import { ScoreBadge } from "./score-badge";
+
+/** After this hour, a still-missing report reads as "you're about to lose today's context" rather than the default all-day empty state. */
+const URGENT_HOUR = 20;
 
 interface NightlyReportCardProps {
   loggedOn?: string;
@@ -15,6 +19,7 @@ export async function NightlyReportCard({ loggedOn }: NightlyReportCardProps = {
   const isToday = date === today;
   const report = await getAiReportForDate(date);
   const reportHref = isToday ? "/report" : `/report/${date}`;
+  const isUrgent = !report && isToday && getLocalHour() >= URGENT_HOUR;
 
   return (
     <Card className="animate-fade-up" style={{ animationDelay: "300ms" }}>
@@ -52,9 +57,10 @@ export async function NightlyReportCard({ loggedOn }: NightlyReportCardProps = {
           </>
         ) : (
           <>
-            <p className="text-sm text-muted-foreground">
-              Generate a report to analyze in Claude, then import the results
-              back once ready.
+            <p className={cn("text-sm", isUrgent ? "font-semibold text-warning" : "text-muted-foreground")}>
+              {isUrgent
+                ? "It's getting late — generate tonight's report before the day's context slips away."
+                : "Generate a report to analyze in Claude, then import the results back once ready."}
             </p>
             <Button nativeButton={false} render={<Link href={`/report/generate?date=${date}`} />}>
               Generate Nightly Report

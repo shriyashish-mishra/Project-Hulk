@@ -8,9 +8,10 @@ import { WeightFormDrawer } from "./weight-form-drawer";
 interface WeightRowProps {
   loggedOn: string;
   initialLog: WeightLog | null;
+  autoOpen?: boolean;
 }
 
-export function WeightRow({ loggedOn, initialLog }: WeightRowProps) {
+export function WeightRow({ loggedOn, initialLog, autoOpen }: WeightRowProps) {
   const [log, setLog] = useState(initialLog);
   const [, startTransition] = useTransition();
 
@@ -47,6 +48,7 @@ export function WeightRow({ loggedOn, initialLog }: WeightRowProps) {
       initialLog={log}
       onSubmit={handleSave}
       onDelete={log ? handleClear : undefined}
+      defaultOpen={autoOpen}
       trigger={
         <button
           type="button"

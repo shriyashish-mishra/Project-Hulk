@@ -11,18 +11,49 @@ const MICRONUTRIENT_STATUSES = new Set(["low", "adequate", "high"]);
 
 class ReportParseError extends Error {}
 
+/**
+ * Handles both a ```json fence and a bare ``` fence (Claude doesn't always
+ * label the language), and falls back to scanning the raw text directly
+ * when there's no fence at all. Once a candidate is picked, walks forward
+ * from its first "{" tracking string-literal state so braces inside a
+ * string value (e.g. a coach_summary sentence) don't throw off the depth
+ * count, and stops exactly where the outermost object closes — unlike a
+ * naive lastIndexOf("}"), this doesn't break if Claude adds any trailing
+ * commentary after the JSON that happens to contain a stray "}".
+ */
 function extractJsonBlock(rawResponse: string): string {
-  const fenced = rawResponse.match(/```json\s*([\s\S]*?)```/i);
-  if (fenced) return fenced[1].trim();
+  const fenced = rawResponse.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidate = fenced ? fenced[1].trim() : rawResponse;
 
-  const start = rawResponse.indexOf("{");
-  const end = rawResponse.lastIndexOf("}");
-  if (start === -1 || end === -1 || end < start) {
+  const start = candidate.indexOf("{");
+  if (start === -1) {
     throw new ReportParseError(
       "Couldn't find a JSON block in the pasted response. Make sure you copied the full reply, including the ```json code block.",
     );
   }
-  return rawResponse.slice(start, end + 1);
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < candidate.length; i++) {
+    const char = candidate[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') inString = true;
+    else if (char === "{") depth++;
+    else if (char === "}") {
+      depth--;
+      if (depth === 0) return candidate.slice(start, i + 1);
+    }
+  }
+
+  throw new ReportParseError(
+    "Couldn't find a complete JSON block in the pasted response. Make sure you copied the full reply.",
+  );
 }
 
 function field(obj: Record<string, unknown>, key: string): unknown {

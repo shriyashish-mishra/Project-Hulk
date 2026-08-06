@@ -6,6 +6,13 @@ export function getLocalDateString(date: Date = new Date()): string {
   );
 }
 
+/** Current hour (0-23) in the app's fixed timezone — used to decide when "generate tonight's report" should read as urgent rather than just the default empty state. */
+export function getLocalHour(date: Date = new Date()): number {
+  return Number(
+    new Intl.DateTimeFormat("en-US", { timeZone: APP_TIME_ZONE, hour: "numeric", hour12: false }).format(date),
+  );
+}
+
 export function getDaysAgoDateString(
   daysAgo: number,
   from: Date = new Date(),

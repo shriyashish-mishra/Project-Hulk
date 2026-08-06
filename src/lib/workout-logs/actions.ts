@@ -51,6 +51,28 @@ export async function saveWorkoutLog(
   return data;
 }
 
+/**
+ * How many days (including today, if already saved) have this exact
+ * workout text logged — the signal behind "you've logged this 3 times,
+ * save it as a preset?" A plain trimmed exact match, not fuzzy: this is a
+ * nudge, not a hard rule, and false negatives (missing a near-duplicate)
+ * are far cheaper than false positives (nagging on unrelated entries).
+ */
+export async function countMatchingWorkoutLogs(rawText: string): Promise<number> {
+  const trimmed = rawText.trim();
+  if (!trimmed) return 0;
+
+  const { supabase, user } = await requireUser();
+  const { count, error } = await supabase
+    .from("workout_logs")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("raw_text", trimmed);
+
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+
 export async function deleteWorkoutLog(loggedOn: string): Promise<void> {
   const { supabase, user } = await requireUser();
   const { error } = await supabase
