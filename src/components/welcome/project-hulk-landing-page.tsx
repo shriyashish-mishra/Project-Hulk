@@ -4,6 +4,7 @@ import { useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Inter } from "next/font/google";
 import {
+  ArrowUpRight,
   Battery,
   Bookmark,
   Camera,
@@ -805,6 +806,49 @@ function PrivacyCtaSection() {
 }
 
 /* ---------------------------------------------------------------------- */
+/* About the author                                                        */
+/* ---------------------------------------------------------------------- */
+
+function AboutAuthorSection() {
+  return (
+    <section className="px-5 py-6">
+      <div className={CARD_BASE} style={{ backgroundColor: COLOR.card, borderColor: COLOR.border }}>
+        <div className="flex items-center gap-3">
+          <span
+            className="flex size-12 shrink-0 items-center justify-center rounded-full text-sm font-black"
+            style={{ backgroundColor: COLOR.mintGlow, color: COLOR.mint }}
+          >
+            SM
+          </span>
+          <div>
+            <p className="text-[15px] font-semibold" style={{ color: COLOR.textPrimary }}>
+              Built by Shriyashish Mishra
+            </p>
+            <p className="text-xs" style={{ color: COLOR.textMuted }}>
+              Product Manager
+            </p>
+          </div>
+        </div>
+        <p className="mt-3 text-sm leading-6" style={{ color: COLOR.textSecondary }}>
+          Building products through strategy, experimentation, execution, and AI &mdash; Project Hulk is one of
+          them.
+        </p>
+        <a
+          href="https://shriyashish.lovable.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold"
+          style={{ color: COLOR.mint }}
+        >
+          View full profile
+          <ArrowUpRight className="size-3.5" />
+        </a>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------------------------------------------------------------- */
 /* Footer                                                                   */
 /* ---------------------------------------------------------------------- */
 
@@ -867,6 +911,7 @@ export function ProjectHulkLandingPage() {
         <InsightsSection />
         <HowItWorksSection />
         <PrivacyCtaSection />
+        <AboutAuthorSection />
         <Footer />
       </div>
     </div>
