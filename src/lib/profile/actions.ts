@@ -32,6 +32,8 @@ export interface CompleteOnboardingInput {
   activityLevel: ActivityLevel;
   trainingFrequency: TrainingFrequency;
   unitsPreference: UnitsPreference;
+  /** IANA name (e.g. "America/New_York"), detected client-side via Intl at submit time — every "what day/hour is it right now" computation for this account uses this from here on, not the app's flat fallback. */
+  timezone: string;
 }
 
 /** Writes the profile row and seeds the FIRST weight_logs entry from the onboarding weight — weight_logs stays the source of truth for trends, the profile never duplicates it. */
@@ -55,7 +57,7 @@ export async function completeOnboarding(input: CompleteOnboardingInput): Promis
   const { supabase, user } = await requireUser();
   const roundedWeight = Math.round(input.weightKg * 10) / 10;
   const proteinTargetG = calculateProteinTargetG(roundedWeight, input.primaryGoal);
-  const today = getLocalDateString();
+  const today = getLocalDateString(new Date(), input.timezone);
 
   const { error: profileError } = await supabase.from("profiles").insert({
     id: user.id,
@@ -69,6 +71,7 @@ export async function completeOnboarding(input: CompleteOnboardingInput): Promis
     training_frequency: input.trainingFrequency,
     protein_target_g: proteinTargetG,
     units_preference: input.unitsPreference,
+    timezone: input.timezone,
     onboarding_completed_at: new Date().toISOString(),
   });
   if (profileError) throw new Error(profileError.message);
@@ -108,6 +111,7 @@ export interface UpdateProfileFieldsInput {
   proteinTargetG?: number | null;
   unitsPreference?: UnitsPreference;
   averageCycleLengthDays?: number | null;
+  timezone?: string;
 }
 
 /** Partial update over one or more profile sections — the Profile page edits by logical group, not one giant form. */
@@ -128,6 +132,7 @@ export async function updateProfileFields(input: UpdateProfileFieldsInput): Prom
   if (input.proteinTargetG !== undefined) patch.protein_target_g = input.proteinTargetG;
   if (input.unitsPreference !== undefined) patch.units_preference = input.unitsPreference;
   if (input.averageCycleLengthDays !== undefined) patch.average_cycle_length_days = input.averageCycleLengthDays;
+  if (input.timezone !== undefined) patch.timezone = input.timezone;
 
   const { error } = await supabase.from("profiles").update(patch).eq("id", user.id);
   if (error) throw new Error(error.message);

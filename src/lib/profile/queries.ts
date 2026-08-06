@@ -1,3 +1,4 @@
+import { APP_TIME_ZONE } from "@/lib/date";
 import { getUserContextRpc } from "./rpc";
 import type { Profile } from "./types";
 
@@ -15,4 +16,16 @@ export async function getProfile(): Promise<Profile | null> {
 export async function isOnboardingComplete(): Promise<boolean> {
   const profile = await getProfile();
   return profile?.onboarding_completed_at != null;
+}
+
+/**
+ * The signed-in user's own timezone for server-side "what day/hour is it
+ * right now" computations — falls back to the flat app default for
+ * accounts that signed up before this existed, or haven't finished
+ * onboarding yet. No separate cache() wrapper needed: getProfile() already
+ * shares one memoized round-trip per request via getUserContextRpc().
+ */
+export async function getCurrentUserTimeZone(): Promise<string> {
+  const profile = await getProfile();
+  return profile?.timezone || APP_TIME_ZONE;
 }

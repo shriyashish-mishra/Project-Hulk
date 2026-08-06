@@ -3,6 +3,7 @@ import { BackLink } from "@/components/ui/back-link";
 import { ReportDayView } from "@/components/nightly-report/report-day-view";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
 import { getAiReportForDate } from "@/lib/nightly-report/queries";
+import { getCurrentUserTimeZone } from "@/lib/profile/queries";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -16,7 +17,8 @@ export default async function ReportDatePage({ params }: ReportDatePageProps) {
   if (!DATE_PATTERN.test(date)) notFound();
 
   await requireOnboardedUser();
-  const today = getLocalDateString();
+  const timeZone = await getCurrentUserTimeZone();
+  const today = getLocalDateString(new Date(), timeZone);
   const isToday = date === today;
   const report = await getAiReportForDate(date);
 

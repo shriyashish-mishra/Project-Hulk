@@ -41,15 +41,18 @@ export function PreferencesDrawer({ trigger, profile }: PreferencesDrawerProps) 
 
 function PreferencesForm({ profile, onDone }: { profile: Profile; onDone: () => void }) {
   const [unitsPreference, setUnitsPreference] = useState<UnitsPreference>(profile.units_preference);
+  const [timezone, setTimezone] = useState<string>(profile.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
     startTransition(async () => {
       try {
-        await updateProfileFields({ unitsPreference });
+        await updateProfileFields({ unitsPreference, timezone });
         onDone();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -70,6 +73,19 @@ function PreferencesForm({ profile, onDone }: { profile: Profile; onDone: () => 
             <SelectableCard label="Metric" selected={unitsPreference === "metric"} onSelect={() => setUnitsPreference("metric")} />
             <SelectableCard label="Imperial" selected={unitsPreference === "imperial"} onSelect={() => setUnitsPreference("imperial")} />
           </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label>Timezone</Label>
+          <p className="text-sm text-muted-foreground">
+            {timezone} — used to work out what day and time it is for you (e.g. when &ldquo;today&rdquo; rolls over,
+            or when to nudge about tonight&rsquo;s report).
+          </p>
+          {timezone !== deviceTimezone && (
+            <Button type="button" variant="outline" size="sm" onClick={() => setTimezone(deviceTimezone)}>
+              Use this device&rsquo;s timezone ({deviceTimezone})
+            </Button>
+          )}
         </div>
 
         {error && <p className="text-sm text-destructive">{error}</p>}

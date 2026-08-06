@@ -37,6 +37,7 @@ import { computeWeightTrend } from "@/lib/progress/weight-trend";
 import { buildGoalContextSentence, buildHabitsSentence, buildMonthlyHeadline } from "@/lib/progress/narrative";
 import type { ChangeDirection } from "@/components/progress/what-changed-section";
 import { getUserContext } from "@/lib/profile/context";
+import { getCurrentUserTimeZone } from "@/lib/profile/queries";
 import { deriveMuscleMapModel } from "@/lib/profile/types";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
@@ -62,7 +63,8 @@ export default async function ProgressMonthlyPage({
 }: ProgressMonthlyPageProps) {
   await requireOnboardedUser();
   const { month: monthParam } = await searchParams;
-  const currentMonth = getCurrentMonthString();
+  const timeZone = await getCurrentUserTimeZone();
+  const currentMonth = getCurrentMonthString(new Date(), timeZone);
   const month =
     monthParam && MONTH_PATTERN.test(monthParam) && monthParam <= currentMonth
       ? monthParam
@@ -261,7 +263,7 @@ export default async function ProgressMonthlyPage({
             : null
         }
         pickerValue={start}
-        pickerMax={getLocalDateString()}
+        pickerMax={getLocalDateString(new Date(), timeZone)}
         mode="month"
         hrefBase="/progress/monthly"
       />

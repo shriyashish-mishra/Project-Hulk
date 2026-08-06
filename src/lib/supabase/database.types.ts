@@ -172,6 +172,7 @@ export type Database = {
           primary_goal: string | null
           protein_target_g: number | null
           target_weight_kg: number | null
+          timezone: string | null
           training_frequency: string | null
           units_preference: string
           updated_at: string
@@ -189,6 +190,7 @@ export type Database = {
           primary_goal?: string | null
           protein_target_g?: number | null
           target_weight_kg?: number | null
+          timezone?: string | null
           training_frequency?: string | null
           units_preference?: string
           updated_at?: string
@@ -206,6 +208,7 @@ export type Database = {
           primary_goal?: string | null
           protein_target_g?: number | null
           target_weight_kg?: number | null
+          timezone?: string | null
           training_frequency?: string | null
           units_preference?: string
           updated_at?: string

@@ -22,6 +22,7 @@ import { getWaterLogForDate } from "@/lib/water/queries";
 import { getSleepLogForDate } from "@/lib/sleep/queries";
 import { getWeightLogForDate } from "@/lib/weight/queries";
 import { getUserContext } from "@/lib/profile/context";
+import { getCurrentUserTimeZone } from "@/lib/profile/queries";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 interface TodayPageProps {
@@ -32,7 +33,8 @@ interface TodayPageProps {
 export default async function TodayPage({ searchParams }: TodayPageProps) {
   const { open } = await searchParams;
   const { user } = await requireOnboardedUser();
-  const loggedOn = getLocalDateString();
+  const timeZone = await getCurrentUserTimeZone();
+  const loggedOn = getLocalDateString(new Date(), timeZone);
   const [
     logs,
     foodPresets,
@@ -63,7 +65,7 @@ export default async function TodayPage({ searchParams }: TodayPageProps) {
       <header className="flex items-start justify-between">
         <div>
           <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">
-            {formatDateHeading()}
+            {formatDateHeading(new Date(), timeZone)}
           </p>
           <h1 className="mt-1 text-4xl font-black tracking-tight text-foreground">
             Today

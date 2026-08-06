@@ -9,6 +9,7 @@ import { getRecoveryPromptContext } from "@/lib/nightly-report/context";
 import { getWeekSoFarContext } from "@/lib/nightly-report/week-context";
 import { getPhotoComparisonNote } from "@/lib/nightly-report/photo-comparison";
 import { getUserContext } from "@/lib/profile/context";
+import { getCurrentUserTimeZone } from "@/lib/profile/queries";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -20,7 +21,8 @@ interface GenerateReportPageProps {
 export default async function GenerateReportPage({ searchParams }: GenerateReportPageProps) {
   await requireOnboardedUser();
   const { date: dateParam } = await searchParams;
-  const today = getLocalDateString();
+  const timeZone = await getCurrentUserTimeZone();
+  const today = getLocalDateString(new Date(), timeZone);
   const loggedOn =
     dateParam && DATE_PATTERN.test(dateParam) && dateParam <= today ? dateParam : today;
   const isToday = loggedOn === today;

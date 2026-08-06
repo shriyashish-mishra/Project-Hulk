@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getLocalDateString, getLocalHour } from "@/lib/date";
 import { getAiReportForDate } from "@/lib/nightly-report/queries";
+import { getCurrentUserTimeZone } from "@/lib/profile/queries";
 import { ScoreBadge } from "./score-badge";
 
 /** After this hour, a still-missing report reads as "you're about to lose today's context" rather than the default all-day empty state. */
@@ -14,12 +15,13 @@ interface NightlyReportCardProps {
 }
 
 export async function NightlyReportCard({ loggedOn }: NightlyReportCardProps = {}) {
-  const today = getLocalDateString();
+  const timeZone = await getCurrentUserTimeZone();
+  const today = getLocalDateString(new Date(), timeZone);
   const date = loggedOn ?? today;
   const isToday = date === today;
   const report = await getAiReportForDate(date);
   const reportHref = isToday ? "/report" : `/report/${date}`;
-  const isUrgent = !report && isToday && getLocalHour() >= URGENT_HOUR;
+  const isUrgent = !report && isToday && getLocalHour(new Date(), timeZone) >= URGENT_HOUR;
 
   return (
     <Card className="animate-fade-up" style={{ animationDelay: "300ms" }}>

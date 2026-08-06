@@ -3,6 +3,7 @@ import { PhotoSlot } from "@/components/photos/photo-slot";
 import { PHOTO_VIEW_TYPES } from "@/lib/photos/types";
 import { getPhotosForDate } from "@/lib/photos/queries";
 import { formatDateHeading, getLocalDateString } from "@/lib/date";
+import { getCurrentUserTimeZone } from "@/lib/profile/queries";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -14,7 +15,8 @@ interface PhotosPageProps {
 export default async function PhotosPage({ searchParams }: PhotosPageProps) {
   await requireOnboardedUser();
   const { date: dateParam } = await searchParams;
-  const today = getLocalDateString();
+  const timeZone = await getCurrentUserTimeZone();
+  const today = getLocalDateString(new Date(), timeZone);
   const date =
     dateParam && DATE_PATTERN.test(dateParam) && dateParam <= today ? dateParam : today;
   const isToday = date === today;

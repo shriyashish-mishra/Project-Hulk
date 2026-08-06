@@ -5,6 +5,7 @@ import { getExercisesByIds } from "@/lib/exercise-library/queries";
 import { getTemplateWithExercises, touchTemplate } from "@/lib/workout-templates/queries";
 import { requireUser } from "@/lib/supabase/auth";
 import { getLocalDateString } from "@/lib/date";
+import { getCurrentUserTimeZone } from "@/lib/profile/queries";
 import { saveWorkoutLog } from "@/lib/workout-logs/actions";
 import { buildCanonicalWorkoutText } from "./canonical-text";
 import { estimateCalories } from "./estimate";
@@ -21,6 +22,7 @@ export async function startSessionFromTemplate(templateId: string): Promise<Work
   const { supabase, user } = await requireUser();
   const template = await getTemplateWithExercises(templateId, { supabase, user });
   if (!template) throw new Error("Template not found.");
+  const timeZone = await getCurrentUserTimeZone();
 
   const { data: session, error: sessionError } = await supabase
     .from("workout_sessions")
@@ -28,7 +30,7 @@ export async function startSessionFromTemplate(templateId: string): Promise<Work
       user_id: user.id,
       template_id: template.id,
       template_name_snapshot: template.name,
-      logged_on: getLocalDateString(),
+      logged_on: getLocalDateString(new Date(), timeZone),
     })
     .select()
     .single();

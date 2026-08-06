@@ -30,6 +30,7 @@ import { getWeightLogForDate } from "@/lib/weight/queries";
 import { getPhotosForDate } from "@/lib/photos/queries";
 import { buildDailyRecoverySentence, computeRecoverySummary } from "@/lib/progress/recovery";
 import { getUserContext } from "@/lib/profile/context";
+import { getCurrentUserTimeZone } from "@/lib/profile/queries";
 import { deriveMuscleMapModel } from "@/lib/profile/types";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
@@ -44,7 +45,8 @@ export default async function ProgressDailyPage({
 }: ProgressDailyPageProps) {
   await requireOnboardedUser();
   const { date: dateParam } = await searchParams;
-  const today = getLocalDateString();
+  const timeZone = await getCurrentUserTimeZone();
+  const today = getLocalDateString(new Date(), timeZone);
   const date =
     dateParam && DATE_PATTERN.test(dateParam) && dateParam <= today
       ? dateParam

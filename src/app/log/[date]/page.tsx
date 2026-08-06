@@ -19,6 +19,7 @@ import { getWaterLogForDate } from "@/lib/water/queries";
 import { getSleepLogForDate } from "@/lib/sleep/queries";
 import { getWeightLogForDate } from "@/lib/weight/queries";
 import { getUserContext } from "@/lib/profile/context";
+import { getCurrentUserTimeZone } from "@/lib/profile/queries";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -32,7 +33,8 @@ export default async function LogDatePage({ params }: LogDatePageProps) {
   if (!DATE_PATTERN.test(date)) notFound();
 
   const { user } = await requireOnboardedUser();
-  const today = getLocalDateString();
+  const timeZone = await getCurrentUserTimeZone();
+  const today = getLocalDateString(new Date(), timeZone);
   const isToday = date === today;
 
   const [

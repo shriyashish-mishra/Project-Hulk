@@ -34,6 +34,7 @@ import { computeRecoveryInsights, computeRecoverySummary } from "@/lib/progress/
 import { computeWeightTrend } from "@/lib/progress/weight-trend";
 import { buildGoalContextSentence, buildWeeklyHeadline, buildWeeklyStorySentence } from "@/lib/progress/narrative";
 import { getUserContext } from "@/lib/profile/context";
+import { getCurrentUserTimeZone } from "@/lib/profile/queries";
 import { deriveMuscleMapModel } from "@/lib/profile/types";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
@@ -48,8 +49,9 @@ export default async function ProgressWeeklyPage({
 }: ProgressWeeklyPageProps) {
   await requireOnboardedUser();
   const { start: startParam } = await searchParams;
-  const today = getLocalDateString();
-  const currentWeekStart = getWeekStart(today);
+  const timeZone = await getCurrentUserTimeZone();
+  const today = getLocalDateString(new Date(), timeZone);
+  const currentWeekStart = getWeekStart(today, timeZone);
   const start =
     startParam &&
     DATE_PATTERN.test(startParam) &&

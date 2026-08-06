@@ -202,6 +202,7 @@ export function OnboardingFlow() {
           activityLevel: state.activityLevel!,
           trainingFrequency: state.trainingFrequency!,
           unitsPreference: state.unitsPreference,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong.");
