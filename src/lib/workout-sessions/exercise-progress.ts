@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getExerciseLibrary, getExercisesByIds } from "@/lib/exercise-library/queries";
 import type { WeightUnit } from "@/lib/exercise-library/types";
 import { getRecentAiReports } from "@/lib/nightly-report/queries";
@@ -113,25 +114,35 @@ function parseWorkoutDetail(detail: string): { reps: number; sets: number; weigh
 /** Comfortably covers years of nightly reports — "every report," not a meaningfully limiting cap. */
 const ALL_REPORTS_LIMIT = 3650;
 
-/** Every `workout_exercises` mention across every AI report, grouped by lowercased exercise name — the shared fetch both `getRecentlyTrainedExercises` and `getExerciseHistory` build on. */
-async function getReportExerciseMentions(
-  ctx: AuthContext,
-): Promise<Map<string, Array<{ reportDate: string; exercise: WorkoutExercise }>>> {
-  const reports = await getRecentAiReports(ALL_REPORTS_LIMIT, ctx);
-  const byName = new Map<string, Array<{ reportDate: string; exercise: WorkoutExercise }>>();
+/**
+ * Every `workout_exercises` mention across every AI report, grouped by
+ * lowercased exercise name — the shared fetch both `getRecentlyTrainedExercises`
+ * and `getExerciseHistory` build on. `getExerciseHistory` gets called once
+ * PER EXERCISE in a session (see `getSessionWeightSuggestions` and
+ * `applyRecommendationsToTemplate`'s loops), and without memoization each
+ * of those calls re-fetched and re-parsed up to `ALL_REPORTS_LIMIT` reports
+ * from scratch — a session with 6 exercises paid for this 6 times over,
+ * sequentially. React's cache() dedupes by argument identity within one
+ * request/render, same fix already applied to requireUser() in auth.ts.
+ */
+const getReportExerciseMentions = cache(
+  async (ctx: AuthContext): Promise<Map<string, Array<{ reportDate: string; exercise: WorkoutExercise }>>> => {
+    const reports = await getRecentAiReports(ALL_REPORTS_LIMIT, ctx);
+    const byName = new Map<string, Array<{ reportDate: string; exercise: WorkoutExercise }>>();
 
-  for (const report of reports) {
-    const exercises = report.parsed_json.workout_exercises;
-    if (!Array.isArray(exercises)) continue;
-    for (const exercise of exercises) {
-      const key = exercise.name.trim().toLowerCase();
-      if (!byName.has(key)) byName.set(key, []);
-      byName.get(key)!.push({ reportDate: report.report_date, exercise });
+    for (const report of reports) {
+      const exercises = report.parsed_json.workout_exercises;
+      if (!Array.isArray(exercises)) continue;
+      for (const exercise of exercises) {
+        const key = exercise.name.trim().toLowerCase();
+        if (!byName.has(key)) byName.set(key, []);
+        byName.get(key)!.push({ reportDate: report.report_date, exercise });
+      }
     }
-  }
 
-  return byName;
-}
+    return byName;
+  },
+);
 
 /** Every distinct strength exercise ever completed in a session or mentioned with a parseable weight in a report — deliberately unbounded, not a top-N recent list. */
 export async function getRecentlyTrainedExercises(ctx?: AuthContext): Promise<RecentExercise[]> {
