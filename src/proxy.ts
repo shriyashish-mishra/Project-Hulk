@@ -27,6 +27,12 @@ const ALWAYS_ALLOWED_PATHS = [
   // single bearer token (QUICK_LOG_TOKEN), no cookie at all, called directly
   // by iOS Shortcuts / Android automation apps.
   "/api/quick/",
+  // Legal pages need to be readable by a prospective signup who has no
+  // session yet AND by an already-logged-in user re-reading them — unlike
+  // PUBLIC_PATHS below, which bounces a logged-in visitor away, these should
+  // never redirect either way.
+  "/terms",
+  "/privacy",
 ];
 
 /**

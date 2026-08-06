@@ -16,9 +16,42 @@ async function getSiteOrigin(): Promise<string> {
   return `${proto}://${h.get("host")}`;
 }
 
-export async function signUp(email: string, password: string): Promise<AuthResult> {
+/** Below this, a submission is almost certainly scripted — no real person reads the form and types an email/password faster than this. */
+const MIN_SUBMIT_MS = 1500;
+const GENERIC_ERROR = "Something went wrong. Please try again.";
+
+/**
+ * Two lightweight, zero-dependency bot checks ahead of the real signup —
+ * a honeypot field (`website`) invisible to real users but often
+ * auto-filled by naive form-spam bots, and a minimum elapsed time between
+ * when the form rendered and when it was submitted. Neither defeats a
+ * determined, targeted attacker (a real CAPTCHA like Cloudflare Turnstile
+ * would be the upgrade for that) — this is specifically aimed at generic
+ * scripted signup spam, which is the more common threat for a public
+ * form with no protection at all. Fails with the same generic message a
+ * real error would show, so a bot gets no signal about which check it
+ * tripped.
+ */
+export async function signUp(
+  email: string,
+  password: string,
+  acceptedTerms: boolean,
+  honeypot: string,
+  renderedAt: number,
+): Promise<AuthResult> {
+  if (honeypot.trim() !== "" || Date.now() - renderedAt < MIN_SUBMIT_MS) {
+    return { error: GENERIC_ERROR };
+  }
+  if (!acceptedTerms) {
+    return { error: "You must agree to the Terms of Service and Privacy Policy to continue." };
+  }
+
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { terms_accepted_at: new Date().toISOString() } },
+  });
 
   if (error) return { error: error.message };
   if (!data.session) return { needsEmailConfirmation: true };

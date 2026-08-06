@@ -20,6 +20,8 @@ const CHROMELESS_PATHS = [
   "/reset-password",
   "/update-password",
   "/onboarding",
+  "/terms",
+  "/privacy",
 ];
 
 export function BottomNav() {

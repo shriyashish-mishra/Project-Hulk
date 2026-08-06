@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -152,11 +152,55 @@ function canAdvanceFrom(
   }
 }
 
-export function OnboardingFlow() {
+interface OnboardingFlowProps {
+  userId: string;
+}
+
+function getStorageKey(userId: string): string {
+  return `onboarding-progress:${userId}`;
+}
+
+export function OnboardingFlow({ userId }: OnboardingFlowProps) {
   const [step, setStep] = useState(0);
   const [state, setState] = useState<OnboardingState>(INITIAL_STATE);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  // Starts false so the FIRST client render matches the server-rendered
+  // HTML exactly (both start from INITIAL_STATE/step 0) — restoring from
+  // localStorage happens a moment later in an effect, avoiding a
+  // hydration mismatch. The brief flash from empty to restored is
+  // imperceptible in practice.
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(getStorageKey(userId));
+      if (raw) {
+        const saved = JSON.parse(raw) as { state?: Partial<OnboardingState>; step?: number };
+        // One-time restore from a browser-only API on mount, deliberately
+        // after the first paint so it can't cause a server/client
+        // hydration mismatch (see the `hydrated` comment above) — not a
+        // case the lazy-initial-state or useSyncExternalStore
+        // alternatives this rule usually suggests actually cover.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (saved.state) setState((prev) => ({ ...prev, ...saved.state }));
+        if (typeof saved.step === "number") setStep(saved.step);
+      }
+    } catch {
+      // Corrupted or inaccessible storage — just start fresh.
+    } finally {
+      setHydrated(true);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (!hydrated) return; // don't clobber a not-yet-restored save with INITIAL_STATE
+    try {
+      localStorage.setItem(getStorageKey(userId), JSON.stringify({ state, step }));
+    } catch {
+      // Storage unavailable/full — losing the draft-save isn't fatal, the form still works.
+    }
+  }, [userId, state, step, hydrated]);
 
   const steps = getVisibleSteps(state.biologicalSex);
   const currentIndex = Math.min(step, steps.length - 1);
@@ -204,6 +248,12 @@ export function OnboardingFlow() {
           unitsPreference: state.unitsPreference,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         });
+        // completeOnboarding() redirects on success, so this only runs if
+        // that redirect throw is ever reachable here — harmless either way,
+        // since /onboarding itself won't render this component again once
+        // onboarding_completed_at is set regardless of whether the draft
+        // was explicitly cleared.
+        localStorage.removeItem(getStorageKey(userId));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong.");
       }

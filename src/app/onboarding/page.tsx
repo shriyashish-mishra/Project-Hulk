@@ -16,5 +16,5 @@ export default async function OnboardingPage() {
     redirect("/");
   }
 
-  return <OnboardingFlow />;
+  return <OnboardingFlow userId={user.id} />;
 }

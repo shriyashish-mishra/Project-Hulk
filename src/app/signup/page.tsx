@@ -11,15 +11,20 @@ import { signUp } from "@/lib/auth/actions";
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [isPending, startTransition] = useTransition();
+  // Captured once, at first render, not on every keystroke — the server
+  // compares this against its own clock when the submission arrives.
+  const [renderedAt] = useState(() => Date.now());
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
     startTransition(async () => {
-      const result = await signUp(email, password);
+      const result = await signUp(email, password, acceptedTerms, honeypot, renderedAt);
       if (result?.error) {
         setError(result.error);
       } else if (result?.needsEmailConfirmation) {
@@ -86,9 +91,44 @@ export default function SignupPage() {
           />
         </div>
 
+        {/* Honeypot — real users never see this field (off-screen, unreachable by tab), so anything typed into it means a bot auto-filled every field it could find. */}
+        <div aria-hidden="true" className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden">
+          <label htmlFor="website">Website</label>
+          <input
+            id="website"
+            name="website"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={honeypot}
+            onChange={(e) => setHoneypot(e.target.value)}
+          />
+        </div>
+
+        <label className="flex items-start gap-2.5 text-sm text-muted-foreground">
+          <input
+            type="checkbox"
+            required
+            checked={acceptedTerms}
+            onChange={(e) => setAcceptedTerms(e.target.checked)}
+            className="mt-0.5 size-4 shrink-0 accent-primary"
+          />
+          <span>
+            I agree to the{" "}
+            <Link href="/terms" target="_blank" className="text-primary underline-offset-4 hover:underline">
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" target="_blank" className="text-primary underline-offset-4 hover:underline">
+              Privacy Policy
+            </Link>
+            .
+          </span>
+        </label>
+
         {error && <p className="text-sm text-destructive">{error}</p>}
 
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" disabled={isPending || !acceptedTerms}>
           {isPending ? "Signing up…" : "Sign up"}
         </Button>
       </form>
