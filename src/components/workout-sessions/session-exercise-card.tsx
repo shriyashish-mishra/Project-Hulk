@@ -1,18 +1,24 @@
-import { Check, Dumbbell, TrendingDown, TrendingUp, Waves } from "lucide-react";
+import { Check, Dumbbell, Plus, TrendingDown, TrendingUp, Waves } from "lucide-react";
+import type { ExerciseCategory } from "@/lib/exercise-library/types";
 import { cn } from "@/lib/utils";
 import type { SessionWeightSuggestion } from "@/lib/workout-sessions/exercise-progress";
 import type { SessionExercise } from "@/lib/workout-sessions/types";
 
 interface SessionExerciseCardProps {
-  exercise: SessionExercise;
-  onPressField: () => void;
-  onToggleSet: (setIndex: number) => void;
+  exerciseName: string;
+  category: ExerciseCategory;
+  /** One or more rows sharing this exercise — more than one means the user logged separate weight/rep groups (e.g. a drop set) for the same exercise this session. */
+  entries: SessionExercise[];
+  onPressField: (entry: SessionExercise) => void;
+  onToggleSet: (entry: SessionExercise, setIndex: number) => void;
   /** Renders the field chips and set dots as plain, non-interactive elements — the completed-session detail view reuses this card without letting anything be edited. */
   readOnly?: boolean;
-  /** Present when this exercise's pre-filled weight is a Hulk-computed bump/ease from last time — surfaces why the number changed, not just that it did. */
-  weightSuggestion?: SessionWeightSuggestion;
-  /** Reverts both this session's weight and the template's default back to `weightSuggestion.previous_weight` — a one-tap "no, keep it at X" for when the heuristic misfires (e.g. one bad night's sleep tanking reps for 3 sessions). */
-  onRevertSuggestion?: (previousWeight: number) => void;
+  /** Keyed by session_exercise id — present when that specific entry's pre-filled weight is a Hulk-computed bump/ease from last time. */
+  weightSuggestions?: Record<string, SessionWeightSuggestion>;
+  /** Reverts both this session's weight and the template's default back to `previousWeight` — a one-tap "no, keep it at X" for when the heuristic misfires. */
+  onRevertSuggestion?: (entry: SessionExercise, previousWeight: number) => void;
+  /** Appends another weight/rep (or duration/incline/speed) entry for this same exercise — how a drop set or a second cardio interval gets logged. */
+  onAddEntry?: () => void;
 }
 
 function FieldChip({ label, value, suffix }: { label: string; value: number | null; suffix?: string }) {
@@ -42,44 +48,30 @@ function SetDot({ done, onClick, readOnly = false }: { done: boolean; onClick: (
   );
 }
 
-/** Screen 3's per-exercise card — editable weight/reps (or duration/incline/speed) and tappable set-completion dots. Cardio exercises get a single dot standing in for "done." */
-export function SessionExerciseCard({
-  exercise,
+function EntryRow({
+  entry,
+  entryLabel,
+  isCardio,
   onPressField,
   onToggleSet,
-  readOnly = false,
+  readOnly,
   weightSuggestion,
   onRevertSuggestion,
-}: SessionExerciseCardProps) {
-  const isCardio = exercise.category === "cardio";
-  const setsPlanned = exercise.sets_planned ?? 0;
-  const isDone = isCardio ? exercise.sets_completed > 0 : setsPlanned > 0 && exercise.sets_completed >= setsPlanned;
+}: {
+  entry: SessionExercise;
+  entryLabel?: string;
+  isCardio: boolean;
+  onPressField: () => void;
+  onToggleSet: (setIndex: number) => void;
+  readOnly: boolean;
+  weightSuggestion?: SessionWeightSuggestion;
+  onRevertSuggestion?: (previousWeight: number) => void;
+}) {
+  const setsPlanned = entry.sets_planned ?? 0;
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
-          <span
-            className={cn(
-              "flex size-8 shrink-0 items-center justify-center rounded-lg",
-              isCardio ? "bg-warning/15 text-warning" : "bg-primary/15 text-primary",
-            )}
-          >
-            {isCardio ? <Waves className="size-4" /> : <Dumbbell className="size-4" />}
-          </span>
-          <span className="text-[15px] font-semibold text-foreground">{exercise.exercise_name}</span>
-        </div>
-        {!isCardio && (
-          <span
-            className={cn(
-              "rounded-full px-2.5 py-1 text-xs font-bold",
-              isDone ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
-            )}
-          >
-            {exercise.sets_completed}/{setsPlanned}
-          </span>
-        )}
-      </div>
+    <div className="flex flex-col gap-2">
+      {entryLabel && <span className="text-[11px] font-semibold text-muted-foreground">{entryLabel}</span>}
 
       {weightSuggestion && (
         <div
@@ -114,30 +106,111 @@ export function SessionExerciseCard({
       >
         {isCardio ? (
           <>
-            <FieldChip label="Min" value={exercise.duration_minutes} />
-            <FieldChip label="Incline" value={exercise.incline_percent} suffix="%" />
-            <FieldChip label="Kph" value={exercise.speed_kph} />
+            <FieldChip label="Min" value={entry.duration_minutes} />
+            <FieldChip label="Incline" value={entry.incline_percent} suffix="%" />
+            <FieldChip label="Kph" value={entry.speed_kph} />
           </>
         ) : (
           <>
-            <FieldChip label="Weight" value={exercise.weight} suffix={exercise.weight != null ? ` ${exercise.weight_unit ?? ""}` : ""} />
-            <FieldChip label="Reps" value={exercise.reps} />
+            <FieldChip label="Weight" value={entry.weight} suffix={entry.weight != null ? ` ${entry.weight_unit ?? ""}` : ""} />
+            <FieldChip label="Reps" value={entry.reps} />
           </>
         )}
       </button>
 
       {isCardio ? (
         <div className="flex">
-          <SetDot done={exercise.sets_completed > 0} onClick={() => onToggleSet(0)} readOnly={readOnly} />
+          <SetDot done={entry.sets_completed > 0} onClick={() => onToggleSet(0)} readOnly={readOnly} />
         </div>
       ) : (
         setsPlanned > 0 && (
           <div className="flex gap-1.5">
             {Array.from({ length: setsPlanned }, (_, index) => (
-              <SetDot key={index} done={index < exercise.sets_completed} onClick={() => onToggleSet(index)} readOnly={readOnly} />
+              <SetDot key={index} done={index < entry.sets_completed} onClick={() => onToggleSet(index)} readOnly={readOnly} />
             ))}
           </div>
         )
+      )}
+    </div>
+  );
+}
+
+/**
+ * Screen 3's per-exercise card. Usually one entry, but renders every entry
+ * sharing this exercise as its own weight/reps/set-dots block within a
+ * single card — how a drop set (e.g. 10kg x2x8 then 7.5kg x2x10 on the same
+ * Bicep Curl) gets logged, instead of two visually-identical cards.
+ */
+export function SessionExerciseCard({
+  exerciseName,
+  category,
+  entries,
+  onPressField,
+  onToggleSet,
+  readOnly = false,
+  weightSuggestions = {},
+  onRevertSuggestion,
+  onAddEntry,
+}: SessionExerciseCardProps) {
+  const isCardio = category === "cardio";
+  const totalPlanned = entries.reduce((sum, entry) => sum + (entry.sets_planned ?? 0), 0);
+  const totalCompleted = entries.reduce((sum, entry) => sum + entry.sets_completed, 0);
+  const isDone = isCardio
+    ? entries.every((entry) => entry.sets_completed > 0)
+    : totalPlanned > 0 && totalCompleted >= totalPlanned;
+  const showEntryLabels = entries.length > 1;
+
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5">
+          <span
+            className={cn(
+              "flex size-8 shrink-0 items-center justify-center rounded-lg",
+              isCardio ? "bg-warning/15 text-warning" : "bg-primary/15 text-primary",
+            )}
+          >
+            {isCardio ? <Waves className="size-4" /> : <Dumbbell className="size-4" />}
+          </span>
+          <span className="text-[15px] font-semibold text-foreground">{exerciseName}</span>
+        </div>
+        {!isCardio && (
+          <span
+            className={cn(
+              "rounded-full px-2.5 py-1 text-xs font-bold",
+              isDone ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
+            )}
+          >
+            {totalCompleted}/{totalPlanned}
+          </span>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-4">
+        {entries.map((entry, index) => (
+          <EntryRow
+            key={entry.id}
+            entry={entry}
+            entryLabel={showEntryLabels ? `Entry ${index + 1} of ${entries.length}` : undefined}
+            isCardio={isCardio}
+            onPressField={() => onPressField(entry)}
+            onToggleSet={(setIndex) => onToggleSet(entry, setIndex)}
+            readOnly={readOnly}
+            weightSuggestion={weightSuggestions[entry.id]}
+            onRevertSuggestion={onRevertSuggestion ? (previousWeight) => onRevertSuggestion(entry, previousWeight) : undefined}
+          />
+        ))}
+      </div>
+
+      {!readOnly && onAddEntry && (
+        <button
+          type="button"
+          onClick={onAddEntry}
+          className="flex items-center gap-1 self-start text-xs font-semibold text-primary active:opacity-60"
+        >
+          <Plus className="size-3.5" />
+          Log another entry
+        </button>
       )}
     </div>
   );

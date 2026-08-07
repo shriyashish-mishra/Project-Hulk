@@ -105,6 +105,12 @@ export function ActiveSession({ initialSession, exercises, weightSuggestions = {
     setSession((prev) => ({ ...prev, exercises: [...prev.exercises, created] }));
   }
 
+  /** Opens the same "add exercise" drawer pre-targeted at an exercise already in this session — how a drop set (e.g. 10kg x2x8 then 7.5kg x2x10 on the same Bicep Curl) gets logged as a second entry instead of overwriting the first. */
+  function handleLogAnotherEntry(exercise: SessionExercise) {
+    const libraryItem = exercises.find((item) => item.id === exercise.exercise_id);
+    if (libraryItem) setAddingExercise(libraryItem);
+  }
+
   function handleComplete() {
     startCompleting(async () => {
       await completeSession(session.id);
@@ -123,6 +129,24 @@ export function ActiveSession({ initialSession, exercises, weightSuggestions = {
     : elapsedMinutes;
   const estimatedCalories = estimateCalories(session.exercises);
   const sortedExercises = [...session.exercises].sort((a, b) => a.position - b.position);
+
+  // Groups rows sharing an exercise_id into one card — a drop set logged via
+  // "Log another entry" is a second row, not a second card.
+  const groupedExercises: SessionExercise[][] = [];
+  const groupIndexByExerciseId = new Map<string, number>();
+  for (const exercise of sortedExercises) {
+    const existingIndex = groupIndexByExerciseId.get(exercise.exercise_id);
+    if (existingIndex !== undefined) {
+      groupedExercises[existingIndex].push(exercise);
+    } else {
+      groupIndexByExerciseId.set(exercise.exercise_id, groupedExercises.length);
+      groupedExercises.push([exercise]);
+    }
+  }
+
+  const visibleWeightSuggestions = Object.fromEntries(
+    Object.entries(weightSuggestions).filter(([id]) => !dismissedSuggestionIds.has(id)),
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -144,15 +168,18 @@ export function ActiveSession({ initialSession, exercises, weightSuggestions = {
       </div>
 
       <div className="flex flex-col gap-2">
-        {sortedExercises.map((exercise) => (
+        {groupedExercises.map((entries) => (
           <SessionExerciseCard
-            key={exercise.id}
-            exercise={exercise}
-            onPressField={() => setEditingExercise(exercise)}
-            onToggleSet={(setIndex) => handleToggleSet(exercise, setIndex)}
+            key={entries[0].exercise_id}
+            exerciseName={entries[0].exercise_name}
+            category={entries[0].category}
+            entries={entries}
+            onPressField={(entry) => setEditingExercise(entry)}
+            onToggleSet={(entry, setIndex) => handleToggleSet(entry, setIndex)}
             readOnly={isCompleted}
-            weightSuggestion={dismissedSuggestionIds.has(exercise.id) ? undefined : weightSuggestions[exercise.id]}
-            onRevertSuggestion={(previousWeight) => handleRevertSuggestion(exercise, previousWeight)}
+            weightSuggestions={visibleWeightSuggestions}
+            onRevertSuggestion={(entry, previousWeight) => handleRevertSuggestion(entry, previousWeight)}
+            onAddEntry={() => handleLogAnotherEntry(entries[0])}
           />
         ))}
       </div>
