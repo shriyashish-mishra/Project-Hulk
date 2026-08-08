@@ -44,7 +44,7 @@ export function RecommendationsOverview({ summaries, selectedExerciseName }: Rec
   if (increasing.length === 0 && decreasing.length === 0 && holding.length === 0) return null;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
+    <div className="flex flex-col gap-4">
       {increasing.length > 0 && (
         <div className="rounded-2xl border border-border bg-card p-4">
           <h3 className="mb-2 text-sm font-semibold text-primary">Ready to Increase</h3>
