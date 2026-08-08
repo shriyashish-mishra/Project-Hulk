@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition, type ReactElement } from "react";
-import { Dumbbell, Plus, Waves } from "lucide-react";
+import { Dumbbell, Plus, Trash2, Waves } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { findOrCreateExercise } from "@/lib/exercise-library/actions";
+import { deleteExercise, findOrCreateExercise } from "@/lib/exercise-library/actions";
 import type { ExerciseCategory, ExerciseLibraryItem } from "@/lib/exercise-library/types";
 
 interface ExerciseLibraryPickerDrawerProps {
@@ -55,19 +55,21 @@ function PickerBody({
   exercises: ExerciseLibraryItem[];
   onPick: (exercise: ExerciseLibraryItem) => void;
 }) {
+  const [items, setItems] = useState(exercises);
   const [query, setQuery] = useState("");
   const [newCategory, setNewCategory] = useState<ExerciseCategory>("strength");
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const filtered = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
-    if (!trimmed) return exercises;
-    return exercises.filter((item) => item.name.toLowerCase().includes(trimmed));
-  }, [exercises, query]);
+    if (!trimmed) return items;
+    return items.filter((item) => item.name.toLowerCase().includes(trimmed));
+  }, [items, query]);
 
   const trimmedQuery = query.trim();
-  const hasExactMatch = exercises.some((item) => item.name.toLowerCase() === trimmedQuery.toLowerCase());
+  const hasExactMatch = items.some((item) => item.name.toLowerCase() === trimmedQuery.toLowerCase());
   const canCreate = trimmedQuery.length > 0 && !hasExactMatch;
 
   function handleCreate() {
@@ -75,11 +77,25 @@ function PickerBody({
     startTransition(async () => {
       try {
         const created = await findOrCreateExercise(trimmedQuery, newCategory, "kg");
+        setItems((prev) => [...prev, created]);
         onPick(created);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong.");
       }
     });
+  }
+
+  async function handleDelete(item: ExerciseLibraryItem) {
+    setError(null);
+    setDeletingId(item.id);
+    try {
+      await deleteExercise(item.id);
+      setItems((prev) => prev.filter((existing) => existing.id !== item.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete.");
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   return (
@@ -93,22 +109,32 @@ function PickerBody({
 
         <div className="flex flex-col gap-2">
           {filtered.map((item) => (
-            <button
+            <div
               key={item.id}
-              type="button"
-              onClick={() => onPick(item)}
-              className="flex items-center justify-between gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-left active:opacity-60"
+              className="flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3"
             >
-              <span className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => onPick(item)}
+                className="flex min-w-0 flex-1 items-center gap-2.5 text-left active:opacity-60"
+              >
                 {item.category === "cardio" ? (
-                  <Waves className="size-4 text-primary" />
+                  <Waves className="size-4 shrink-0 text-primary" />
                 ) : (
-                  <Dumbbell className="size-4 text-primary" />
+                  <Dumbbell className="size-4 shrink-0 text-primary" />
                 )}
-                <span className="text-[15px] font-semibold text-foreground">{item.name}</span>
-              </span>
-              <Plus className="size-4 text-muted-foreground" />
-            </button>
+                <span className="truncate text-[15px] font-semibold text-foreground">{item.name}</span>
+              </button>
+              <button
+                type="button"
+                aria-label={`Delete ${item.name}`}
+                disabled={deletingId === item.id}
+                onClick={() => handleDelete(item)}
+                className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground active:opacity-60"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            </div>
           ))}
         </div>
 
