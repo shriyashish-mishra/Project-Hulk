@@ -17,7 +17,7 @@ interface SessionExerciseCardProps {
   weightSuggestions?: Record<string, SessionWeightSuggestion>;
   /** Reverts both this session's weight and the template's default back to `previousWeight` — a one-tap "no, keep it at X" for when the heuristic misfires. */
   onRevertSuggestion?: (entry: SessionExercise, previousWeight: number) => void;
-  /** Appends another weight/rep (or duration/incline/speed) entry for this same exercise — how a drop set or a second cardio interval gets logged. */
+  /** Appends another weight/rep (or duration/incline/speed) variation for this same exercise — how a drop set or a second cardio interval gets logged. */
   onAddEntry?: () => void;
 }
 
@@ -191,7 +191,7 @@ export function SessionExerciseCard({
           <EntryRow
             key={entry.id}
             entry={entry}
-            entryLabel={showEntryLabels ? `Entry ${index + 1} of ${entries.length}` : undefined}
+            entryLabel={showEntryLabels ? `Variation ${index + 1} of ${entries.length}` : undefined}
             isCardio={isCardio}
             onPressField={() => onPressField(entry)}
             onToggleSet={(setIndex) => onToggleSet(entry, setIndex)}
@@ -206,10 +206,10 @@ export function SessionExerciseCard({
         <button
           type="button"
           onClick={onAddEntry}
-          className="flex items-center gap-1 self-start text-xs font-semibold text-primary active:opacity-60"
+          className="flex items-center gap-1 self-start text-[11px] font-medium text-muted-foreground active:opacity-60"
         >
-          <Plus className="size-3.5" />
-          Log another entry
+          <Plus className="size-3" />
+          Variation
         </button>
       )}
     </div>
