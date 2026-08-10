@@ -163,14 +163,20 @@ export type Database = {
           activity_level: string | null
           average_cycle_length_days: number | null
           biological_sex: string | null
+          calorie_target_kcal: number | null
+          carbs_target_g: number | null
           created_at: string
           date_of_birth: string | null
           display_name: string | null
+          fat_target_g: number | null
+          fiber_target_g: number | null
           height_cm: number | null
+          hydration_target_glasses: number | null
           id: string
           onboarding_completed_at: string | null
           primary_goal: string | null
           protein_target_g: number | null
+          sleep_target_minutes: number | null
           target_weight_kg: number | null
           timezone: string | null
           training_frequency: string | null
@@ -181,14 +187,20 @@ export type Database = {
           activity_level?: string | null
           average_cycle_length_days?: number | null
           biological_sex?: string | null
+          calorie_target_kcal?: number | null
+          carbs_target_g?: number | null
           created_at?: string
           date_of_birth?: string | null
           display_name?: string | null
+          fat_target_g?: number | null
+          fiber_target_g?: number | null
           height_cm?: number | null
+          hydration_target_glasses?: number | null
           id: string
           onboarding_completed_at?: string | null
           primary_goal?: string | null
           protein_target_g?: number | null
+          sleep_target_minutes?: number | null
           target_weight_kg?: number | null
           timezone?: string | null
           training_frequency?: string | null
@@ -199,14 +211,20 @@ export type Database = {
           activity_level?: string | null
           average_cycle_length_days?: number | null
           biological_sex?: string | null
+          calorie_target_kcal?: number | null
+          carbs_target_g?: number | null
           created_at?: string
           date_of_birth?: string | null
           display_name?: string | null
+          fat_target_g?: number | null
+          fiber_target_g?: number | null
           height_cm?: number | null
+          hydration_target_glasses?: number | null
           id?: string
           onboarding_completed_at?: string | null
           primary_goal?: string | null
           protein_target_g?: number | null
+          sleep_target_minutes?: number | null
           target_weight_kg?: number | null
           timezone?: string | null
           training_frequency?: string | null

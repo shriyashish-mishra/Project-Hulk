@@ -151,6 +151,7 @@ export default async function ProfilePage() {
           <TargetsDrawer
             profile={profile}
             latestWeightKg={context.latestWeightKg}
+            age={context.age}
             trigger={
               <SectionButton title="Targets">
                 <Row label="Protein" value={context.proteinTargetG ? `${context.proteinTargetG}g` : "Not enough info yet"} />
@@ -158,6 +159,9 @@ export default async function ProfilePage() {
                   label="Calories"
                   value={context.calorieRangeKcal ? `${context.calorieRangeKcal.min}–${context.calorieRangeKcal.max} kcal` : "Not enough info yet"}
                 />
+                <Row label="Carbs" value={context.carbsTargetG ? `${context.carbsTargetG}g` : "Not enough info yet"} />
+                <Row label="Fat" value={context.fatTargetG ? `${context.fatTargetG}g` : "Not enough info yet"} />
+                <Row label="Fiber" value={context.fiberTargetG ? `${context.fiberTargetG}g` : "Not enough info yet"} />
                 <Row label="Hydration" value={context.hydrationTargetGlasses ? `${context.hydrationTargetGlasses} glasses` : "—"} />
                 <Row label="Sleep" value={context.sleepTargetMinutes ? formatDuration(context.sleepTargetMinutes) : "—"} />
               </SectionButton>

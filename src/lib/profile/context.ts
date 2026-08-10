@@ -3,6 +3,7 @@ import type { CycleEstimate, PeriodRange } from "@/lib/cycle/types";
 import { getLocalDateString } from "@/lib/date";
 import { getUserContextRpc } from "./rpc";
 import {
+  CALORIE_RANGE_BUFFER_KCAL,
   calculateAge,
   calculateCalorieRangeKcal,
   calculateFiberTargetG,
@@ -72,28 +73,35 @@ export async function getUserContext(asOfDate: string = getLocalDateString()): P
       ? calculateProteinTargetG(latestWeightKg, profile.primary_goal)
       : null);
 
-  const calorieRangeKcal = calculateCalorieRangeKcal({
-    dateOfBirth: profile.date_of_birth,
-    biologicalSex: profile.biological_sex,
-    heightCm: profile.height_cm,
-    activityLevel: profile.activity_level,
-    primaryGoal: profile.primary_goal,
-    latestWeightKg,
-  });
+  const calorieRangeKcal =
+    profile.calorie_target_kcal != null
+      ? { min: profile.calorie_target_kcal - CALORIE_RANGE_BUFFER_KCAL, max: profile.calorie_target_kcal + CALORIE_RANGE_BUFFER_KCAL }
+      : calculateCalorieRangeKcal({
+          dateOfBirth: profile.date_of_birth,
+          biologicalSex: profile.biological_sex,
+          heightCm: profile.height_cm,
+          activityLevel: profile.activity_level,
+          primaryGoal: profile.primary_goal,
+          latestWeightKg,
+        });
 
   const macroTargetsG = calculateMacroTargetsG(calorieRangeKcal, proteinTargetG, profile.primary_goal);
-  const fiberTargetG = calculateFiberTargetG(calorieRangeKcal);
+  const carbsTargetG = profile.carbs_target_g ?? macroTargetsG?.carbsG ?? null;
+  const fatTargetG = profile.fat_target_g ?? macroTargetsG?.fatG ?? null;
+  const fiberTargetG = profile.fiber_target_g ?? calculateFiberTargetG(calorieRangeKcal);
 
-  const hydrationTargetGlasses = latestWeightKg
-    ? calculateHydrationTargetGlasses({
-        weightKg: latestWeightKg,
-        biologicalSex: profile.biological_sex,
-        age,
-        heightCm: profile.height_cm,
-      })
-    : DEFAULT_HYDRATION_TARGET_GLASSES;
+  const hydrationTargetGlasses =
+    profile.hydration_target_glasses ??
+    (latestWeightKg
+      ? calculateHydrationTargetGlasses({
+          weightKg: latestWeightKg,
+          biologicalSex: profile.biological_sex,
+          age,
+          heightCm: profile.height_cm,
+        })
+      : DEFAULT_HYDRATION_TARGET_GLASSES);
 
-  const sleepTargetMinutes = calculateSleepTargetMinutes(age);
+  const sleepTargetMinutes = profile.sleep_target_minutes ?? calculateSleepTargetMinutes(age);
 
   // Entirely opt-in: only computed for users who've said they're female AND
   // logged at least one period start. No log, no estimate — never inferred.
@@ -117,8 +125,8 @@ export async function getUserContext(asOfDate: string = getLocalDateString()): P
     latestWeightKg,
     proteinTargetG,
     calorieRangeKcal,
-    carbsTargetG: macroTargetsG?.carbsG ?? null,
-    fatTargetG: macroTargetsG?.fatG ?? null,
+    carbsTargetG,
+    fatTargetG,
     fiberTargetG,
     hydrationTargetGlasses,
     sleepTargetMinutes,

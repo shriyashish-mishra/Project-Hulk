@@ -109,6 +109,12 @@ export interface UpdateProfileFieldsInput {
   activityLevel?: ActivityLevel;
   trainingFrequency?: TrainingFrequency;
   proteinTargetG?: number | null;
+  calorieTargetKcal?: number | null;
+  carbsTargetG?: number | null;
+  fatTargetG?: number | null;
+  fiberTargetG?: number | null;
+  hydrationTargetGlasses?: number | null;
+  sleepTargetMinutes?: number | null;
   unitsPreference?: UnitsPreference;
   averageCycleLengthDays?: number | null;
   timezone?: string;
@@ -130,6 +136,12 @@ export async function updateProfileFields(input: UpdateProfileFieldsInput): Prom
   if (input.activityLevel !== undefined) patch.activity_level = input.activityLevel;
   if (input.trainingFrequency !== undefined) patch.training_frequency = input.trainingFrequency;
   if (input.proteinTargetG !== undefined) patch.protein_target_g = input.proteinTargetG;
+  if (input.calorieTargetKcal !== undefined) patch.calorie_target_kcal = input.calorieTargetKcal;
+  if (input.carbsTargetG !== undefined) patch.carbs_target_g = input.carbsTargetG;
+  if (input.fatTargetG !== undefined) patch.fat_target_g = input.fatTargetG;
+  if (input.fiberTargetG !== undefined) patch.fiber_target_g = input.fiberTargetG;
+  if (input.hydrationTargetGlasses !== undefined) patch.hydration_target_glasses = input.hydrationTargetGlasses;
+  if (input.sleepTargetMinutes !== undefined) patch.sleep_target_minutes = input.sleepTargetMinutes;
   if (input.unitsPreference !== undefined) patch.units_preference = input.unitsPreference;
   if (input.averageCycleLengthDays !== undefined) patch.average_cycle_length_days = input.averageCycleLengthDays;
   if (input.timezone !== undefined) patch.timezone = input.timezone;

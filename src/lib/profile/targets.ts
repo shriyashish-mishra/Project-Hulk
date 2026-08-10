@@ -38,7 +38,7 @@ const GOAL_CALORIE_ADJUSTMENT: Record<Exclude<PrimaryGoal, "recomposition">, num
   maintain: 0,
 };
 
-const CALORIE_RANGE_BUFFER_KCAL = 100;
+export const CALORIE_RANGE_BUFFER_KCAL = 100;
 
 export interface CalorieRangeInput {
   dateOfBirth: string | null;
@@ -84,7 +84,7 @@ export function calculateCalorieRangeKcal(
   };
 }
 
-const FAT_PERCENT_OF_CALORIES: Record<PrimaryGoal, number> = {
+export const FAT_PERCENT_OF_CALORIES: Record<PrimaryGoal, number> = {
   // Fat as a share of total calories; carbs fill whatever's left after
   // protein (grams-based, from calculateProteinTargetG) and fat are
   // allocated. Lower fat for build_muscle leaves more room for carbs to
@@ -122,7 +122,7 @@ export function calculateMacroTargetsG(
   };
 }
 
-const FIBER_G_PER_1000_KCAL = 14; // Dietary Guidelines for Americans / IOM guideline
+export const FIBER_G_PER_1000_KCAL = 14; // Dietary Guidelines for Americans / IOM guideline
 
 /** Same null-propagation as `calculateMacroTargetsG` — fiber is calorie-derived, so it's only ever meaningful when a calorie range exists. */
 export function calculateFiberTargetG(calorieRangeKcal: { min: number; max: number } | null): number | null {
@@ -144,7 +144,7 @@ const HEIGHT_ADJUSTMENT_PER_10CM = 0.01;
 const MAX_HEIGHT_ADJUSTMENT = 0.05;
 const OLDER_ADULT_AGE = 65;
 const OLDER_ADULT_ADJUSTMENT = -0.05;
-const GLASS_SIZE_ML = 250;
+export const GLASS_SIZE_ML = 250;
 const MIN_HYDRATION_GLASSES = 6;
 const MAX_HYDRATION_GLASSES = 14;
 
@@ -200,4 +200,204 @@ export function calculateSleepTargetMinutes(age: number | null): number {
   if (age <= TEEN_MAX_AGE) return SLEEP_TARGET_MINUTES_TEEN;
   if (age >= OLDER_ADULT_SLEEP_AGE) return SLEEP_TARGET_MINUTES_OLDER_ADULT;
   return SLEEP_TARGET_MINUTES_DEFAULT;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Suggested defaults for the Targets editor                              */
+/* ---------------------------------------------------------------------- */
+
+/**
+ * Every suggestion below is shown ONLY inside the Targets editor, as a
+ * starting point for a value the user is about to override — distinct
+ * from the ambient auto-computed value used everywhere else in the app
+ * (getUserContext), which stays current-weight-based. These prefer the
+ * user's target weight ("the body you're aiming for") over their current
+ * weight, per an explicit product choice: a target is a goal-state
+ * number, not a restatement of today. Falls back to current weight when
+ * no goal weight is set yet (e.g. a "maintain" goal), and to null when
+ * neither exists — callers must render "not enough info yet," never a
+ * fabricated number.
+ */
+export interface TargetSuggestion {
+  value: number;
+  insight: string;
+}
+
+function resolveSuggestionWeightKg(
+  targetWeightKg: number | null,
+  currentWeightKg: number | null,
+): { weightKg: number; basisLabel: string } | null {
+  if (targetWeightKg) return { weightKg: targetWeightKg, basisLabel: `target weight of ${targetWeightKg}kg` };
+  if (currentWeightKg) return { weightKg: currentWeightKg, basisLabel: `current weight of ${currentWeightKg}kg` };
+  return null;
+}
+
+export function suggestProteinTargetG(
+  targetWeightKg: number | null,
+  currentWeightKg: number | null,
+  goal: PrimaryGoal | null,
+): TargetSuggestion | null {
+  const basis = resolveSuggestionWeightKg(targetWeightKg, currentWeightKg);
+  if (!basis || !goal) return null;
+  const value = calculateProteinTargetG(basis.weightKg, goal);
+  return { value, insight: `${value}g — ${PROTEIN_G_PER_KG[goal]}g of protein per kg of your ${basis.basisLabel}.` };
+}
+
+export interface CalorieSuggestionInput {
+  targetWeightKg: number | null;
+  currentWeightKg: number | null;
+  dateOfBirth: string | null;
+  biologicalSex: BiologicalSex | null;
+  heightCm: number | null;
+  activityLevel: ActivityLevel | null;
+  primaryGoal: PrimaryGoal | null;
+}
+
+export function suggestCalorieTargetKcal(input: CalorieSuggestionInput): TargetSuggestion | null {
+  const basis = resolveSuggestionWeightKg(input.targetWeightKg, input.currentWeightKg);
+  if (!basis) return null;
+  const range = calculateCalorieRangeKcal({
+    dateOfBirth: input.dateOfBirth,
+    biologicalSex: input.biologicalSex,
+    heightCm: input.heightCm,
+    activityLevel: input.activityLevel,
+    primaryGoal: input.primaryGoal,
+    latestWeightKg: basis.weightKg,
+  });
+  if (!range) return null;
+  const value = Math.round((range.min + range.max) / 2 / 10) * 10;
+  return {
+    value,
+    insight: `${value} kcal/day — Mifflin-St Jeor estimate from your ${basis.basisLabel}, height, age, and activity level.`,
+  };
+}
+
+export interface MacroSuggestionInput {
+  calorieTargetKcal: number | null;
+  proteinTargetG: number | null;
+  primaryGoal: PrimaryGoal | null;
+}
+
+/** Carbs and fat are calorie- and protein-derived, not independently weight-based — so unlike protein/calories/hydration above, these chain from the OTHER suggested values rather than target weight directly. */
+export function suggestCarbsAndFatTargetsG(
+  input: MacroSuggestionInput,
+): { carbs: TargetSuggestion; fat: TargetSuggestion } | null {
+  if (input.calorieTargetKcal === null) return null;
+  const range = {
+    min: input.calorieTargetKcal - CALORIE_RANGE_BUFFER_KCAL,
+    max: input.calorieTargetKcal + CALORIE_RANGE_BUFFER_KCAL,
+  };
+  const macros = calculateMacroTargetsG(range, input.proteinTargetG, input.primaryGoal);
+  if (!macros) return null;
+  const fatPercent = Math.round(FAT_PERCENT_OF_CALORIES[input.primaryGoal ?? "maintain"] * 100);
+  return {
+    carbs: {
+      value: macros.carbsG,
+      insight: `${macros.carbsG}g — whatever's left of your ${input.calorieTargetKcal} kcal/day target after protein and fat.`,
+    },
+    fat: {
+      value: macros.fatG,
+      insight: `${macros.fatG}g — ${fatPercent}% of your ${input.calorieTargetKcal} kcal/day target.`,
+    },
+  };
+}
+
+export function suggestFiberTargetG(calorieTargetKcal: number | null): TargetSuggestion | null {
+  if (calorieTargetKcal === null) return null;
+  const range = { min: calorieTargetKcal - CALORIE_RANGE_BUFFER_KCAL, max: calorieTargetKcal + CALORIE_RANGE_BUFFER_KCAL };
+  const value = calculateFiberTargetG(range);
+  if (value === null) return null;
+  return { value, insight: `${value}g — ${FIBER_G_PER_1000_KCAL}g per 1,000 kcal of your ${calorieTargetKcal} kcal/day target.` };
+}
+
+export interface HydrationSuggestionInput {
+  targetWeightKg: number | null;
+  currentWeightKg: number | null;
+  biologicalSex: BiologicalSex | null;
+  age: number | null;
+  heightCm: number | null;
+}
+
+export function suggestHydrationTargetGlasses(input: HydrationSuggestionInput): TargetSuggestion | null {
+  const basis = resolveSuggestionWeightKg(input.targetWeightKg, input.currentWeightKg);
+  if (!basis) return null;
+  const value = calculateHydrationTargetGlasses({
+    weightKg: basis.weightKg,
+    biologicalSex: input.biologicalSex,
+    age: input.age,
+    heightCm: input.heightCm,
+  });
+  return { value, insight: `${value} glasses (~${value * GLASS_SIZE_ML}ml) — based on your ${basis.basisLabel}.` };
+}
+
+/** Unlike the others above, never returns null — sleep guidelines are age-banded only (see calculateSleepTargetMinutes), so there's always a value even with zero other profile data. */
+export function suggestSleepTargetMinutes(age: number | null): TargetSuggestion {
+  const value = calculateSleepTargetMinutes(age);
+  const hours = Math.round((value / 60) * 10) / 10;
+  return {
+    value,
+    insight:
+      age !== null
+        ? `${hours}h — the National Sleep Foundation's guideline for your age (${age}). Sleep needs are age-based, not weight-based.`
+        : `${hours}h — general adult guideline. Add your date of birth for an age-specific recommendation.`,
+  };
+}
+
+export interface AllTargetSuggestions {
+  protein: TargetSuggestion | null;
+  calories: TargetSuggestion | null;
+  carbs: TargetSuggestion | null;
+  fat: TargetSuggestion | null;
+  fiber: TargetSuggestion | null;
+  hydration: TargetSuggestion | null;
+  sleep: TargetSuggestion;
+}
+
+export interface AllTargetSuggestionsInput {
+  targetWeightKg: number | null;
+  currentWeightKg: number | null;
+  dateOfBirth: string | null;
+  biologicalSex: BiologicalSex | null;
+  heightCm: number | null;
+  activityLevel: ActivityLevel | null;
+  primaryGoal: PrimaryGoal | null;
+  age: number | null;
+}
+
+/** One consistent "if I were eating for my goal weight" suggestion set — carbs/fat/fiber chain from the suggested calorie+protein values computed here, not from whatever's currently active (which may itself be a manual override), so every field's default agrees with every other field's. */
+export function calculateAllTargetSuggestions(input: AllTargetSuggestionsInput): AllTargetSuggestions {
+  const protein = suggestProteinTargetG(input.targetWeightKg, input.currentWeightKg, input.primaryGoal);
+  const calories = suggestCalorieTargetKcal({
+    targetWeightKg: input.targetWeightKg,
+    currentWeightKg: input.currentWeightKg,
+    dateOfBirth: input.dateOfBirth,
+    biologicalSex: input.biologicalSex,
+    heightCm: input.heightCm,
+    activityLevel: input.activityLevel,
+    primaryGoal: input.primaryGoal,
+  });
+  const macros = suggestCarbsAndFatTargetsG({
+    calorieTargetKcal: calories?.value ?? null,
+    proteinTargetG: protein?.value ?? null,
+    primaryGoal: input.primaryGoal,
+  });
+  const fiber = suggestFiberTargetG(calories?.value ?? null);
+  const hydration = suggestHydrationTargetGlasses({
+    targetWeightKg: input.targetWeightKg,
+    currentWeightKg: input.currentWeightKg,
+    biologicalSex: input.biologicalSex,
+    age: input.age,
+    heightCm: input.heightCm,
+  });
+  const sleep = suggestSleepTargetMinutes(input.age);
+
+  return {
+    protein,
+    calories,
+    carbs: macros?.carbs ?? null,
+    fat: macros?.fat ?? null,
+    fiber,
+    hydration,
+    sleep,
+  };
 }
