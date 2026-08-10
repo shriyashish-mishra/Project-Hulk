@@ -162,8 +162,8 @@ export function SessionExerciseCard({
 
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
           <span
             className={cn(
               "flex size-8 shrink-0 items-center justify-center rounded-lg",
@@ -172,12 +172,12 @@ export function SessionExerciseCard({
           >
             {isCardio ? <Waves className="size-4" /> : <Dumbbell className="size-4" />}
           </span>
-          <span className="text-[15px] font-semibold text-foreground">{exerciseName}</span>
+          <span className="min-w-0 flex-1 text-[15px] font-semibold break-words text-foreground">{exerciseName}</span>
         </div>
         {!isCardio && (
           <span
             className={cn(
-              "rounded-full px-2.5 py-1 text-xs font-bold",
+              "shrink-0 rounded-full px-2.5 py-1 text-xs font-bold",
               isDone ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
             )}
           >

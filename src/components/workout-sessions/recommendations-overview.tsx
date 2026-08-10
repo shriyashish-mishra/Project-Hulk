@@ -19,11 +19,11 @@ function ExerciseLink({
     <li>
       <Link
         href={`/workouts/progress?exercise=${encodeURIComponent(summary.exercise.name)}`}
-        className={`flex items-center justify-between gap-3 rounded-xl px-2.5 py-1.5 text-sm transition-colors ${
+        className={`flex items-start justify-between gap-3 rounded-xl px-2.5 py-1.5 text-sm transition-colors ${
           selected ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
         }`}
       >
-        <span className="truncate">{summary.exercise.name}</span>
+        <span className="min-w-0 flex-1 break-words">{summary.exercise.name}</span>
         <span className="shrink-0 text-xs text-muted-foreground">{valueLabel}</span>
       </Link>
     </li>

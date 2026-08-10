@@ -62,8 +62,8 @@ function renderWorkoutPresetBody(rawText: string) {
   return (
     <div className="flex flex-col gap-0.5">
       {visible.map((line, index) => (
-        <div key={index} className="flex items-baseline justify-between gap-3 text-[15px]">
-          <span className="truncate text-foreground">{line.name}</span>
+        <div key={index} className="flex items-start justify-between gap-3 text-[15px]">
+          <span className="min-w-0 flex-1 break-words text-foreground">{line.name}</span>
           {line.detail && (
             <span className="shrink-0 text-xs text-muted-foreground">{line.detail}</span>
           )}

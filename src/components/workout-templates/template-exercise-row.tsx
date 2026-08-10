@@ -42,7 +42,7 @@ export function TemplateExerciseRow({ exercise, kebab }: TemplateExerciseRowProp
           {isCardio ? <Waves className="size-4" /> : <Dumbbell className="size-4" />}
         </span>
         <div className="min-w-0">
-          <p className="truncate text-[15px] font-semibold text-foreground">{exercise.exercise_name}</p>
+          <p className="break-words text-[15px] font-semibold text-foreground">{exercise.exercise_name}</p>
           <p className="text-xs text-muted-foreground">{formatDefaults(exercise)}</p>
         </div>
       </div>

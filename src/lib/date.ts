@@ -118,9 +118,11 @@ export function getMonthRange(monthStr: string): { start: string; end: string } 
   };
 }
 
+/** Rounds to the nearest whole minute first — callers sometimes pass a fractional average (e.g. avg sleep across several nights), and splitting a float into hours/minutes via `%` without rounding first produces IEEE-754 noise like "17.100000000000023m". */
 export function formatDuration(minutes: number): string {
-  const sign = minutes < 0 ? "-" : "";
-  const abs = Math.abs(minutes);
+  const rounded = Math.round(minutes);
+  const sign = rounded < 0 ? "-" : "";
+  const abs = Math.abs(rounded);
   const h = Math.floor(abs / 60);
   const m = abs % 60;
   if (h === 0) return `${sign}${m}m`;

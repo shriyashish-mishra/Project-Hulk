@@ -123,7 +123,7 @@ function PickerBody({
                 ) : (
                   <Dumbbell className="size-4 shrink-0 text-primary" />
                 )}
-                <span className="truncate text-[15px] font-semibold text-foreground">{item.name}</span>
+                <span className="min-w-0 flex-1 break-words text-[15px] font-semibold text-foreground">{item.name}</span>
               </button>
               <button
                 type="button"

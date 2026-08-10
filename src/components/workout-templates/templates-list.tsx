@@ -50,7 +50,7 @@ export function TemplatesList({ templates }: TemplatesListProps) {
               className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3.5"
             >
               <Link href={`/workouts/templates/${template.id}`} className="min-w-0 flex-1 active:opacity-60">
-                <p className="truncate text-[15px] font-semibold text-foreground">{template.name}</p>
+                <p className="break-words text-[15px] font-semibold text-foreground">{template.name}</p>
                 <p className="text-xs text-muted-foreground">Tap to edit</p>
               </Link>
               <Button size="sm" disabled={startingId === template.id} onClick={() => handleStart(template.id)}>
