@@ -22,8 +22,9 @@ export const AI_REPORT_JSON_EXAMPLE = {
   nutrition_score: 78,
   workout_score: 85,
   overall_score: 80,
-  recovery_score: 82,
-  recovery_note: "Training load was moderate and well spaced — recovery looks on track.",
+  recovery_score: 62,
+  recovery_note:
+    "This is the third session in four days with only one rest day taken — accumulated fatigue from that pattern outweighs today's own decent sleep and hydration, so recovery is trending down even though nothing about today in isolation looks off.",
   muscles_trained: ["chest", "shoulders", "triceps"],
   workout_duration_min: 55,
   workout_calories_burned: 420,

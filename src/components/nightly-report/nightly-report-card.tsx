@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getLocalDateString, getLocalHour } from "@/lib/date";
 import { getAiReportForDate } from "@/lib/nightly-report/queries";
 import { getCurrentUserTimeZone } from "@/lib/profile/queries";
+import { GenerateReportButton } from "./generate-report-button";
 import { ScoreBadge } from "./score-badge";
 
 /** After this hour, a still-missing report reads as "you're about to lose today's context" rather than the default all-day empty state. */
@@ -40,14 +41,13 @@ export async function NightlyReportCard({ loggedOn }: NightlyReportCardProps = {
             <Button nativeButton={false} render={<Link href={reportHref} />}>
               View full report
             </Button>
-            <Button
+            <GenerateReportButton
+              date={date}
+              reportHref={reportHref}
+              label="Regenerate Nightly Report"
               variant="ghost"
               size="sm"
-              nativeButton={false}
-              render={<Link href={`/report/generate?date=${date}`} />}
-            >
-              Regenerate Nightly Report
-            </Button>
+            />
             <Button
               variant="ghost"
               size="sm"
@@ -62,11 +62,9 @@ export async function NightlyReportCard({ loggedOn }: NightlyReportCardProps = {
             <p className={cn("text-sm", isUrgent ? "font-semibold text-warning" : "text-muted-foreground")}>
               {isUrgent
                 ? "It's getting late and tonight's report hasn't generated yet — generate it now, or wait for the automatic nightly run."
-                : "A coach report generates automatically tonight. Want it sooner? Generate one now to analyze in Claude, then import the results back."}
+                : "A coach report generates automatically tonight. Want it sooner? Generate one now."}
             </p>
-            <Button nativeButton={false} render={<Link href={`/report/generate?date=${date}`} />}>
-              Generate Nightly Report
-            </Button>
+            <GenerateReportButton date={date} reportHref={reportHref} label="Generate Nightly Report" />
             <Button
               variant="ghost"
               size="sm"
