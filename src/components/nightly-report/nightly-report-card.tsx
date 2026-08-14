@@ -61,8 +61,8 @@ export async function NightlyReportCard({ loggedOn }: NightlyReportCardProps = {
           <>
             <p className={cn("text-sm", isUrgent ? "font-semibold text-warning" : "text-muted-foreground")}>
               {isUrgent
-                ? "It's getting late — generate tonight's report before the day's context slips away."
-                : "Generate a report to analyze in Claude, then import the results back once ready."}
+                ? "It's getting late and tonight's report hasn't generated yet — generate it now, or wait for the automatic nightly run."
+                : "A coach report generates automatically tonight. Want it sooner? Generate one now to analyze in Claude, then import the results back."}
             </p>
             <Button nativeButton={false} render={<Link href={`/report/generate?date=${date}`} />}>
               Generate Nightly Report

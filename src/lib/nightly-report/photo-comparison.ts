@@ -1,10 +1,15 @@
-import Anthropic from "@anthropic-ai/sdk";
+import type { Database } from "@/lib/supabase/database.types";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { requireUser } from "@/lib/supabase/auth";
 import { formatShortDateWithWeekday } from "@/lib/date";
 import { getPhotosForDate, getPreviousPhoto } from "@/lib/photos/queries";
 import { PHOTO_VIEW_LABEL, type PhotoViewType } from "@/lib/photos/types";
+import { compareProgressPhotos, type GroqContentBlock } from "@/lib/groq/client";
 
-const VISION_MODEL = "claude-sonnet-5";
+interface AuthContext {
+  supabase: SupabaseClient<Database>;
+  user: User;
+}
 
 interface ComparisonPair {
   viewType: PhotoViewType;
@@ -15,7 +20,7 @@ interface ComparisonPair {
 }
 
 async function downloadAsBase64(
-  supabase: Awaited<ReturnType<typeof requireUser>>["supabase"],
+  supabase: SupabaseClient<Database>,
   storagePath: string,
 ): Promise<string> {
   const { data, error } = await supabase.storage.from("progress-photos").download(storagePath);
@@ -29,22 +34,28 @@ function dateLabel(dateStr: string): string {
 }
 
 /**
- * Compares today's progress photo(s) against the most recent prior photo of the
- * same view via a live vision call — the only place actual photo bytes leave
- * this app, and only for this one server-side request. Returns null when
- * there's nothing captured today or no baseline to compare against yet, so
- * most days trigger no API call at all.
+ * Compares today's progress photo(s) against the most recent prior photo of
+ * the same view via a live vision call — the only place actual photo bytes
+ * leave this app, and only for this one server-side request. Returns null
+ * when there's nothing captured today or no baseline to compare against
+ * yet, so most days trigger no API call at all. `ctx` lets callers outside
+ * a browser request (the nightly-report cron) inject an already-authenticated
+ * context instead of `requireUser()`.
  */
-export async function getPhotoComparisonNote(capturedOn: string): Promise<string | null> {
-  if (!process.env.ANTHROPIC_API_KEY) return null;
+export async function getPhotoComparisonNote(
+  capturedOn: string,
+  ctx?: AuthContext,
+): Promise<string | null> {
+  if (!process.env.GROQ_API_KEY) return null;
 
-  const { supabase } = await requireUser();
-  const todaysPhotos = await getPhotosForDate(capturedOn);
+  const auth = ctx ?? (await requireUser());
+  const { supabase } = auth;
+  const todaysPhotos = await getPhotosForDate(capturedOn, auth);
   if (todaysPhotos.length === 0) return null;
 
   const pairs: ComparisonPair[] = [];
   for (const photo of todaysPhotos) {
-    const previous = await getPreviousPhoto(photo.view_type, capturedOn);
+    const previous = await getPreviousPhoto(photo.view_type, capturedOn, auth);
     if (!previous) continue;
     pairs.push({
       viewType: photo.view_type,
@@ -56,7 +67,7 @@ export async function getPhotoComparisonNote(capturedOn: string): Promise<string
   }
   if (pairs.length === 0) return null;
 
-  const content: Anthropic.ContentBlockParam[] = [
+  const content: GroqContentBlock[] = [
     {
       type: "text",
       text: "These are paired before/after progress photos for physique tracking, one pair per view below. For each view, write one or two factual sentences on visible changes in body composition, posture, or muscle definition — no encouragement or filler. If nothing is visibly different, say so plainly. Prefix each note with the view name.",
@@ -73,20 +84,11 @@ export async function getPhotoComparisonNote(capturedOn: string): Promise<string
         type: "text",
         text: `${PHOTO_VIEW_LABEL[pair.viewType]} view — before (${dateLabel(pair.previousDate)}) then after (${dateLabel(pair.currentDate)}):`,
       },
-      { type: "image", source: { type: "base64", media_type: "image/jpeg", data: previousB64 } },
-      { type: "image", source: { type: "base64", media_type: "image/jpeg", data: currentB64 } },
+      { type: "image_url", image_url: { url: `data:image/jpeg;base64,${previousB64}` } },
+      { type: "image_url", image_url: { url: `data:image/jpeg;base64,${currentB64}` } },
     );
   }
 
-  const client = new Anthropic();
-  const message = await client.messages.create({
-    model: VISION_MODEL,
-    max_tokens: 1024,
-    thinking: { type: "adaptive" },
-    output_config: { effort: "low" },
-    messages: [{ role: "user", content }],
-  });
-
-  const textBlock = message.content.find((block) => block.type === "text");
-  return textBlock && "text" in textBlock ? textBlock.text.trim() || null : null;
+  const note = await compareProgressPhotos(content);
+  return note.trim() || null;
 }

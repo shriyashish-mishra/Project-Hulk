@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { BackLink } from "@/components/ui/back-link";
 
-const LAST_UPDATED = "August 6, 2026";
+const LAST_UPDATED = "August 14, 2026";
 const CONTACT_EMAIL = "shriyashishm@gmail.com";
 
 export default function TermsPage() {
@@ -31,10 +31,14 @@ export default function TermsPage() {
           <p>
             Project Hulk is a personal fitness and nutrition tracker. You log meals, workouts, water, sleep, weight,
             and optionally progress photos and menstrual cycle data. The Service computes targets, trends, and
-            summaries from what you log, and helps you generate a nightly &ldquo;coach report&rdquo; prompt that you
-            paste into your own separate Claude (Anthropic) conversation and then import the response back in.
-            Project Hulk does not automatically send your data to any AI service on your behalf — that step is
-            always something you do yourself, outside the Service.
+            summaries from what you log, and generates a nightly &ldquo;coach report&rdquo; automatically each
+            night using Groq, a third-party AI provider — see the{" "}
+            <Link href="/privacy" className="text-primary underline-offset-4 hover:underline">
+              Privacy Policy
+            </Link>{" "}
+            for what&rsquo;s sent and why. You can also generate a report yourself for a given day by pasting a
+            prompt into your own separate Claude (Anthropic) conversation and importing the response back in,
+            instead of the automatic run.
           </p>
         </section>
 

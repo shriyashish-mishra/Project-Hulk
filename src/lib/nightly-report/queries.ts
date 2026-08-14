@@ -10,8 +10,9 @@ interface AuthContext {
 
 export async function getAiReportForDate(
   reportDate: string,
+  ctx?: AuthContext,
 ): Promise<AiDailyReport | null> {
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = ctx ?? (await requireUser());
   const { data, error } = await supabase
     .from("daily_ai_reports")
     .select("*")

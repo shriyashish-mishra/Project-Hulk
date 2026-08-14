@@ -1,6 +1,6 @@
 import { BackLink } from "@/components/ui/back-link";
 
-const LAST_UPDATED = "August 6, 2026";
+const LAST_UPDATED = "August 14, 2026";
 const CONTACT_EMAIL = "shriyashishm@gmail.com";
 
 export default function PrivacyPage() {
@@ -24,7 +24,10 @@ export default function PrivacyPage() {
             </li>
             <li>Daily logs: meals, workouts, water, sleep, and body weight over time.</li>
             <li>Optional data you choose to add: progress photos and menstrual cycle tracking.</li>
-            <li>Generated content: nightly coach reports you import back into the Service after using Claude.</li>
+            <li>
+              Generated content: nightly coach reports, generated automatically each night from that day&rsquo;s
+              logs (or manually via your own Claude conversation, if you use that path instead).
+            </li>
           </ul>
         </section>
 
@@ -32,18 +35,29 @@ export default function PrivacyPage() {
           <h2 className="mb-1.5 text-base font-bold">2. How we use it</h2>
           <p>
             We use your data to run the Service for you — computing your nutrition and training targets, showing
-            your trends and progress, building the nightly report prompt from your day&rsquo;s logs, and storing the
-            report you bring back. We don&rsquo;t use your data for advertising, and we don&rsquo;t sell it.
+            your trends and progress, and generating your nightly coach report from that day&rsquo;s logs. We
+            don&rsquo;t use your data for advertising, and we don&rsquo;t sell it.
           </p>
         </section>
 
         <section>
-          <h2 className="mb-1.5 text-base font-bold">3. AI reports are your action, not ours</h2>
+          <h2 className="mb-1.5 text-base font-bold">3. AI-generated reports</h2>
           <p>
-            The nightly coach report works by generating a text prompt from your logged data, which you copy and
-            paste into your own Claude conversation, then paste the reply back in. Project Hulk itself never sends
-            your data to Anthropic or any other AI provider automatically — that exchange happens directly between
-            you and the AI service you choose to use, outside of Project Hulk&rsquo;s systems.
+            Each night, Project Hulk automatically sends that day&rsquo;s logged data — meals, workouts, hydration,
+            sleep, weight, and, only on days you&rsquo;ve captured one, your progress photo(s) — to{" "}
+            <a
+              href="https://groq.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline-offset-4 hover:underline"
+            >
+              Groq
+            </a>
+            , a third-party AI provider, to generate your coach report. Groq&rsquo;s terms contractually bar them
+            from using this data to train or fine-tune their models. You can skip the automatic run for a given
+            night and generate a report yourself instead, by copying a prompt into your own Claude conversation and
+            importing the reply back in — that manual path stays available from the report screen, and nothing sent
+            that way passes through Project Hulk&rsquo;s own systems.
           </p>
         </section>
 
@@ -52,7 +66,10 @@ export default function PrivacyPage() {
           <p>
             Menstrual cycle tracking is entirely opt-in. If you choose to use it, that data is stored the same way
             as your other logs — private to your account, never shared, and deletable at any time. You can turn
-            cycle tracking off in your profile settings whenever you like.
+            cycle tracking off in your profile settings whenever you like. When it&rsquo;s on, a coarse phase
+            estimate (e.g. &ldquo;day 12 of ~28, follicular phase&rdquo;) is included in the nightly report&rsquo;s
+            request to Groq, the same way it would appear in a prompt you pasted into Claude yourself — never the
+            underlying dates you logged, just the derived phase.
           </p>
         </section>
 
@@ -60,8 +77,10 @@ export default function PrivacyPage() {
           <h2 className="mb-1.5 text-base font-bold">5. Where your data lives</h2>
           <p>
             Your data is stored with Supabase (database, authentication, and photo storage) and the Service is
-            hosted on Vercel. These providers process data on our behalf under their own security and privacy
-            commitments; we don&rsquo;t share your data with any other third party.
+            hosted on Vercel. These providers, along with Groq (used only for generating your nightly coach report,
+            as described in section 3), process data on our behalf under their own security and privacy
+            commitments; we don&rsquo;t share your data with any other third party beyond what&rsquo;s described
+            here.
           </p>
         </section>
 
