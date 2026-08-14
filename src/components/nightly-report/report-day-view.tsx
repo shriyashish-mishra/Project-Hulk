@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DailyReportView } from "./daily-report-view";
+import { GenerateReportButton } from "./generate-report-button";
 import type { AiDailyReport } from "@/lib/nightly-report/types";
 
 interface ReportDayViewProps {
@@ -34,12 +35,9 @@ export function ReportDayView({ report, isToday, date }: ReportDayViewProps) {
         {isToday ? (
           <>
             <p className="text-sm text-muted-foreground">
-              Generate tonight&rsquo;s prompt, paste it into Claude, then import
-              the response to see your coaching report here.
+              A coach report generates automatically tonight. Want it sooner? Generate one now.
             </p>
-            <Button nativeButton={false} render={<Link href="/report/generate" />}>
-              Generate Nightly Report
-            </Button>
+            <GenerateReportButton date={date} reportHref="/report" label="Generate Nightly Report" />
             <Button
               variant="ghost"
               size="sm"

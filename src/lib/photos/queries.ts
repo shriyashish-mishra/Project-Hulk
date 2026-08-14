@@ -1,5 +1,12 @@
+import type { Database } from "@/lib/supabase/database.types";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { requireUser } from "@/lib/supabase/auth";
 import type { PhotoViewType, ProgressPhoto, ProgressPhotoRow } from "./types";
+
+interface AuthContext {
+  supabase: SupabaseClient<Database>;
+  user: User;
+}
 
 const SIGNED_URL_TTL_SECONDS = 300;
 
@@ -29,9 +36,9 @@ async function attachSignedUrls(
   }));
 }
 
-/** All photos captured on `capturedOn` (up to one per view), each with a ready-to-render signed URL. */
-export async function getPhotosForDate(capturedOn: string): Promise<ProgressPhoto[]> {
-  const { supabase, user } = await requireUser();
+/** All photos captured on `capturedOn` (up to one per view), each with a ready-to-render signed URL. `ctx` lets callers outside a browser request (the nightly-report cron) inject an already-authenticated context instead of `requireUser()`. */
+export async function getPhotosForDate(capturedOn: string, ctx?: AuthContext): Promise<ProgressPhoto[]> {
+  const { supabase, user } = ctx ?? (await requireUser());
   const { data, error } = await supabase
     .from("progress_photos")
     .select("*")
@@ -60,12 +67,13 @@ export async function getPhotoViewsForDate(
   return data.map((row) => row.view_type as PhotoViewType);
 }
 
-/** Most recent photo of `viewType` captured strictly before `beforeDate`, or null — the "since last time" baseline for photo comparison. No signed URL: callers read bytes directly via `storage_path`. */
+/** Most recent photo of `viewType` captured strictly before `beforeDate`, or null — the "since last time" baseline for photo comparison. No signed URL: callers read bytes directly via `storage_path`. `ctx` lets callers outside a browser request (the nightly-report cron) inject an already-authenticated context instead of `requireUser()`. */
 export async function getPreviousPhoto(
   viewType: PhotoViewType,
   beforeDate: string,
+  ctx?: AuthContext,
 ): Promise<ProgressPhotoRow | null> {
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = ctx ?? (await requireUser());
   const { data, error } = await supabase
     .from("progress_photos")
     .select("*")

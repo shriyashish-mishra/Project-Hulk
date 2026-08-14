@@ -12,9 +12,26 @@ import { getPhotoComparisonNote } from "./photo-comparison";
 import { getUserContext } from "@/lib/profile/context";
 import { deriveMuscleMapModel } from "@/lib/profile/types";
 import { parseAiReportResponse } from "./parse";
+import { runNightlyReportPipeline } from "./generate";
 import type { AiDailyReport, AiReportJson } from "./types";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * On-demand counterpart to the nightly cron: same `runNightlyReportPipeline`,
+ * just triggered by a click instead of a schedule, and authenticated via the
+ * browser session (`requireUser()`) instead of the cron's service-role ctx.
+ * Always overwrites — an explicit "Generate"/"Regenerate" click from the UI
+ * should never be silently skipped the way the cron run is when a report
+ * already exists.
+ */
+export async function generateReportNow(reportDate: string): Promise<AiDailyReport> {
+  if (!DATE_PATTERN.test(reportDate)) {
+    throw new Error("Invalid date.");
+  }
+  const auth = await requireUser();
+  return runNightlyReportPipeline(reportDate, auth);
+}
 
 /** Parses, validates, and stores `reportDate`'s AI report from a pasted Claude response. */
 export async function importAiReport(

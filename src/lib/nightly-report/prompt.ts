@@ -218,7 +218,7 @@ under "About Me" above, not generic advice:
 
 - Nutrition quality
 - Workout quality
-- Recovery — a 0-100 assessment of how well-recovered I likely am, judged from training load, rest patterns, and today's hydration and sleep versus their targets above (not a biometric reading, a coaching judgment).
+- Recovery — a 0-100 assessment of how well-recovered I likely am. Weigh CUMULATIVE training load across "This Week So Far" above — workouts already completed, rest days taken — alongside today's hydration and sleep versus their targets, not just today's session in isolation. A demanding week already logged should pull this down even when today's own numbers look fine, the same way a real coach factors in accumulated fatigue, not just today's snapshot. Not a biometric reading, a coaching judgment — and explain the actual reasoning behind the number in recovery_note, not a restatement of the score.
 - Muscle groups trained
 - What I did well (as many points as are genuinely worth noting)
 - What I could improve (as many points as are genuinely worth noting)
@@ -229,8 +229,12 @@ IMPORTANT:
 
 - Weight is logged for my own long-term tracking only, never as a daily
   performance signal. It must NOT influence nutrition_score,
-  workout_score, recovery_score, or overall_score — base those four
-  purely on today's food, training, hydration, and sleep.
+  workout_score, recovery_score, or overall_score — base those four on
+  today's food, training, hydration, and sleep. The one deliberate
+  exception is recovery_score, which should also weigh cumulative
+  training load from "This Week So Far" as described above — that's
+  about accumulated training fatigue, not weight, so it's not excluded
+  by this rule.
 - Judge workout_score only on the quality and effort of what I actually
   trained today (e.g. an arms-and-shoulders session should be scored as
   an arms-and-shoulders session, not marked down for skipping legs). No
@@ -244,6 +248,13 @@ IMPORTANT:
   I only ever mean lbs there, regardless of what unit I typed. Leave
   every dumbbell and barbell weight exactly as I logged it, unit and
   all — this rule is only for machine/cable exercises.
+- coach_summary and recovery_note should read like an actual coach's
+  takeaway, not a generic one-liner: 2-4 sentences that synthesize
+  today's nutrition, training, and recovery together and connect them to
+  the week's pattern where it's relevant (e.g. "third session this week
+  after only one rest day" matters more than restating today's numbers
+  alone). Specific and situational beats generic every time — write the
+  reasoning, not just the verdict.
 
 Return TWO outputs:
 
