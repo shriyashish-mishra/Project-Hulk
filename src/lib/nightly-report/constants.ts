@@ -14,8 +14,10 @@ export const AI_REPORT_JSON_EXAMPLE = {
   fat_g: 70,
   fiber_g: 28,
   micronutrients: [
-    { name: "Vitamin C", status: "adequate" },
-    { name: "Iron", status: "low", note: "consider leafy greens or red meat" },
+    { name: "Vitamin C", status: "adequate", note: "citrus at breakfast and the salad at lunch both contributed" },
+    { name: "Iron", status: "low", note: "no red meat or leafy greens logged today — consider adding one" },
+    { name: "Calcium", status: "adequate", note: "yogurt and the whey shake covered most of it" },
+    { name: "Vitamin D", status: "low", note: "no clear dietary source logged — a consistent gap worth a supplement or more sun" },
   ],
   calorie_balance: "-320 kcal (deficit)",
   calorie_balance_kcal: -320,
@@ -33,8 +35,17 @@ export const AI_REPORT_JSON_EXAMPLE = {
     { name: "Lateral Raises", detail: "4x12", calories_burned: 30 },
     { name: "Overhead Tricep Extension", detail: "3x12", calories_burned: 25 },
   ],
-  strengths: ["High protein intake", "Consistent meal timing"],
-  improvements: ["Low fiber", "Add more vegetables at dinner"],
+  strengths: [
+    "Protein cleared target from whole-food sources — eggs at breakfast, chicken at lunch, dal at dinner",
+    "Full push session with progressive loading across all four exercises",
+    "Sleep and hydration both landed right at target",
+    "Consistent meal timing across all four slots, nothing skipped",
+  ],
+  improvements: [
+    "Fiber came in well under the 28g target — today's meals were light on vegetables and whole grains",
+    "Vitamin D has no dietary source again — a recurring gap worth addressing directly",
+    "Third training day this week with only one rest day taken — worth planning true rest soon",
+  ],
   tomorrow_meals: [
     { meal_type: "breakfast", suggestion: "Greek yogurt with berries and oats" },
     { meal_type: "lunch", suggestion: "Grilled fish with quinoa and greens" },
@@ -48,5 +59,6 @@ export const AI_REPORT_JSON_EXAMPLE = {
     { name: "Leg Press", detail: "3x12" },
     { name: "Calf Raises", detail: "3x15" },
   ],
-  coach_summary: "Solid day overall — great protein intake, just watch fiber.",
+  coach_summary:
+    "Strong push session backed by protein right at target from whole-food sources. Fiber and vitamin D are the recurring gaps to close. This is the third training day this week with only one rest day taken, so recovery is worth watching even though today's own sleep and hydration were both on point.",
 } as const;
