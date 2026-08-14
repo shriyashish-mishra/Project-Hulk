@@ -209,7 +209,11 @@ Please estimate:
 - Fat
 - Carbohydrates
 - Fibre
-- Micronutrients
+- Micronutrients — check at least 3-4 that are actually relevant to
+  today's log (protein/iron/calcium/vitamin-D-type staples are usually
+  worth checking regardless of what else was eaten), each with a note
+  naming the specific food(s) that covered it, or the specific gap if
+  it didn't — "adequate" or "low" with no note is not useful on its own
 - Estimated calorie deficit/surplus, as both a sentence and a signed kcal number (negative = deficit)
 - From the workout log: duration in minutes, total calories burned, and the individual exercises with sets/reps if mentioned, each with its own best-effort calories-burned estimate ("calories_burned" per exercise — leave it off an exercise, or leave the exercise out entirely, if the log genuinely doesn't support a guess; the per-exercise numbers don't need to add up exactly to the workout total, both are independent estimates)
 
@@ -220,8 +224,16 @@ under "About Me" above, not generic advice:
 - Workout quality
 - Recovery — a 0-100 assessment of how well-recovered I likely am. Weigh CUMULATIVE training load across "This Week So Far" above — workouts already completed, rest days taken — alongside today's hydration and sleep versus their targets, not just today's session in isolation. A demanding week already logged should pull this down even when today's own numbers look fine, the same way a real coach factors in accumulated fatigue, not just today's snapshot. Not a biometric reading, a coaching judgment — and explain the actual reasoning behind the number in recovery_note, not a restatement of the score.
 - Muscle groups trained
-- What I did well (as many points as are genuinely worth noting)
-- What I could improve (as many points as are genuinely worth noting)
+- What I did well — name the actual food, exercise, or pattern each
+  point is about, not a generic category label ("high protein" on its
+  own is weak; "protein cleared target from whole-food sources — eggs,
+  chicken, dal" is the bar). On a normal day this usually means 4-5
+  points, not 2 — a short list is a signal to look harder at what's
+  already in the logs above before concluding there's little to say
+- What I could improve — same specificity, same bar on count. On a rest
+  day with minimal training to comment on, this can lean more on
+  nutrition/recovery detail instead, but should still reach a similar
+  count, not shrink because there's no workout to discuss
 - Suggested meals tomorrow — informed by this week's protein/calorie pattern under "This Week So Far" above, not just today's numbers in isolation
 - Suggested workout tomorrow, both as a sentence and as a specific exercise list with sets/reps — prioritize whatever's listed as "Not yet trained this week" while training days remain in the week, rather than repeating what's already been trained. If "Cycle Context" is provided above, let it gently inform intensity/volume only (e.g. a lower-intensity or recovery-leaning session may suit menstrual or late-luteal days better for some people) — never change exercise selection rigidly because of it, never offer medical commentary, and simply ignore this entirely if no cycle context is given
 
