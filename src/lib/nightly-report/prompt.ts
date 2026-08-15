@@ -12,6 +12,7 @@ import {
   TRAINING_FREQUENCY_LABEL,
 } from "@/lib/profile/types";
 import { formatDuration } from "@/lib/date";
+import { calculateKcalPer1000Steps } from "@/lib/profile/targets";
 import { CYCLE_PHASE_LABEL } from "@/lib/cycle/types";
 import type { WeekSoFarContext } from "./week-context";
 import type { RecentCalorieBalance } from "./calorie-history";
@@ -99,7 +100,8 @@ function buildRecentCalorieBalanceMarkdown(recentCalorieBalances: RecentCalorieB
 
 /** Structured facts about who's asking — the AI interprets them, it never has to guess or ask what the user's goal is. */
 function buildAboutMeMarkdown(userContext: UserContext): string {
-  const { profile, proteinTargetG, calorieRangeKcal, carbsTargetG, fatTargetG, fiberTargetG } = userContext;
+  const { profile, proteinTargetG, calorieRangeKcal, carbsTargetG, fatTargetG, fiberTargetG, latestWeightKg } =
+    userContext;
   if (!profile) return "Not provided yet.";
 
   const lines: string[] = [];
@@ -116,6 +118,13 @@ function buildAboutMeMarkdown(userContext: UserContext): string {
   if (fatTargetG) lines.push(`Fat target: ${fatTargetG}g/day`);
   if (fiberTargetG) lines.push(`Fibre target: ${fiberTargetG}g/day`);
   if (profile.target_weight_kg) lines.push(`Target weight: ${profile.target_weight_kg} kg`);
+
+  const kcalPer1000Steps = calculateKcalPer1000Steps(latestWeightKg, profile.height_cm);
+  if (kcalPer1000Steps) {
+    lines.push(
+      `Approx. calories per 1,000 steps at a casual pace, for my height/weight: ${kcalPer1000Steps} kcal — use this as the basis for estimating any step count mentioned in the workout log below, not a free guess (e.g. 16,000 steps ≈ 16 × this number)`,
+    );
+  }
 
   return lines.length > 0 ? lines.join("\n") : "Not provided yet.";
 }
@@ -255,7 +264,7 @@ Please estimate:
   naming the specific food(s) that covered it, or the specific gap if
   it didn't — "adequate" or "low" with no note is not useful on its own
 - Estimated calorie deficit/surplus, as both a sentence and a signed kcal number (negative = deficit). Stay consistent with "Recent Calorie Balance" above — that reflects an already-established read of my likely maintenance level, so don't reinvent it from scratch or introduce a large unexplained swing from one day to the next. Let today's actual intake move the number normally, but the implied maintenance/TDEE assumption behind your deficit should hold roughly steady day to day unless the log itself justifies a real shift (e.g. a notably heavier or lighter training day). There's no stored calorie target for a recomposition goal, so this history is the only continuity signal available, and it needs to hold regardless of which AI reads this prompt — a provider or model change should never look like a change in my actual progress.
-- From the workout log: duration in minutes, total calories burned, and the individual exercises with sets/reps if mentioned, each with its own best-effort calories-burned estimate ("calories_burned" per exercise — leave it off an exercise, or leave the exercise out entirely, if the log genuinely doesn't support a guess; the per-exercise numbers don't need to add up exactly to the workout total, both are independent estimates). If the log also mentions non-workout activity — a step count, a walk, general daily movement — that counts too and must not be silently dropped just because it isn't a traditional exercise: give it its own entry (e.g. "Daily Steps (non-workout)") with its own calories_burned estimate, and make sure the overall workout_calories_burned total actually reflects it, not just the structured exercises above it.
+- From the workout log: duration in minutes, total calories burned, and the individual exercises with sets/reps if mentioned, each with its own best-effort calories-burned estimate ("calories_burned" per exercise — leave it off an exercise, or leave the exercise out entirely, if the log genuinely doesn't support a guess; the per-exercise numbers don't need to add up exactly to the workout total, both are independent estimates). If the log also mentions non-workout activity — a step count, a walk, general daily movement — that counts too and must not be silently dropped just because it isn't a traditional exercise: give it its own entry (e.g. "Daily Steps (non-workout)") with its own calories_burned estimate, and make sure the overall workout_calories_burned total actually reflects it, not just the structured exercises above it. For a step count specifically, don't estimate its calorie cost from scratch — read the count out of the log and multiply by the "Approx. calories per 1,000 steps" figure under "About Me" below (when that figure is available); a smaller AI reasoning about walking calorie physiology unaided has been shown to land 2-4x too low.
 
 Then analyse — weighed against my goal, targets, and training frequency
 under "About Me" above, not generic advice:

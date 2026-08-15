@@ -131,6 +131,30 @@ export function calculateFiberTargetG(calorieRangeKcal: { min: number; max: numb
   return Math.round(((calorieTargetKcal / 1000) * FIBER_G_PER_1000_KCAL) / 5) * 5;
 }
 
+const STRIDE_LENGTH_RATIO = 0.414; // commonly cited height-to-stride-length ratio for walking
+const WALKING_KCAL_PER_KG_PER_KM = 0.6; // standard approximation for casual/moderate-pace walking
+
+/**
+ * A deterministic reference figure the nightly-report prompt hands to the
+ * AI, rather than leaving "how many calories did N steps burn" to be
+ * invented from scratch — the same free-text-step-count entries ("16k
+ * steps non-workout") that need this were previously estimated by the AI
+ * alone, and came back 2-4x too low against this same formula, because a
+ * smaller model doing unit-scaled physiology arithmetic from nothing is
+ * exactly the kind of thing this codebase already doesn't trust an LLM
+ * with (see the calorie/hydration/protein targets above). The AI still
+ * has to read the actual step count out of the log — that part stays its
+ * job — but the per-1,000-steps rate itself is computed here. Returns
+ * null when weight or height aren't known yet, never a guess from
+ * partial data.
+ */
+export function calculateKcalPer1000Steps(weightKg: number | null, heightCm: number | null): number | null {
+  if (!weightKg || !heightCm) return null;
+  const strideLengthM = (heightCm * STRIDE_LENGTH_RATIO) / 100;
+  const kmPer1000Steps = (1000 * strideLengthM) / 1000;
+  return Math.round(kmPer1000Steps * weightKg * WALKING_KCAL_PER_KG_PER_KM);
+}
+
 const ML_PER_KG_BY_SEX: Record<BiologicalSex, number> = {
   // Commonly cited sports-nutrition range is 30-35ml/kg; split by the
   // typical difference in body-water percentage between sexes rather than
