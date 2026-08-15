@@ -7,6 +7,7 @@ import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import { buildNightlyReportPrompt } from "@/lib/nightly-report/prompt";
 import { getRecoveryPromptContext } from "@/lib/nightly-report/context";
 import { getWeekSoFarContext } from "@/lib/nightly-report/week-context";
+import { getRecentCalorieBalanceContext } from "@/lib/nightly-report/calorie-history";
 import { getPhotoComparisonNote } from "@/lib/nightly-report/photo-comparison";
 import { getUserContext } from "@/lib/profile/context";
 import { getCurrentUserTimeZone } from "@/lib/profile/queries";
@@ -27,7 +28,7 @@ export default async function GenerateReportPage({ searchParams }: GenerateRepor
     dateParam && DATE_PATTERN.test(dateParam) && dateParam <= today ? dateParam : today;
   const isToday = loggedOn === today;
 
-  const [foodLogs, workoutLog, recoveryContext, userContext, weekSoFar, photoComparisonNote] =
+  const [foodLogs, workoutLog, recoveryContext, userContext, weekSoFar, photoComparisonNote, recentCalorieBalances] =
     await Promise.all([
       getFoodLogsForDate(loggedOn),
       getWorkoutLogForDate(loggedOn),
@@ -35,6 +36,7 @@ export default async function GenerateReportPage({ searchParams }: GenerateRepor
       getUserContext(loggedOn),
       getWeekSoFarContext(loggedOn),
       getPhotoComparisonNote(loggedOn),
+      getRecentCalorieBalanceContext(loggedOn),
     ]);
 
   const prompt = buildNightlyReportPrompt({
@@ -45,6 +47,7 @@ export default async function GenerateReportPage({ searchParams }: GenerateRepor
     photoComparisonNote,
     userContext,
     weekSoFar,
+    recentCalorieBalances,
   });
 
   return (

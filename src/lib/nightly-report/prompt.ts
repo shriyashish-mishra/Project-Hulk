@@ -14,6 +14,7 @@ import {
 import { formatDuration } from "@/lib/date";
 import { CYCLE_PHASE_LABEL } from "@/lib/cycle/types";
 import type { WeekSoFarContext } from "./week-context";
+import type { RecentCalorieBalance } from "./calorie-history";
 import { AI_REPORT_JSON_EXAMPLE } from "./constants";
 
 interface PriorWeightContext {
@@ -33,6 +34,7 @@ interface BuildPromptInput {
   photoComparisonNote: string | null;
   userContext: UserContext;
   weekSoFar: WeekSoFarContext;
+  recentCalorieBalances: RecentCalorieBalance[];
 }
 
 /**
@@ -61,6 +63,26 @@ function buildWeekSoFarMarkdown(week: WeekSoFarContext): string {
   if (week.avgCalories !== null) lines.push(`Avg calories/day so far this week: ${week.avgCalories} kcal.`);
 
   return lines.join("\n");
+}
+
+/**
+ * The only continuity signal available for a recomposition goal, where
+ * `calculateCalorieRangeKcal` deliberately never hands the AI a
+ * maintenance-calorie number to anchor a deficit against (see
+ * profile/targets.ts — that goal is explicitly never reduced to a calorie
+ * framing). Without this, every call reinvents an implied TDEE from
+ * scratch, so a different AI reading the same kind of day can land on a
+ * wildly different deficit even when the food logged is nearly identical.
+ * This isn't shown as a target, just as "here's what's already been
+ * established" — see the instruction that references it below.
+ */
+function buildRecentCalorieBalanceMarkdown(recentCalorieBalances: RecentCalorieBalance[]): string {
+  if (recentCalorieBalances.length === 0) {
+    return "No prior reports yet — nothing established to stay consistent with, use your own best judgment.";
+  }
+  return recentCalorieBalances
+    .map((entry) => `${entry.date}: ${entry.calorieBalance}`)
+    .join("\n");
 }
 
 /** Structured facts about who's asking — the AI interprets them, it never has to guess or ask what the user's goal is. */
@@ -155,6 +177,7 @@ export function buildNightlyReportPrompt({
   photoComparisonNote,
   userContext,
   weekSoFar,
+  recentCalorieBalances,
 }: BuildPromptInput): string {
   const foodByMeal = new Map<MealType, string>();
   for (const log of foodLogs) foodByMeal.set(log.meal_type, log.raw_text);
@@ -192,6 +215,10 @@ ${workoutMarkdown}
 
 ${buildWeekSoFarMarkdown(weekSoFar)}
 
+## Recent Calorie Balance (most recent reported days)
+
+${buildRecentCalorieBalanceMarkdown(recentCalorieBalances)}
+
 ${buildCycleContextMarkdown(userContext.cycleEstimate)}## Hydration, Sleep & Weight
 
 ${recoveryContextMarkdown}
@@ -214,7 +241,7 @@ Please estimate:
   worth checking regardless of what else was eaten), each with a note
   naming the specific food(s) that covered it, or the specific gap if
   it didn't — "adequate" or "low" with no note is not useful on its own
-- Estimated calorie deficit/surplus, as both a sentence and a signed kcal number (negative = deficit)
+- Estimated calorie deficit/surplus, as both a sentence and a signed kcal number (negative = deficit). Stay consistent with "Recent Calorie Balance" above — that reflects an already-established read of my likely maintenance level, so don't reinvent it from scratch or introduce a large unexplained swing from one day to the next. Let today's actual intake move the number normally, but the implied maintenance/TDEE assumption behind your deficit should hold roughly steady day to day unless the log itself justifies a real shift (e.g. a notably heavier or lighter training day). There's no stored calorie target for a recomposition goal, so this history is the only continuity signal available, and it needs to hold regardless of which AI reads this prompt — a provider or model change should never look like a change in my actual progress.
 - From the workout log: duration in minutes, total calories burned, and the individual exercises with sets/reps if mentioned, each with its own best-effort calories-burned estimate ("calories_burned" per exercise — leave it off an exercise, or leave the exercise out entirely, if the log genuinely doesn't support a guess; the per-exercise numbers don't need to add up exactly to the workout total, both are independent estimates)
 
 Then analyse — weighed against my goal, targets, and training frequency

@@ -8,6 +8,7 @@ import type { Json } from "@/lib/supabase/database.types";
 import { buildNightlyReportPrompt } from "./prompt";
 import { getRecoveryPromptContext } from "./context";
 import { getWeekSoFarContext } from "./week-context";
+import { getRecentCalorieBalanceContext } from "./calorie-history";
 import { getPhotoComparisonNote } from "./photo-comparison";
 import { getUserContext } from "@/lib/profile/context";
 import { deriveMuscleMapModel } from "@/lib/profile/types";
@@ -49,7 +50,7 @@ export async function importAiReport(
 
   const { supabase, user } = await requireUser();
 
-  const [foodLogs, workoutLog, recoveryContext, userContext, weekSoFar, photoComparisonNote] =
+  const [foodLogs, workoutLog, recoveryContext, userContext, weekSoFar, photoComparisonNote, recentCalorieBalances] =
     await Promise.all([
       getFoodLogsForDate(reportDate),
       getWorkoutLogForDate(reportDate),
@@ -57,6 +58,7 @@ export async function importAiReport(
       getUserContext(reportDate),
       getWeekSoFarContext(reportDate),
       getPhotoComparisonNote(reportDate),
+      getRecentCalorieBalanceContext(reportDate),
     ]);
   const promptMarkdown = buildNightlyReportPrompt({
     date: reportDate,
@@ -66,6 +68,7 @@ export async function importAiReport(
     photoComparisonNote,
     userContext,
     weekSoFar,
+    recentCalorieBalances,
   });
   if (photoComparisonNote) {
     parsed.photo_comparison_note = photoComparisonNote;
