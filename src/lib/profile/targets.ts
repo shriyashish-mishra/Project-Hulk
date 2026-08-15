@@ -49,32 +49,49 @@ export interface CalorieRangeInput {
   latestWeightKg: number | null;
 }
 
+export interface BmrInput {
+  dateOfBirth: string | null;
+  biologicalSex: BiologicalSex | null;
+  heightCm: number | null;
+  latestWeightKg: number | null;
+}
+
 /**
- * Mifflin-St Jeor BMR × activity multiplier × goal adjustment, ±100kcal
- * range. Returns null if any required input is missing — never invents a
- * number from partial data. Recomposition deliberately returns null: the
- * brief is explicit that recomp shouldn't be reduced to a calorie framing.
+ * Mifflin-St Jeor basal metabolic rate — resting energy expenditure only,
+ * before any activity multiplier or goal adjustment. Deliberately NOT
+ * gated on primaryGoal the way calculateCalorieRangeKcal below is: BMR is
+ * a physiological constant, not a prescribed target, so it's fine to
+ * compute (and hand the AI as a reference for estimating today's deficit)
+ * even for a recomposition goal — that goal only ever meant "don't
+ * prescribe a calorie target," never "don't compute a baseline." Returns
+ * null if any required input is missing.
+ */
+export function calculateBMR(input: BmrInput): number | null {
+  const { dateOfBirth, biologicalSex, heightCm, latestWeightKg } = input;
+  if (!dateOfBirth || !biologicalSex || !heightCm || !latestWeightKg) return null;
+  const age = calculateAge(dateOfBirth);
+  const sexOffset = biologicalSex === "male" ? 5 : -161;
+  return Math.round(10 * latestWeightKg + 6.25 * heightCm - 5 * age + sexOffset);
+}
+
+/**
+ * BMR × activity multiplier × goal adjustment, ±100kcal range. Returns
+ * null if any required input is missing — never invents a number from
+ * partial data. Recomposition deliberately returns null: the brief is
+ * explicit that recomp shouldn't be reduced to a calorie framing.
  */
 export function calculateCalorieRangeKcal(
   input: CalorieRangeInput,
 ): { min: number; max: number } | null {
   const { dateOfBirth, biologicalSex, heightCm, activityLevel, primaryGoal, latestWeightKg } = input;
 
-  if (
-    !dateOfBirth ||
-    !biologicalSex ||
-    !heightCm ||
-    !activityLevel ||
-    !primaryGoal ||
-    !latestWeightKg ||
-    primaryGoal === "recomposition"
-  ) {
+  if (!activityLevel || !primaryGoal || primaryGoal === "recomposition") {
     return null;
   }
 
-  const age = calculateAge(dateOfBirth);
-  const sexOffset = biologicalSex === "male" ? 5 : -161;
-  const bmr = 10 * latestWeightKg + 6.25 * heightCm - 5 * age + sexOffset;
+  const bmr = calculateBMR({ dateOfBirth, biologicalSex, heightCm, latestWeightKg });
+  if (bmr === null) return null;
+
   const tdee = bmr * ACTIVITY_LEVEL_MULTIPLIER[activityLevel];
   const adjusted = tdee * (1 + GOAL_CALORIE_ADJUSTMENT[primaryGoal]);
 

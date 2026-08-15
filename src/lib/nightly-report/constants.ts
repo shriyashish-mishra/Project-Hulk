@@ -1,4 +1,4 @@
-export const CURRENT_SCHEMA_VERSION = 3;
+export const CURRENT_SCHEMA_VERSION = 4;
 
 /**
  * Shown inside the generated prompt so Claude returns JSON in exactly
@@ -13,14 +13,21 @@ export const AI_REPORT_JSON_EXAMPLE = {
   carbs_g: 220,
   fat_g: 70,
   fiber_g: 28,
+  // Splits the totals above across the 4 logged meal slots — each meal's own
+  // numbers, not a recomputation, so they should sum to the totals above
+  // (rounding aside). Only include a slot that actually has a food log.
+  meal_breakdown: [
+    { meal_type: "breakfast", estimated_calories: 420, protein_g: 32, carbs_g: 45, fat_g: 12 },
+    { meal_type: "lunch", estimated_calories: 650, protein_g: 48, carbs_g: 70, fat_g: 18 },
+    { meal_type: "snacks", estimated_calories: 280, protein_g: 20, carbs_g: 25, fat_g: 10 },
+    { meal_type: "dinner", estimated_calories: 750, protein_g: 50, carbs_g: 80, fat_g: 30 },
+  ],
   micronutrients: [
     { name: "Vitamin C", status: "adequate", note: "citrus at breakfast and the salad at lunch both contributed" },
     { name: "Iron", status: "low", note: "no red meat or leafy greens logged today — consider adding one" },
     { name: "Calcium", status: "adequate", note: "yogurt and the whey shake covered most of it" },
     { name: "Vitamin D", status: "low", note: "no clear dietary source logged — a consistent gap worth a supplement or more sun" },
   ],
-  calorie_balance: "-320 kcal (deficit)",
-  calorie_balance_kcal: -320,
   nutrition_score: 78,
   workout_score: 85,
   overall_score: 80,
@@ -36,6 +43,10 @@ export const AI_REPORT_JSON_EXAMPLE = {
     { name: "Overhead Tricep Extension", detail: "3x12", calories_burned: 25 },
     { name: "Daily Steps (non-workout)", detail: "9k extra steps beyond the session", calories_burned: 130 },
   ],
+  // Computed last, from BMR (given under About Me) + the workout_calories_burned
+  // just calculated above — not a flat carry-over from prior days.
+  calorie_balance: "-320 kcal (deficit)",
+  calorie_balance_kcal: -320,
   strengths: [
     "Protein cleared target from whole-food sources — eggs at breakfast, chicken at lunch, dal at dinner",
     "Full push session with progressive loading across all four exercises",

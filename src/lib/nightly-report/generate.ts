@@ -5,6 +5,7 @@ import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import { getUserContextForCtx } from "@/lib/mcp/user-context";
 import { deriveMuscleMapModel } from "@/lib/profile/types";
+import { calculateBMR } from "@/lib/profile/targets";
 import { generateNightlyReportText } from "@/lib/gemini/client";
 import { buildNightlyReportPrompt } from "./prompt";
 import { getRecoveryPromptContext } from "./context";
@@ -59,7 +60,13 @@ export async function runNightlyReportPipeline(date: string, ctx: AuthContext): 
   });
 
   const rawResponse = await generateNightlyReportText(promptMarkdown);
-  const parsed = parseAiReportResponse(rawResponse);
+  const bmr = calculateBMR({
+    dateOfBirth: userContext.profile?.date_of_birth ?? null,
+    biologicalSex: userContext.profile?.biological_sex ?? null,
+    heightCm: userContext.profile?.height_cm ?? null,
+    latestWeightKg: userContext.latestWeightKg,
+  });
+  const parsed = parseAiReportResponse(rawResponse, bmr);
 
   // What mattered, as of tonight — so a later goal change never silently
   // reinterprets this already-generated report (see importAiReport).

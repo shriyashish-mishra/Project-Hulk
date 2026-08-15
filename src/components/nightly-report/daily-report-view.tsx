@@ -77,6 +77,21 @@ export function DailyReportView({ report }: DailyReportViewProps) {
             <MacroTile label="Fat" value={report.fat_g} unit="g" />
             <MacroTile label="Fibre" value={report.fiber_g} unit="g" />
           </div>
+          {report.meal_breakdown && report.meal_breakdown.length > 0 && (
+            <ul className="flex flex-col divide-y divide-border">
+              {report.meal_breakdown.map((meal) => (
+                <li key={meal.meal_type} className="flex items-center justify-between gap-2 py-1.5 text-sm">
+                  <span>{mealLabelByType.get(meal.meal_type) ?? meal.meal_type}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {meal.estimated_calories} kcal
+                    <span className="ml-1.5">
+                      P{meal.protein_g} · C{meal.carbs_g} · F{meal.fat_g}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
           {report.micronutrients.length > 0 && (
             <ul className="flex flex-col divide-y divide-border">
               {report.micronutrients.map((note) => (
