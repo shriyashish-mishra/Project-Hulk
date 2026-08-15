@@ -212,6 +212,28 @@ export function parseAiReportResponse(rawResponse: string): AiReportJson {
   const schema_version =
     typeof schemaVersionRaw === "number" ? schemaVersionRaw : CURRENT_SCHEMA_VERSION;
 
+  const workout_exercises = optionalExercises(obj, "workout_exercises");
+  const aiWorkoutCaloriesBurned = optionalNumber(obj, "workout_calories_burned");
+  // The AI's own top-line total is not trustworthy arithmetic — asking any
+  // model to sum many independently-estimated numbers is exactly the kind
+  // of task this codebase already doesn't leave to an LLM (see
+  // profile/targets.ts). Observed in practice: a per-exercise breakdown
+  // that individually checked out (including a step-count entry verified
+  // against a real formula) next to a stated total that was off by 250+
+  // kcal, not a rounding difference. Whenever the exercise list has at
+  // least one usable estimate, the sum of those is what gets stored —
+  // never the AI's separately-stated figure — so the total shown is
+  // always exactly what adding up the visible breakdown would give,
+  // by construction, regardless of which model generated it.
+  const exerciseCaloriesSum = workout_exercises
+    ?.map((exercise) => exercise.calories_burned)
+    .filter((value): value is number => value !== undefined)
+    .reduce((sum, value) => sum + value, 0);
+  const workout_calories_burned =
+    exerciseCaloriesSum !== undefined && exerciseCaloriesSum > 0
+      ? exerciseCaloriesSum
+      : aiWorkoutCaloriesBurned;
+
   return {
     schema_version,
     date: expectString(obj, "date"),
@@ -230,8 +252,8 @@ export function parseAiReportResponse(rawResponse: string): AiReportJson {
     recovery_note: optionalString(obj, "recovery_note"),
     muscles_trained: expectStringArray(obj, "muscles_trained"),
     workout_duration_min: optionalNumber(obj, "workout_duration_min"),
-    workout_calories_burned: optionalNumber(obj, "workout_calories_burned"),
-    workout_exercises: optionalExercises(obj, "workout_exercises"),
+    workout_calories_burned,
+    workout_exercises,
     strengths: expectStringArray(obj, "strengths"),
     improvements: expectStringArray(obj, "improvements"),
     tomorrow_meals: expectTomorrowMeals(obj, "tomorrow_meals"),
