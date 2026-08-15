@@ -35,6 +35,7 @@ export function DailyReportView({ report }: DailyReportViewProps) {
   const mealLabelByType = new Map(
     MEAL_SECTIONS.map((section) => [section.type, section.label]),
   );
+  const hasRecovery = report.recovery_score !== undefined;
 
   return (
     <div className="flex flex-col gap-3">
@@ -47,7 +48,11 @@ export function DailyReportView({ report }: DailyReportViewProps) {
           <div className="flex flex-col gap-4">
             <ScoreMeter label="Nutrition" score={report.nutrition_score} />
             <ScoreMeter label="Workout" score={report.workout_score} />
+            {hasRecovery && <ScoreMeter label="Recovery" score={report.recovery_score!} />}
           </div>
+          {report.recovery_note && (
+            <p className="text-sm text-muted-foreground">{report.recovery_note}</p>
+          )}
         </CardContent>
       </Card>
 
@@ -217,10 +222,29 @@ export function DailyReportView({ report }: DailyReportViewProps) {
         <CardHeader>
           <CardTitle>Tomorrow&rsquo;s Workout Suggestion</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-3">
           <p className="whitespace-pre-line text-sm text-muted-foreground">
             {report.tomorrow_workout}
           </p>
+          {report.tomorrow_workout_exercises && report.tomorrow_workout_exercises.length > 0 && (
+            <ul className="flex flex-col divide-y divide-border">
+              {report.tomorrow_workout_exercises.map((exercise, index) => (
+                <li key={index} className="flex items-center justify-between gap-2 py-1.5 text-sm">
+                  <span>
+                    {exercise.name}
+                    {exercise.detail && (
+                      <span className="ml-1.5 text-xs text-muted-foreground">{exercise.detail}</span>
+                    )}
+                  </span>
+                  {exercise.calories_burned != null && (
+                    <span className="shrink-0 text-xs font-medium text-muted-foreground">
+                      {exercise.calories_burned} kcal
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
     </div>
