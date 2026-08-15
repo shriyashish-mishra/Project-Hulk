@@ -106,7 +106,17 @@ export function DailyReportView({ report }: DailyReportViewProps) {
         <CardHeader>
           <CardTitle>Workout Analysis</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-3">
+          {(report.workout_duration_min != null || report.workout_calories_burned != null) && (
+            <div className="grid grid-cols-2 gap-3">
+              {report.workout_duration_min != null && (
+                <MacroTile label="Duration" value={report.workout_duration_min} unit="min" />
+              )}
+              {report.workout_calories_burned != null && (
+                <MacroTile label="Calories Burned" value={report.workout_calories_burned} unit="kcal" />
+              )}
+            </div>
+          )}
           {report.muscles_trained.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
               {report.muscles_trained.map((muscle) => (
@@ -117,6 +127,25 @@ export function DailyReportView({ report }: DailyReportViewProps) {
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">No workout logged.</p>
+          )}
+          {report.workout_exercises && report.workout_exercises.length > 0 && (
+            <ul className="flex flex-col divide-y divide-border">
+              {report.workout_exercises.map((exercise, index) => (
+                <li key={index} className="flex items-center justify-between gap-2 py-1.5 text-sm">
+                  <span>
+                    {exercise.name}
+                    {exercise.detail && (
+                      <span className="ml-1.5 text-xs text-muted-foreground">{exercise.detail}</span>
+                    )}
+                  </span>
+                  {exercise.calories_burned != null && (
+                    <span className="shrink-0 text-xs font-medium text-muted-foreground">
+                      {exercise.calories_burned} kcal
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
           )}
         </CardContent>
       </Card>

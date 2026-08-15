@@ -35,6 +35,18 @@ interface BuildPromptInput {
   userContext: UserContext;
   weekSoFar: WeekSoFarContext;
   recentCalorieBalances: RecentCalorieBalance[];
+  /**
+   * Whether to ask for the prose markdown report alongside the JSON block.
+   * Only the manual Claude-copy-paste path has a human actually reading
+   * that markdown in the chat before importing — every automated caller
+   * (cron, on-demand button, MCP) only ever parses the JSON block and
+   * discards the rest, so asking for it there is pure wasted generation
+   * time. Measured impact: ~56% of a typical response is the markdown
+   * portion, and it's the dominant factor in how long generation takes.
+   * Defaults to true so existing callers that don't pass it keep the
+   * behavior they already had.
+   */
+  includeMarkdownReport?: boolean;
 }
 
 /**
@@ -178,6 +190,7 @@ export function buildNightlyReportPrompt({
   userContext,
   weekSoFar,
   recentCalorieBalances,
+  includeMarkdownReport = true,
 }: BuildPromptInput): string {
   const foodByMeal = new Map<MealType, string>();
   for (const log of foodLogs) foodByMeal.set(log.meal_type, log.raw_text);
@@ -304,10 +317,14 @@ IMPORTANT:
   alone). Specific and situational beats generic every time — write the
   reasoning, not just the verdict.
 
-Return TWO outputs:
+${
+  includeMarkdownReport
+    ? `Return TWO outputs:
 
 1. A beautiful markdown report.
-2. A structured JSON object inside a \`\`\`json code block, matching exactly this shape (scores are integers 0-100, dates are YYYY-MM-DD):
+2. A structured JSON object inside a \`\`\`json code block, matching exactly this shape (scores are integers 0-100, dates are YYYY-MM-DD):`
+    : `Return ONLY a structured JSON object inside a \`\`\`json code block — no markdown report, no commentary before or after it, matching exactly this shape (scores are integers 0-100, dates are YYYY-MM-DD):`
+}
 
 \`\`\`json
 ${JSON.stringify(AI_REPORT_JSON_EXAMPLE, null, 2)}
