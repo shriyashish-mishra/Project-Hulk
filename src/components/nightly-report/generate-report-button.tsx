@@ -15,7 +15,7 @@ interface GenerateReportButtonProps {
 }
 
 /**
- * Generates the report directly via Groq (`generateReportNow`) instead of
+ * Generates the report directly via Gemini (`generateReportNow`) instead of
  * sending the user off to copy a prompt into Claude — that manual path
  * stays reachable as a fallback link if the automatic call fails, and
  * separately via the "Import a response" buttons next to this one.

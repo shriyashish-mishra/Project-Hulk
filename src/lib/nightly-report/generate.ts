@@ -5,12 +5,11 @@ import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import { getUserContextForCtx } from "@/lib/mcp/user-context";
 import { deriveMuscleMapModel } from "@/lib/profile/types";
-import { generateNightlyReportText } from "@/lib/groq/client";
+import { generateNightlyReportText } from "@/lib/gemini/client";
 import { buildNightlyReportPrompt } from "./prompt";
 import { getRecoveryPromptContext } from "./context";
 import { getWeekSoFarContext } from "./week-context";
 import { getRecentCalorieBalanceContext } from "./calorie-history";
-import { getPhotoComparisonNote } from "./photo-comparison";
 import { parseAiReportResponse } from "./parse";
 import type { AiDailyReport, AiReportJson } from "./types";
 
@@ -23,7 +22,7 @@ interface AuthContext {
  * The unattended equivalent of the manual generate-in-Claude-then-import
  * flow (`report/generate` + `importAiReport`): gathers the same context via
  * `buildNightlyReportPrompt`, but instead of a human copying that prompt
- * into Claude and pasting the reply back, calls Groq directly and parses
+ * into Claude and pasting the reply back, calls Gemini directly and parses
  * its reply with the same `parseAiReportResponse` the manual import path
  * uses. Called by the nightly cron route with a service-role `ctx` — never
  * touches request cookies, so it has no browser-request dependency.
@@ -38,14 +37,18 @@ export async function runNightlyReportPipeline(date: string, ctx: AuthContext): 
     getRecentCalorieBalanceContext(date, ctx),
   ]);
 
-  const photoComparisonNote = await getPhotoComparisonNote(date, ctx);
-
+  // No automatic photo comparison here — Groq's vision free tier can't
+  // reliably handle more than one view per day (its 8,000-tokens-per-minute
+  // cap gets used up by a single comparison call), which broke on exactly
+  // this user's normal capture pattern (front + side together). Same
+  // stance as the MCP tool's gatherReportContext(): if photos matter for a
+  // given night, attach them directly in a Claude conversation instead.
   const promptMarkdown = buildNightlyReportPrompt({
     date,
     foodLogs,
     workoutLog,
     ...recoveryContext,
-    photoComparisonNote,
+    photoComparisonNote: null,
     userContext,
     weekSoFar,
     recentCalorieBalances,
@@ -53,9 +56,6 @@ export async function runNightlyReportPipeline(date: string, ctx: AuthContext): 
 
   const rawResponse = await generateNightlyReportText(promptMarkdown);
   const parsed = parseAiReportResponse(rawResponse);
-  if (photoComparisonNote) {
-    parsed.photo_comparison_note = photoComparisonNote;
-  }
 
   // What mattered, as of tonight — so a later goal change never silently
   // reinterprets this already-generated report (see importAiReport).

@@ -9,7 +9,6 @@ import { buildNightlyReportPrompt } from "./prompt";
 import { getRecoveryPromptContext } from "./context";
 import { getWeekSoFarContext } from "./week-context";
 import { getRecentCalorieBalanceContext } from "./calorie-history";
-import { getPhotoComparisonNote } from "./photo-comparison";
 import { getUserContext } from "@/lib/profile/context";
 import { deriveMuscleMapModel } from "@/lib/profile/types";
 import { parseAiReportResponse } from "./parse";
@@ -50,29 +49,30 @@ export async function importAiReport(
 
   const { supabase, user } = await requireUser();
 
-  const [foodLogs, workoutLog, recoveryContext, userContext, weekSoFar, photoComparisonNote, recentCalorieBalances] =
+  const [foodLogs, workoutLog, recoveryContext, userContext, weekSoFar, recentCalorieBalances] =
     await Promise.all([
       getFoodLogsForDate(reportDate),
       getWorkoutLogForDate(reportDate),
       getRecoveryPromptContext(reportDate),
       getUserContext(reportDate),
       getWeekSoFarContext(reportDate),
-      getPhotoComparisonNote(reportDate),
       getRecentCalorieBalanceContext(reportDate),
     ]);
+  // No automatic photo comparison — see runNightlyReportPipeline() for why.
+  // If your pasted Claude response includes its own photo commentary
+  // (because you attached photos directly in that chat), it just flows
+  // through coach_summary/strengths naturally; there's no separate
+  // structured note to inject here anymore.
   const promptMarkdown = buildNightlyReportPrompt({
     date: reportDate,
     foodLogs,
     workoutLog,
     ...recoveryContext,
-    photoComparisonNote,
+    photoComparisonNote: null,
     userContext,
     weekSoFar,
     recentCalorieBalances,
   });
-  if (photoComparisonNote) {
-    parsed.photo_comparison_note = photoComparisonNote;
-  }
 
   // What mattered, as of today — so a later goal change never silently
   // reinterprets this already-generated report (see plan doc section 7).

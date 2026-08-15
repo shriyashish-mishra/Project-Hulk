@@ -44,20 +44,29 @@ export default function PrivacyPage() {
           <h2 className="mb-1.5 text-base font-bold">3. AI-generated reports</h2>
           <p>
             Each night, Project Hulk automatically sends that day&rsquo;s logged data — meals, workouts, hydration,
-            sleep, weight, and, only on days you&rsquo;ve captured one, your progress photo(s) — to{" "}
+            sleep, and weight — to{" "}
             <a
-              href="https://groq.com"
+              href="https://ai.google.dev"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary underline-offset-4 hover:underline"
             >
-              Groq
+              Gemini
             </a>
-            , a third-party AI provider, to generate your coach report. Groq&rsquo;s terms contractually bar them
-            from using this data to train or fine-tune their models. You can skip the automatic run for a given
-            night and generate a report yourself instead, by copying a prompt into your own Claude conversation and
-            importing the reply back in — that manual path stays available from the report screen, and nothing sent
-            that way passes through Project Hulk&rsquo;s own systems.
+            , Google&rsquo;s AI service, to generate your coach report. We use Gemini&rsquo;s free tier, and
+            Google&rsquo;s terms for that tier allow them to use submitted content to improve their products,
+            including human review in some cases — a materially different guarantee than a paid tier would carry.
+          </p>
+          <p>
+            Progress photos are never part of this automatic send — no photo bytes leave Project Hulk&rsquo;s
+            systems on their own. If you want AI feedback on a progress photo, attach it directly in your own Claude
+            conversation, the same way you would for the manual report path below.
+          </p>
+          <p>
+            You can also skip the automatic run for a given night entirely and generate a report yourself instead,
+            by copying a prompt into your own Claude conversation and importing the reply back in — that manual path
+            stays available from the report screen, and nothing sent that way passes through Project Hulk&rsquo;s
+            own systems.
           </p>
         </section>
 
@@ -68,7 +77,7 @@ export default function PrivacyPage() {
             as your other logs — private to your account, never shared, and deletable at any time. You can turn
             cycle tracking off in your profile settings whenever you like. When it&rsquo;s on, a coarse phase
             estimate (e.g. &ldquo;day 12 of ~28, follicular phase&rdquo;) is included in the nightly report&rsquo;s
-            request to Groq, the same way it would appear in a prompt you pasted into Claude yourself — never the
+            request to Gemini, the same way it would appear in a prompt you pasted into Claude yourself — never the
             underlying dates you logged, just the derived phase.
           </p>
         </section>
@@ -77,8 +86,8 @@ export default function PrivacyPage() {
           <h2 className="mb-1.5 text-base font-bold">5. Where your data lives</h2>
           <p>
             Your data is stored with Supabase (database, authentication, and photo storage) and the Service is
-            hosted on Vercel. These providers, along with Groq (used only for generating your nightly coach report,
-            as described in section 3), process data on our behalf under their own security and privacy
+            hosted on Vercel. These providers, along with Gemini (used only for generating your nightly coach
+            report, as described in section 3), process data on our behalf under their own security and privacy
             commitments; we don&rsquo;t share your data with any other third party beyond what&rsquo;s described
             here.
           </p>
