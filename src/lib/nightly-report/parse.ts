@@ -1,6 +1,7 @@
 import { CURRENT_SCHEMA_VERSION } from "./constants";
 import type {
   AiReportJson,
+  MealBreakdown,
   MicronutrientNote,
   TomorrowMeal,
   WorkoutExercise,
@@ -135,6 +136,43 @@ function optionalExercises(
   return exercises.length > 0 ? exercises : undefined;
 }
 
+/** Non-throwing, like optionalExercises — a meal breakdown is an enhancement, not core data an older/imperfect response should fail over. */
+function optionalMealBreakdown(
+  obj: Record<string, unknown>,
+  key: string,
+): MealBreakdown[] | undefined {
+  const value = field(obj, key);
+  if (!Array.isArray(value)) return undefined;
+  const meals = value
+    .map((item): MealBreakdown | null => {
+      if (typeof item !== "object" || item === null) return null;
+      const record = item as Record<string, unknown>;
+      const mealType = field(record, "meal_type");
+      if (typeof mealType !== "string" || !MEAL_TYPES.has(mealType)) return null;
+      const estimatedCalories = optionalNumber(record, "estimated_calories");
+      const proteinG = optionalNumber(record, "protein_g");
+      const carbsG = optionalNumber(record, "carbs_g");
+      const fatG = optionalNumber(record, "fat_g");
+      if (
+        estimatedCalories === undefined ||
+        proteinG === undefined ||
+        carbsG === undefined ||
+        fatG === undefined
+      ) {
+        return null;
+      }
+      return {
+        meal_type: mealType as MealBreakdown["meal_type"],
+        estimated_calories: estimatedCalories,
+        protein_g: proteinG,
+        carbs_g: carbsG,
+        fat_g: fatG,
+      };
+    })
+    .filter((item): item is MealBreakdown => item !== null);
+  return meals.length > 0 ? meals : undefined;
+}
+
 function expectMicronutrients(
   obj: Record<string, unknown>,
   key: string,
@@ -190,8 +228,25 @@ function expectTomorrowMeals(
   });
 }
 
-/** Extracts, validates, and normalizes the JSON block from Claude's pasted response. */
-export function parseAiReportResponse(rawResponse: string): AiReportJson {
+function formatCalorieBalance(kcal: number): string {
+  const rounded = Math.round(kcal);
+  return `${rounded >= 0 ? "+" : ""}${rounded} kcal (${rounded < 0 ? "deficit" : "surplus"})`;
+}
+
+/**
+ * Extracts, validates, and normalizes the JSON block from a Claude/Gemini
+ * response. `bmr` — when known — lets this override the AI's own stated
+ * calorie_balance_kcal with a deterministic
+ * `estimated_calories - bmr - workout_calories_burned`, for the same
+ * reason workout_calories_burned itself is overridden below: asking an
+ * LLM to combine several independently-produced numbers into a new one
+ * is exactly the kind of arithmetic this codebase already doesn't trust
+ * it with. Observed in practice: a response whose own stated BMR and
+ * workout total, added together, didn't match its own stated deficit by
+ * 200 kcal. Skipped when bmr is unavailable (e.g. profile incomplete) —
+ * falls back to the AI's own figure rather than guessing.
+ */
+export function parseAiReportResponse(rawResponse: string, bmr?: number | null): AiReportJson {
   const jsonText = extractJsonBlock(rawResponse);
 
   let data: unknown;
@@ -212,17 +267,48 @@ export function parseAiReportResponse(rawResponse: string): AiReportJson {
   const schema_version =
     typeof schemaVersionRaw === "number" ? schemaVersionRaw : CURRENT_SCHEMA_VERSION;
 
+  const workout_exercises = optionalExercises(obj, "workout_exercises");
+  const aiWorkoutCaloriesBurned = optionalNumber(obj, "workout_calories_burned");
+  // The AI's own top-line total is not trustworthy arithmetic — asking any
+  // model to sum many independently-estimated numbers is exactly the kind
+  // of task this codebase already doesn't leave to an LLM (see
+  // profile/targets.ts). Observed in practice: a per-exercise breakdown
+  // that individually checked out (including a step-count entry verified
+  // against a real formula) next to a stated total that was off by 250+
+  // kcal, not a rounding difference. Whenever the exercise list has at
+  // least one usable estimate, the sum of those is what gets stored —
+  // never the AI's separately-stated figure — so the total shown is
+  // always exactly what adding up the visible breakdown would give,
+  // by construction, regardless of which model generated it.
+  const exerciseCaloriesSum = workout_exercises
+    ?.map((exercise) => exercise.calories_burned)
+    .filter((value): value is number => value !== undefined)
+    .reduce((sum, value) => sum + value, 0);
+  const workout_calories_burned =
+    exerciseCaloriesSum !== undefined && exerciseCaloriesSum > 0
+      ? exerciseCaloriesSum
+      : aiWorkoutCaloriesBurned;
+
+  const estimated_calories = expectNumber(obj, "estimated_calories");
+  const aiCalorieBalance = expectString(obj, "calorie_balance");
+  const aiCalorieBalanceKcal = optionalNumber(obj, "calorie_balance_kcal");
+  const deterministicBalanceKcal =
+    bmr != null ? estimated_calories - bmr - (workout_calories_burned ?? 0) : null;
+  const calorie_balance_kcal = deterministicBalanceKcal ?? aiCalorieBalanceKcal;
+  const calorie_balance =
+    deterministicBalanceKcal !== null ? formatCalorieBalance(deterministicBalanceKcal) : aiCalorieBalance;
+
   return {
     schema_version,
     date: expectString(obj, "date"),
-    estimated_calories: expectNumber(obj, "estimated_calories"),
+    estimated_calories,
     protein_g: expectNumber(obj, "protein_g"),
     carbs_g: expectNumber(obj, "carbs_g"),
     fat_g: expectNumber(obj, "fat_g"),
     fiber_g: expectNumber(obj, "fiber_g"),
     micronutrients: expectMicronutrients(obj, "micronutrients"),
-    calorie_balance: expectString(obj, "calorie_balance"),
-    calorie_balance_kcal: optionalNumber(obj, "calorie_balance_kcal"),
+    calorie_balance,
+    calorie_balance_kcal,
     nutrition_score: expectScore(obj, "nutrition_score"),
     workout_score: expectScore(obj, "workout_score"),
     overall_score: expectScore(obj, "overall_score"),
@@ -230,13 +316,14 @@ export function parseAiReportResponse(rawResponse: string): AiReportJson {
     recovery_note: optionalString(obj, "recovery_note"),
     muscles_trained: expectStringArray(obj, "muscles_trained"),
     workout_duration_min: optionalNumber(obj, "workout_duration_min"),
-    workout_calories_burned: optionalNumber(obj, "workout_calories_burned"),
-    workout_exercises: optionalExercises(obj, "workout_exercises"),
+    workout_calories_burned,
+    workout_exercises,
     strengths: expectStringArray(obj, "strengths"),
     improvements: expectStringArray(obj, "improvements"),
     tomorrow_meals: expectTomorrowMeals(obj, "tomorrow_meals"),
     tomorrow_workout: expectString(obj, "tomorrow_workout"),
     tomorrow_workout_exercises: optionalExercises(obj, "tomorrow_workout_exercises"),
     coach_summary: expectString(obj, "coach_summary"),
+    meal_breakdown: optionalMealBreakdown(obj, "meal_breakdown"),
   };
 }

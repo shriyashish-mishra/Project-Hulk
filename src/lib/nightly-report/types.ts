@@ -45,6 +45,16 @@ export interface AiReportJson {
   coach_summary: string;
   /** Vision comparison of today's progress photo(s) against the most recent prior capture of each view — computed by us, not by the AI that returns the rest of this JSON. Optional: absent when no photo was captured today or no baseline exists yet. */
   photo_comparison_note?: string;
+  /** Per-meal split of the day's totals above. Optional: absent on reports imported before schema v4, or on a day with no meals logged. */
+  meal_breakdown?: MealBreakdown[];
+}
+
+export interface MealBreakdown {
+  meal_type: MealType;
+  estimated_calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
 }
 
 export interface MicronutrientNote {

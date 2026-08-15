@@ -12,6 +12,7 @@ import {
   TRAINING_FREQUENCY_LABEL,
 } from "@/lib/profile/types";
 import { formatDuration } from "@/lib/date";
+import { calculateBMR, calculateKcalPer1000Steps } from "@/lib/profile/targets";
 import { CYCLE_PHASE_LABEL } from "@/lib/cycle/types";
 import type { WeekSoFarContext } from "./week-context";
 import type { RecentCalorieBalance } from "./calorie-history";
@@ -99,7 +100,8 @@ function buildRecentCalorieBalanceMarkdown(recentCalorieBalances: RecentCalorieB
 
 /** Structured facts about who's asking — the AI interprets them, it never has to guess or ask what the user's goal is. */
 function buildAboutMeMarkdown(userContext: UserContext): string {
-  const { profile, proteinTargetG, calorieRangeKcal, carbsTargetG, fatTargetG, fiberTargetG } = userContext;
+  const { profile, proteinTargetG, calorieRangeKcal, carbsTargetG, fatTargetG, fiberTargetG, latestWeightKg } =
+    userContext;
   if (!profile) return "Not provided yet.";
 
   const lines: string[] = [];
@@ -116,6 +118,25 @@ function buildAboutMeMarkdown(userContext: UserContext): string {
   if (fatTargetG) lines.push(`Fat target: ${fatTargetG}g/day`);
   if (fiberTargetG) lines.push(`Fibre target: ${fiberTargetG}g/day`);
   if (profile.target_weight_kg) lines.push(`Target weight: ${profile.target_weight_kg} kg`);
+
+  const kcalPer1000Steps = calculateKcalPer1000Steps(latestWeightKg, profile.height_cm);
+  if (kcalPer1000Steps) {
+    lines.push(
+      `Approx. calories per 1,000 steps at a casual pace, for my height/weight: ${kcalPer1000Steps} kcal — use this as the basis for estimating any step count mentioned in the workout log below, not a free guess (e.g. 16,000 steps ≈ 16 × this number)`,
+    );
+  }
+
+  const bmr = calculateBMR({
+    dateOfBirth: profile.date_of_birth,
+    biologicalSex: profile.biological_sex,
+    heightCm: profile.height_cm,
+    latestWeightKg,
+  });
+  if (bmr) {
+    lines.push(
+      `Estimated resting metabolic rate (BMR): ${bmr} kcal/day — this is what I'd burn doing nothing at all today. Use it as described in the deficit/surplus instruction below, not on its own.`,
+    );
+  }
 
   return lines.length > 0 ? lines.join("\n") : "Not provided yet.";
 }
@@ -249,13 +270,20 @@ Please estimate:
 - Fat
 - Carbohydrates
 - Fibre
+- A per-meal breakdown ("meal_breakdown"): for each of the 4 slots under
+  "Today's Meals" above that has something logged (skip any marked "Not
+  logged" entirely, don't invent an entry for it), give that meal's own
+  calories/protein/carbs/fat. These are a split of the daily totals
+  above, not a separate recomputation — they should add up to the
+  Calories/Protein/Fat/Carbohydrates figures you just gave (rounding
+  aside); if they don't, fix the split rather than leaving a mismatch.
 - Micronutrients — check at least 3-4 that are actually relevant to
   today's log (protein/iron/calcium/vitamin-D-type staples are usually
   worth checking regardless of what else was eaten), each with a note
   naming the specific food(s) that covered it, or the specific gap if
   it didn't — "adequate" or "low" with no note is not useful on its own
-- Estimated calorie deficit/surplus, as both a sentence and a signed kcal number (negative = deficit). Stay consistent with "Recent Calorie Balance" above — that reflects an already-established read of my likely maintenance level, so don't reinvent it from scratch or introduce a large unexplained swing from one day to the next. Let today's actual intake move the number normally, but the implied maintenance/TDEE assumption behind your deficit should hold roughly steady day to day unless the log itself justifies a real shift (e.g. a notably heavier or lighter training day). There's no stored calorie target for a recomposition goal, so this history is the only continuity signal available, and it needs to hold regardless of which AI reads this prompt — a provider or model change should never look like a change in my actual progress.
-- From the workout log: duration in minutes, total calories burned, and the individual exercises with sets/reps if mentioned, each with its own best-effort calories-burned estimate ("calories_burned" per exercise — leave it off an exercise, or leave the exercise out entirely, if the log genuinely doesn't support a guess; the per-exercise numbers don't need to add up exactly to the workout total, both are independent estimates)
+- From the workout log: duration in minutes, total calories burned, and "workout_exercises" — one entry per distinct line/movement in the log above, IN FULL. This must be exhaustive, not a representative sample: count the distinct exercises/activities in the log yourself first, then confirm your "workout_exercises" array has exactly that many entries before moving on — a cardio interval, a walk, or any other non-strength line is exactly as mandatory an entry as a lifting exercise is, not something to fold into a summary sentence or quietly leave out. Each entry gets its own best-effort "calories_burned" estimate (only omit that one number, never the whole entry, if the log genuinely doesn't support a guess — omitting an entire exercise is a miss, omitting just its calorie number is fine). If the log also mentions non-workout activity — a step count, general daily movement beyond the session itself — that's an entry too, same as above (e.g. "Daily Steps (non-workout)"), and it must be reflected in the overall workout_calories_burned total, not just the structured exercises. For a step count specifically, don't estimate its calorie cost from scratch — read the count out of the log and multiply by the "Approx. calories per 1,000 steps" figure under "About Me" above (when that figure is available); a smaller AI reasoning about walking calorie physiology unaided has been shown to land 2-4x too low.
+- Estimated calorie deficit/surplus, as both a sentence and a signed kcal number (negative = deficit). Compute this from real numbers, not a free guess or a flat carry-over: today's total energy expenditure ≈ the "Estimated resting metabolic rate (BMR)" figure under "About Me" above, plus the workout_calories_burned total you just calculated above (that already covers today's specific structured exercise and any non-workout steps) — deficit/surplus is my estimated intake minus that sum. Use "Recent Calorie Balance" above as a plausibility check, not the primary method: if this calculation lands far outside that recent pattern, double check your arithmetic before assuming today was simply an outlier, but a day with genuinely unusual activity (like the workout total you just computed being well above or below normal) SHOULD move the deficit accordingly — don't flatten it back to the historical average just to stay consistent. There's no stored calorie target for a recomposition goal, so BMR plus measured activity is the only grounded basis available, and it needs to hold regardless of which AI reads this prompt — a provider or model change should never look like a change in my actual progress.
 
 Then analyse — weighed against my goal, targets, and training frequency
 under "About Me" above, not generic advice:

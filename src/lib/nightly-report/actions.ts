@@ -11,6 +11,7 @@ import { getWeekSoFarContext } from "./week-context";
 import { getRecentCalorieBalanceContext } from "./calorie-history";
 import { getUserContext } from "@/lib/profile/context";
 import { deriveMuscleMapModel } from "@/lib/profile/types";
+import { calculateBMR } from "@/lib/profile/targets";
 import { parseAiReportResponse } from "./parse";
 import { runNightlyReportPipeline } from "./generate";
 import type { AiDailyReport, AiReportJson } from "./types";
@@ -45,8 +46,6 @@ export async function importAiReport(
     throw new Error("Invalid date.");
   }
 
-  const parsed = parseAiReportResponse(rawResponse);
-
   const { supabase, user } = await requireUser();
 
   const [foodLogs, workoutLog, recoveryContext, userContext, weekSoFar, recentCalorieBalances] =
@@ -58,6 +57,14 @@ export async function importAiReport(
       getWeekSoFarContext(reportDate),
       getRecentCalorieBalanceContext(reportDate),
     ]);
+
+  const bmr = calculateBMR({
+    dateOfBirth: userContext.profile?.date_of_birth ?? null,
+    biologicalSex: userContext.profile?.biological_sex ?? null,
+    heightCm: userContext.profile?.height_cm ?? null,
+    latestWeightKg: userContext.latestWeightKg,
+  });
+  const parsed = parseAiReportResponse(rawResponse, bmr);
   // No automatic photo comparison — see runNightlyReportPipeline() for why.
   // If your pasted Claude response includes its own photo commentary
   // (because you attached photos directly in that chat), it just flows

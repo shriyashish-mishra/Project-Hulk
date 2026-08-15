@@ -49,32 +49,49 @@ export interface CalorieRangeInput {
   latestWeightKg: number | null;
 }
 
+export interface BmrInput {
+  dateOfBirth: string | null;
+  biologicalSex: BiologicalSex | null;
+  heightCm: number | null;
+  latestWeightKg: number | null;
+}
+
 /**
- * Mifflin-St Jeor BMR × activity multiplier × goal adjustment, ±100kcal
- * range. Returns null if any required input is missing — never invents a
- * number from partial data. Recomposition deliberately returns null: the
- * brief is explicit that recomp shouldn't be reduced to a calorie framing.
+ * Mifflin-St Jeor basal metabolic rate — resting energy expenditure only,
+ * before any activity multiplier or goal adjustment. Deliberately NOT
+ * gated on primaryGoal the way calculateCalorieRangeKcal below is: BMR is
+ * a physiological constant, not a prescribed target, so it's fine to
+ * compute (and hand the AI as a reference for estimating today's deficit)
+ * even for a recomposition goal — that goal only ever meant "don't
+ * prescribe a calorie target," never "don't compute a baseline." Returns
+ * null if any required input is missing.
+ */
+export function calculateBMR(input: BmrInput): number | null {
+  const { dateOfBirth, biologicalSex, heightCm, latestWeightKg } = input;
+  if (!dateOfBirth || !biologicalSex || !heightCm || !latestWeightKg) return null;
+  const age = calculateAge(dateOfBirth);
+  const sexOffset = biologicalSex === "male" ? 5 : -161;
+  return Math.round(10 * latestWeightKg + 6.25 * heightCm - 5 * age + sexOffset);
+}
+
+/**
+ * BMR × activity multiplier × goal adjustment, ±100kcal range. Returns
+ * null if any required input is missing — never invents a number from
+ * partial data. Recomposition deliberately returns null: the brief is
+ * explicit that recomp shouldn't be reduced to a calorie framing.
  */
 export function calculateCalorieRangeKcal(
   input: CalorieRangeInput,
 ): { min: number; max: number } | null {
   const { dateOfBirth, biologicalSex, heightCm, activityLevel, primaryGoal, latestWeightKg } = input;
 
-  if (
-    !dateOfBirth ||
-    !biologicalSex ||
-    !heightCm ||
-    !activityLevel ||
-    !primaryGoal ||
-    !latestWeightKg ||
-    primaryGoal === "recomposition"
-  ) {
+  if (!activityLevel || !primaryGoal || primaryGoal === "recomposition") {
     return null;
   }
 
-  const age = calculateAge(dateOfBirth);
-  const sexOffset = biologicalSex === "male" ? 5 : -161;
-  const bmr = 10 * latestWeightKg + 6.25 * heightCm - 5 * age + sexOffset;
+  const bmr = calculateBMR({ dateOfBirth, biologicalSex, heightCm, latestWeightKg });
+  if (bmr === null) return null;
+
   const tdee = bmr * ACTIVITY_LEVEL_MULTIPLIER[activityLevel];
   const adjusted = tdee * (1 + GOAL_CALORIE_ADJUSTMENT[primaryGoal]);
 
@@ -129,6 +146,30 @@ export function calculateFiberTargetG(calorieRangeKcal: { min: number; max: numb
   if (!calorieRangeKcal) return null;
   const calorieTargetKcal = (calorieRangeKcal.min + calorieRangeKcal.max) / 2;
   return Math.round(((calorieTargetKcal / 1000) * FIBER_G_PER_1000_KCAL) / 5) * 5;
+}
+
+const STRIDE_LENGTH_RATIO = 0.414; // commonly cited height-to-stride-length ratio for walking
+const WALKING_KCAL_PER_KG_PER_KM = 0.6; // standard approximation for casual/moderate-pace walking
+
+/**
+ * A deterministic reference figure the nightly-report prompt hands to the
+ * AI, rather than leaving "how many calories did N steps burn" to be
+ * invented from scratch — the same free-text-step-count entries ("16k
+ * steps non-workout") that need this were previously estimated by the AI
+ * alone, and came back 2-4x too low against this same formula, because a
+ * smaller model doing unit-scaled physiology arithmetic from nothing is
+ * exactly the kind of thing this codebase already doesn't trust an LLM
+ * with (see the calorie/hydration/protein targets above). The AI still
+ * has to read the actual step count out of the log — that part stays its
+ * job — but the per-1,000-steps rate itself is computed here. Returns
+ * null when weight or height aren't known yet, never a guess from
+ * partial data.
+ */
+export function calculateKcalPer1000Steps(weightKg: number | null, heightCm: number | null): number | null {
+  if (!weightKg || !heightCm) return null;
+  const strideLengthM = (heightCm * STRIDE_LENGTH_RATIO) / 100;
+  const kmPer1000Steps = (1000 * strideLengthM) / 1000;
+  return Math.round(kmPer1000Steps * weightKg * WALKING_KCAL_PER_KG_PER_KM);
 }
 
 const ML_PER_KG_BY_SEX: Record<BiologicalSex, number> = {
