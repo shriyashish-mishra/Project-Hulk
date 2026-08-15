@@ -8,7 +8,6 @@ import { buildNightlyReportPrompt } from "@/lib/nightly-report/prompt";
 import { getRecoveryPromptContext } from "@/lib/nightly-report/context";
 import { getWeekSoFarContext } from "@/lib/nightly-report/week-context";
 import { getRecentCalorieBalanceContext } from "@/lib/nightly-report/calorie-history";
-import { getPhotoComparisonNote } from "@/lib/nightly-report/photo-comparison";
 import { getUserContext } from "@/lib/profile/context";
 import { getCurrentUserTimeZone } from "@/lib/profile/queries";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
@@ -28,23 +27,25 @@ export default async function GenerateReportPage({ searchParams }: GenerateRepor
     dateParam && DATE_PATTERN.test(dateParam) && dateParam <= today ? dateParam : today;
   const isToday = loggedOn === today;
 
-  const [foodLogs, workoutLog, recoveryContext, userContext, weekSoFar, photoComparisonNote, recentCalorieBalances] =
+  const [foodLogs, workoutLog, recoveryContext, userContext, weekSoFar, recentCalorieBalances] =
     await Promise.all([
       getFoodLogsForDate(loggedOn),
       getWorkoutLogForDate(loggedOn),
       getRecoveryPromptContext(loggedOn),
       getUserContext(loggedOn),
       getWeekSoFarContext(loggedOn),
-      getPhotoComparisonNote(loggedOn),
       getRecentCalorieBalanceContext(loggedOn),
     ]);
 
+  // No automatic photo comparison — see runNightlyReportPipeline() for why.
+  // Attach photos directly in the Claude conversation this prompt gets
+  // pasted into if you want AI feedback on them.
   const prompt = buildNightlyReportPrompt({
     date: loggedOn,
     foodLogs,
     workoutLog,
     ...recoveryContext,
-    photoComparisonNote,
+    photoComparisonNote: null,
     userContext,
     weekSoFar,
     recentCalorieBalances,

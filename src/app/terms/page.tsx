@@ -31,14 +31,14 @@ export default function TermsPage() {
           <p>
             Project Hulk is a personal fitness and nutrition tracker. You log meals, workouts, water, sleep, weight,
             and optionally progress photos and menstrual cycle data. The Service computes targets, trends, and
-            summaries from what you log, and generates a nightly &ldquo;coach report&rdquo; automatically each
-            night using Groq, a third-party AI provider — see the{" "}
+            summaries from what you log, and generates a nightly &ldquo;coach report&rdquo; automatically each night
+            using Gemini, a third-party AI provider — see the{" "}
             <Link href="/privacy" className="text-primary underline-offset-4 hover:underline">
               Privacy Policy
             </Link>{" "}
-            for what&rsquo;s sent and why. You can also generate a report yourself for a given day by pasting a
-            prompt into your own separate Claude (Anthropic) conversation and importing the response back in,
-            instead of the automatic run.
+            for what&rsquo;s sent and why. Progress photos are never part of that automatic send. You can also
+            generate a report yourself for a given day by pasting a prompt into your own separate Claude (Anthropic)
+            conversation and importing the response back in, instead of the automatic run.
           </p>
         </section>
 
