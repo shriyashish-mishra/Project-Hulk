@@ -29,11 +29,12 @@ export const AI_REPORT_JSON_EXAMPLE = {
     "This is the third session in four days with only one rest day taken — accumulated fatigue from that pattern outweighs today's own decent sleep and hydration, so recovery is trending down even though nothing about today in isolation looks off.",
   muscles_trained: ["chest", "shoulders", "triceps"],
   workout_duration_min: 55,
-  workout_calories_burned: 420,
+  workout_calories_burned: 245,
   workout_exercises: [
     { name: "Incline Dumbbell Press", detail: "4x10", calories_burned: 60 },
     { name: "Lateral Raises", detail: "4x12", calories_burned: 30 },
     { name: "Overhead Tricep Extension", detail: "3x12", calories_burned: 25 },
+    { name: "Daily Steps (non-workout)", detail: "9k extra steps beyond the session", calories_burned: 130 },
   ],
   strengths: [
     "Protein cleared target from whole-food sources — eggs at breakfast, chicken at lunch, dal at dinner",
