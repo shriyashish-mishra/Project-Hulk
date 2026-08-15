@@ -9,6 +9,7 @@ import { generateNightlyReportText } from "@/lib/groq/client";
 import { buildNightlyReportPrompt } from "./prompt";
 import { getRecoveryPromptContext } from "./context";
 import { getWeekSoFarContext } from "./week-context";
+import { getRecentCalorieBalanceContext } from "./calorie-history";
 import { getPhotoComparisonNote } from "./photo-comparison";
 import { parseAiReportResponse } from "./parse";
 import type { AiDailyReport, AiReportJson } from "./types";
@@ -28,12 +29,13 @@ interface AuthContext {
  * touches request cookies, so it has no browser-request dependency.
  */
 export async function runNightlyReportPipeline(date: string, ctx: AuthContext): Promise<AiDailyReport> {
-  const [foodLogs, workoutLog, recoveryContext, weekSoFar, userContext] = await Promise.all([
+  const [foodLogs, workoutLog, recoveryContext, weekSoFar, userContext, recentCalorieBalances] = await Promise.all([
     getFoodLogsForDate(date, ctx),
     getWorkoutLogForDate(date, ctx),
     getRecoveryPromptContext(date, ctx),
     getWeekSoFarContext(date, ctx),
     getUserContextForCtx(ctx, date),
+    getRecentCalorieBalanceContext(date, ctx),
   ]);
 
   const photoComparisonNote = await getPhotoComparisonNote(date, ctx);
@@ -46,6 +48,7 @@ export async function runNightlyReportPipeline(date: string, ctx: AuthContext): 
     photoComparisonNote,
     userContext,
     weekSoFar,
+    recentCalorieBalances,
   });
 
   const rawResponse = await generateNightlyReportText(promptMarkdown);
