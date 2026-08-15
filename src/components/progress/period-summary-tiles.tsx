@@ -57,6 +57,19 @@ export function PeriodSummaryTiles({
         <Tile label="Workout days" value={`${current.workoutsCompleted}`} />
         <Tile label="Rest days" value={`${current.restDays}`} />
       </div>
+      <div className="flex items-baseline justify-between rounded-2xl bg-muted p-3.5">
+        <span className="text-xs text-muted-foreground">Calories burned</span>
+        <span className="flex items-baseline gap-2">
+          <span className="text-lg font-semibold text-foreground tabular-nums">
+            {current.totalWorkoutCaloriesBurned} kcal
+          </span>
+          {formatDelta(current.totalWorkoutCaloriesBurned, previous.totalWorkoutCaloriesBurned, "", periodLabel) && (
+            <span className="text-xs text-muted-foreground">
+              {formatDelta(current.totalWorkoutCaloriesBurned, previous.totalWorkoutCaloriesBurned, "", periodLabel)}
+            </span>
+          )}
+        </span>
+      </div>
       <div className="flex flex-col gap-1 rounded-2xl bg-muted p-3.5">
         <div className="flex items-baseline justify-between">
           <span className="text-xs text-muted-foreground">Average score</span>

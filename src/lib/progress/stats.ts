@@ -122,6 +122,7 @@ export function buildTrendPoints(reports: AiDailyReport[]): DailyTrendPoint[] {
     calorieBalanceKcal:
       report.parsed_json.calorie_balance_kcal ??
       parseCalorieBalanceFallback(report.parsed_json.calorie_balance),
+    workoutCaloriesBurned: report.parsed_json.workout_calories_burned ?? null,
     musclesTrained: report.parsed_json.muscles_trained,
     coachSummary: report.coach_summary,
   }));
@@ -136,6 +137,10 @@ function average(values: number[]): number | null {
 export function computePeriodSummary(points: DailyTrendPoint[]): PeriodSummary {
   const workoutsCompleted = points.filter((p) => p.musclesTrained.length > 0).length;
   const restDays = points.length - workoutsCompleted;
+  const totalWorkoutCaloriesBurned = points.reduce(
+    (sum, p) => sum + (p.workoutCaloriesBurned ?? 0),
+    0,
+  );
 
   return {
     daysWithReports: points.length,
@@ -146,6 +151,7 @@ export function computePeriodSummary(points: DailyTrendPoint[]): PeriodSummary {
     avgOverallScore: average(points.map((p) => p.overallScore)),
     workoutsCompleted,
     restDays,
+    totalWorkoutCaloriesBurned,
   };
 }
 

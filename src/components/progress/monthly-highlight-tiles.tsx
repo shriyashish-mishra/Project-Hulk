@@ -72,6 +72,19 @@ export function MonthlyHighlightTiles({
           value={longestStreakDays > 0 ? `${longestStreakDays} days` : "—"}
         />
       </div>
+      <div className="flex items-baseline justify-between rounded-2xl bg-muted p-3.5">
+        <span className="text-xs text-muted-foreground">Calories burned</span>
+        <span className="flex items-baseline gap-2">
+          <span className="text-lg font-semibold text-foreground tabular-nums">
+            {current.totalWorkoutCaloriesBurned} kcal
+          </span>
+          {formatDelta(current.totalWorkoutCaloriesBurned, previous.totalWorkoutCaloriesBurned, "", "last month") && (
+            <span className="text-xs text-muted-foreground">
+              {formatDelta(current.totalWorkoutCaloriesBurned, previous.totalWorkoutCaloriesBurned, "", "last month")}
+            </span>
+          )}
+        </span>
+      </div>
       {bestWeek && (
         <div className="flex items-baseline justify-between rounded-2xl bg-muted p-3.5">
           <span className="text-xs text-muted-foreground">Best week</span>
