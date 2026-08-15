@@ -253,6 +253,15 @@ IMPORTANT:
   single day is expected to hit every muscle group — whether my training
   is balanced across muscle groups is a weekly/monthly question, never a
   daily one, so don't factor muscle-group coverage into today's score.
+- A deliberate, explicitly-logged rest day (no structured training,
+  described as rest/recovery) is NOT a zero-effort day — score
+  workout_score high (typically 85-100), the same as scoring any other
+  good training decision, since choosing to rest given the week's
+  accumulated load is itself the right call, not the absence of one.
+  Reserve a low workout_score for a day that should have had training
+  and simply didn't, not for a day where rest was the actual plan.
+  muscles_trained stays an empty list either way — resting doesn't train
+  a muscle group, it just isn't a failure to.
 - For machine/cable exercises specifically (lat pulldown, machine row,
   face pull, tricep pushdown, and anything else clearly done on a
   machine or cable stack) always report the weight unit as lbs in
