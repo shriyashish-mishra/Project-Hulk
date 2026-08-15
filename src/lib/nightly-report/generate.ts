@@ -52,6 +52,10 @@ export async function runNightlyReportPipeline(date: string, ctx: AuthContext): 
     userContext,
     weekSoFar,
     recentCalorieBalances,
+    // Nobody reads the markdown report on this path — only parseAiReportResponse's
+    // JSON extraction matters — and it was ~56% of a typical response, the
+    // dominant factor in how long generation took. See BuildPromptInput's docs.
+    includeMarkdownReport: false,
   });
 
   const rawResponse = await generateNightlyReportText(promptMarkdown);

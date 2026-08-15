@@ -1,19 +1,18 @@
 const CHAT_COMPLETIONS_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
-/** Free tier, natively multimodal — the same model handles both the nightly report text and progress-photo vision, unlike Groq's free tier which needed two separate models. */
-const MODEL = "gemini-3.5-flash";
+/**
+ * Free tier. The full `gemini-3.5-flash` produced richer output in testing,
+ * but its free-tier latency ran ~30-35s regardless of how much it was asked
+ * to generate — cutting the unused markdown report (see includeMarkdownReport
+ * in prompt.ts) didn't move that number, so output length wasn't the
+ * bottleneck. `-lite` came back in ~5s on the same real data with matching
+ * quality (same evidence-based strengths/improvements, same correct
+ * rest-day/recovery reasoning, calorie deficit still landing in the
+ * established band) — a ~6-7x latency win with no quality tradeoff found.
+ */
+const MODEL = "gemini-3.5-flash-lite";
 
-export type GeminiContentBlock =
-  | { type: "text"; text: string }
-  | { type: "image_url"; image_url: { url: string } };
-
-interface ChatCompletionParams {
-  content: string | GeminiContentBlock[];
-  maxTokens: number;
-  temperature: number;
-}
-
-async function chatCompletion({ content, maxTokens, temperature }: ChatCompletionParams): Promise<string> {
+async function chatCompletion(promptMarkdown: string, maxTokens: number, temperature: number): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not set.");
 
@@ -25,7 +24,7 @@ async function chatCompletion({ content, maxTokens, temperature }: ChatCompletio
     },
     body: JSON.stringify({
       model: MODEL,
-      messages: [{ role: "user", content }],
+      messages: [{ role: "user", content: promptMarkdown }],
       max_tokens: maxTokens,
       temperature,
     }),
@@ -46,17 +45,7 @@ async function chatCompletion({ content, maxTokens, temperature }: ChatCompletio
   return text;
 }
 
-/**
- * Generates the nightly coach report from the same prompt the manual
- * copy-into-Claude flow uses — see `buildNightlyReportPrompt`. The report
- * (markdown + JSON block) tends to run long, so this gives it a generous
- * budget rather than risk a truncated JSON block at the tail end.
- */
+/** Generates the nightly coach report from the same prompt the manual copy-into-Claude flow uses — see `buildNightlyReportPrompt`. */
 export async function generateNightlyReportText(promptMarkdown: string): Promise<string> {
-  return chatCompletion({ content: promptMarkdown, maxTokens: 10000, temperature: 0.4 });
-}
-
-/** Vision comparison of paired before/after progress photos — same prompt shape the prior Claude/Groq vision calls used, now via Gemini's natively multimodal model. */
-export async function compareProgressPhotos(content: GeminiContentBlock[]): Promise<string> {
-  return chatCompletion({ content, maxTokens: 1024, temperature: 0.3 });
+  return chatCompletion(promptMarkdown, 10000, 0.4);
 }
