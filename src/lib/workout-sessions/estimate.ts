@@ -12,13 +12,16 @@ const ACSM_ML_O2_PER_KG_PER_MET = 3.5;
 const ACSM_ML_O2_TO_KCAL_DIVISOR = 200;
 
 // A completed strength set isn't logged with a duration the way cardio
-// is, so the MET formula (which needs time) needs one assumed from reps —
-// ~3 seconds of time-under-load per rep is a reasonable controlled-tempo
-// estimate, same spirit as the assumed casual walking pace behind
-// calculateKcalPer1000Steps (profile/targets.ts). Falls back to a modest
-// 10-rep assumption when reps weren't logged for that set.
-const SECONDS_PER_REP_ESTIMATE = 3;
-const DEFAULT_REPS_ASSUMPTION = 10;
+// is, and reps-implied time (an earlier version of this file assumed
+// ~3 seconds per rep) still made the estimate depend on something never
+// actually measured — every set counted as more or less "time" without
+// the app ever knowing a real tempo. Flat per set instead: sets_completed
+// is the one thing actually logged and countable, so it's the only input
+// here. FIXED_MINUTES_PER_SET is a single calibration constant (not a
+// per-rep or per-set duration claim) chosen so the output lands in the
+// same ballpark as the flat fallback below, now scaled by MET and
+// bodyweight instead of being the same number for every exercise.
+const FIXED_MINUTES_PER_SET = 0.75;
 
 function metKcal(metValue: number, bodyweightKg: number, minutes: number): number {
   return (metValue * ACSM_ML_O2_PER_KG_PER_MET * bodyweightKg) / ACSM_ML_O2_TO_KCAL_DIVISOR * minutes;
@@ -28,10 +31,11 @@ function metKcal(metValue: number, bodyweightKg: number, minutes: number): numbe
  * `bodyweightKg` — when known — lets every exercise with a cached
  * `met_value` (see exercise-library/met.ts) use the real ACSM MET formula
  * instead of the flat per-set/per-minute placeholder, scaled by this
- * specific exercise's actual completed sets/reps/duration. An exercise
- * without a cached MET yet, or a null bodyweight, falls back to the flat
- * figure for just that exercise — never blocks or zeroes out the rest of
- * the estimate.
+ * specific exercise's actual completed sets (strength) or logged duration
+ * (cardio) — never anything not actually logged, like an assumed rep
+ * tempo or the session's own elapsed time. An exercise without a cached
+ * MET yet, or a null bodyweight, falls back to the flat figure for just
+ * that exercise — never blocks or zeroes out the rest of the estimate.
  */
 export function estimateCalories(exercises: SessionExercise[], bodyweightKg: number | null): number {
   return Math.round(
@@ -50,9 +54,7 @@ export function estimateCalories(exercises: SessionExercise[], bodyweightKg: num
       }
 
       if (exercise.met_value != null && bodyweightKg != null) {
-        const repsPerSet = exercise.reps ?? DEFAULT_REPS_ASSUMPTION;
-        const minutesPerSet = (repsPerSet * SECONDS_PER_REP_ESTIMATE) / 60;
-        return total + exercise.sets_completed * metKcal(exercise.met_value, bodyweightKg, minutesPerSet);
+        return total + exercise.sets_completed * metKcal(exercise.met_value, bodyweightKg, FIXED_MINUTES_PER_SET);
       }
       return total + exercise.sets_completed * CALORIES_PER_COMPLETED_SET;
     }, 0),

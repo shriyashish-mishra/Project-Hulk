@@ -95,6 +95,13 @@ export function ImportReportForm({ initialDate }: ImportReportFormProps = {}) {
         />
       </div>
 
+      <Link
+        href={`/report/generate?date=${reportDate}`}
+        className="rounded-2xl border border-dashed border-border px-4 py-3 text-center text-sm font-semibold text-primary underline-offset-4 hover:underline"
+      >
+        Don&rsquo;t have a response yet? Copy the prompt first →
+      </Link>
+
       <Textarea
         autoFocus
         rows={14}
