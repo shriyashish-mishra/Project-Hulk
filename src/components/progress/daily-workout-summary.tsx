@@ -30,7 +30,18 @@ export function DailyWorkoutSummary({
   exercises,
   muscleMapModel,
 }: DailyWorkoutSummaryProps) {
-  if (musclesTrained.length === 0) {
+  const trained = musclesTrained.length > 0;
+  const hasExercises = (exercises?.length ?? 0) > 0;
+  const hasStats = durationMin !== undefined || caloriesBurned !== undefined || hasExercises;
+
+  // A rest day trains no muscle (musclesTrained stays empty by design — see
+  // the nightly-report prompt), but can still carry real numbers: logged
+  // non-workout steps burn calories same as any other day. Only fall back
+  // to the plain text line when there's truly nothing to show (no muscles
+  // AND no stats) — a rest day with steps logged still gets the full
+  // stats/exercises treatment below, just without "Workout completed" or
+  // a muscle map, since nothing was actually trained.
+  if (!trained && !hasStats) {
     return (
       <p className="text-sm text-muted-foreground">
         {workoutNote ? "Rest day. " : "No workout logged. "}
@@ -39,9 +50,7 @@ export function DailyWorkoutSummary({
     );
   }
 
-  const intensity = computeMuscleGroupIntensity([musclesTrained]);
-  const hasExercises = (exercises?.length ?? 0) > 0;
-  const hasStats = durationMin !== undefined || caloriesBurned !== undefined || hasExercises;
+  const intensity = trained ? computeMuscleGroupIntensity([musclesTrained]) : {};
 
   return (
     <div className="flex flex-col gap-4">
@@ -49,7 +58,9 @@ export function DailyWorkoutSummary({
         <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-muted text-primary">
           <Dumbbell className="size-5" />
         </span>
-        <p className="text-sm font-medium text-foreground">Workout completed</p>
+        <p className="text-sm font-medium text-foreground">
+          {trained ? "Workout completed" : "Rest day"}
+        </p>
       </div>
 
       {hasStats && (
@@ -64,7 +75,7 @@ export function DailyWorkoutSummary({
         </div>
       )}
 
-      <MuscleMap intensity={intensity} model={muscleMapModel} />
+      {trained && <MuscleMap intensity={intensity} model={muscleMapModel} />}
 
       {hasExercises && (
         <ul className="flex flex-col divide-y divide-border">
