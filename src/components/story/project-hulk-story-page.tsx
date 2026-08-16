@@ -137,8 +137,13 @@ function Hero() {
         >
           I didn&rsquo;t set out to build a fitness app.
         </h1>
-        <p className="text-lg" style={{ color: COLOR.textSecondary }}>
-          I wanted to understand my own body.
+        <p className="max-w-md text-lg leading-relaxed" style={{ color: COLOR.textSecondary }}>
+          I had my health data. I just didn&rsquo;t understand it.
+          <br />
+          So I built something that could.
+        </p>
+        <p className="text-lg font-semibold" style={{ color: COLOR.mint }}>
+          Becoming Hulk one day at a time.
         </p>
       </div>
       <div
