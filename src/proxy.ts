@@ -16,6 +16,14 @@ const ALWAYS_ALLOWED_PATHS = [
   "/.well-known/oauth-protected-resource",
   "/api/oauth/token",
   "/api/mcp",
+  // Vercel Cron's real invocation (see vercel.json) carries the
+  // Authorization: Bearer $CRON_SECRET header the route checks itself
+  // (requireCronAuth) — never a browser cookie. Without this entry every
+  // cron trigger got bounced to /login before the route handler ever ran,
+  // silently disabling the nightly automated report for as long as this
+  // route existed. Same reasoning as the other bearer/token-authenticated
+  // server-to-server routes below.
+  "/api/cron/",
   // Todoist "notepad" capture bridge (src/lib/todoist/). The webhook has no
   // cookie at all (Todoist's servers call it directly); the callback route
   // authenticates itself via requireUser() internally regardless. /todoist/connect
