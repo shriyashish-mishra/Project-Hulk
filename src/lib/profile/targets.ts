@@ -1,6 +1,8 @@
 import type { ActivityLevel, BiologicalSex, PrimaryGoal } from "./types";
 import { ACTIVITY_LEVEL_MULTIPLIER } from "./types";
 
+const SEDENTARY_MULTIPLIER = ACTIVITY_LEVEL_MULTIPLIER.sedentary;
+
 /**
  * All target calculations live here, deterministic and documented — the AI
  * is never asked to compute a number the app can compute reliably. Every
@@ -72,6 +74,28 @@ export function calculateBMR(input: BmrInput): number | null {
   const age = calculateAge(dateOfBirth);
   const sexOffset = biologicalSex === "male" ? 5 : -161;
   return Math.round(10 * latestWeightKg + 6.25 * heightCm - 5 * age + sexOffset);
+}
+
+/**
+ * BMR scaled by the flat "sedentary" multiplier (1.2 — "little or no
+ * exercise," see ACTIVITY_LEVEL_MULTIPLIER) rather than the user's own
+ * activity_level. This is the deficit baseline in nightly-report/parse.ts,
+ * added on top of that day's *specifically logged* workout_calories_burned
+ * (steps + exercises). Deliberately NOT the user's real activity_level:
+ * "active"/"very_active" already bake in an assumed weekly exercise
+ * pattern (see that map's own comments), which is exactly what
+ * workout_calories_burned already measures — more accurately, from the
+ * actual log — for this specific day. Using both would double-count
+ * exercise twice: once via the multiplier's baked-in assumption, once via
+ * the logged total. The flat sedentary multiplier instead represents only
+ * what raw BMR misses on any day, trained or not: TEF from digesting food,
+ * incidental movement, posture, fidgeting — living your day, not lying in
+ * bed. Returns null when bmr is null, same null-propagation as every other
+ * function here.
+ */
+export function calculateRestingExpenditureKcal(bmr: number | null): number | null {
+  if (bmr === null) return null;
+  return Math.round(bmr * SEDENTARY_MULTIPLIER);
 }
 
 /**

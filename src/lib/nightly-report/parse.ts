@@ -1,4 +1,5 @@
 import { CURRENT_SCHEMA_VERSION } from "./constants";
+import { calculateRestingExpenditureKcal } from "@/lib/profile/targets";
 import type {
   AiReportJson,
   MealBreakdown,
@@ -237,14 +238,21 @@ function formatCalorieBalance(kcal: number): string {
  * Extracts, validates, and normalizes the JSON block from a Claude/Gemini
  * response. `bmr` — when known — lets this override the AI's own stated
  * calorie_balance_kcal with a deterministic
- * `estimated_calories - bmr - workout_calories_burned`, for the same
- * reason workout_calories_burned itself is overridden below: asking an
- * LLM to combine several independently-produced numbers into a new one
- * is exactly the kind of arithmetic this codebase already doesn't trust
- * it with. Observed in practice: a response whose own stated BMR and
+ * `estimated_calories - restingExpenditureKcal - workout_calories_burned`,
+ * for the same reason workout_calories_burned itself is overridden below:
+ * asking an LLM to combine several independently-produced numbers into a
+ * new one is exactly the kind of arithmetic this codebase already doesn't
+ * trust it with. Observed in practice: a response whose own stated BMR and
  * workout total, added together, didn't match its own stated deficit by
- * 200 kcal. Skipped when bmr is unavailable (e.g. profile incomplete) —
- * falls back to the AI's own figure rather than guessing.
+ * 200 kcal. Uses `calculateRestingExpenditureKcal(bmr)` rather than raw
+ * `bmr` — raw BMR is resting-only (calories burned lying in bed all day),
+ * so subtracting it alone and adding back nothing but that day's logged
+ * exercise silently assumed zero expenditure for ordinary daily living
+ * (TEF, incidental movement, posture) on top, which understated every
+ * deficit by a couple hundred kcal. See that function's doc for why the
+ * flat sedentary multiplier is used instead of the user's own
+ * activity_level. Skipped when bmr is unavailable (e.g. profile
+ * incomplete) — falls back to the AI's own figure rather than guessing.
  */
 export function parseAiReportResponse(rawResponse: string, bmr?: number | null): AiReportJson {
   const jsonText = extractJsonBlock(rawResponse);
@@ -292,8 +300,11 @@ export function parseAiReportResponse(rawResponse: string, bmr?: number | null):
   const estimated_calories = expectNumber(obj, "estimated_calories");
   const aiCalorieBalance = expectString(obj, "calorie_balance");
   const aiCalorieBalanceKcal = optionalNumber(obj, "calorie_balance_kcal");
+  const restingExpenditureKcal = calculateRestingExpenditureKcal(bmr ?? null);
   const deterministicBalanceKcal =
-    bmr != null ? estimated_calories - bmr - (workout_calories_burned ?? 0) : null;
+    restingExpenditureKcal != null
+      ? estimated_calories - restingExpenditureKcal - (workout_calories_burned ?? 0)
+      : null;
   const calorie_balance_kcal = deterministicBalanceKcal ?? aiCalorieBalanceKcal;
   const calorie_balance =
     deterministicBalanceKcal !== null ? formatCalorieBalance(deterministicBalanceKcal) : aiCalorieBalance;
