@@ -1,9 +1,10 @@
 import { Check, TriangleAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import { MEAL_SECTIONS } from "@/lib/food-logs/constants";
 import type { AiReportJson } from "@/lib/nightly-report/types";
+import { MealBreakdownList } from "@/components/progress/meal-breakdown-list";
+import { MicronutrientList } from "@/components/progress/micronutrient-list";
 import { ScoreBadge } from "./score-badge";
 import { ScoreMeter } from "./score-meter";
 
@@ -77,48 +78,8 @@ export function DailyReportView({ report }: DailyReportViewProps) {
             <MacroTile label="Fat" value={report.fat_g} unit="g" />
             <MacroTile label="Fibre" value={report.fiber_g} unit="g" />
           </div>
-          {report.meal_breakdown && report.meal_breakdown.length > 0 && (
-            <ul className="flex flex-col divide-y divide-border">
-              {report.meal_breakdown.map((meal) => (
-                <li key={meal.meal_type} className="flex items-center justify-between gap-2 py-1.5 text-sm">
-                  <span>{mealLabelByType.get(meal.meal_type) ?? meal.meal_type}</span>
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {meal.estimated_calories} kcal
-                    <span className="ml-1.5">
-                      P{meal.protein_g} · C{meal.carbs_g} · F{meal.fat_g}
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-          {report.micronutrients.length > 0 && (
-            <ul className="flex flex-col divide-y divide-border">
-              {report.micronutrients.map((note) => (
-                <li
-                  key={note.name}
-                  className="flex items-center justify-between gap-2 py-1.5 text-sm"
-                >
-                  <span>
-                    {note.name}
-                    {note.note && (
-                      <span className="ml-1.5 text-xs text-muted-foreground">
-                        {note.note}
-                      </span>
-                    )}
-                  </span>
-                  <span
-                    className={cn(
-                      "shrink-0 text-xs font-medium capitalize",
-                      note.status === "low" ? "text-warning" : "text-success",
-                    )}
-                  >
-                    {note.status}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <MealBreakdownList meals={report.meal_breakdown ?? []} />
+          <MicronutrientList micronutrients={report.micronutrients} />
         </CardContent>
       </Card>
 

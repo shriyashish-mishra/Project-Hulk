@@ -6,6 +6,8 @@ import { DateNav } from "@/components/progress/date-nav";
 import { DailyScoreCard } from "@/components/progress/daily-score-card";
 import { TodayAtGlance } from "@/components/progress/today-at-a-glance";
 import { NutrientBar } from "@/components/progress/nutrient-bar";
+import { MealBreakdownList } from "@/components/progress/meal-breakdown-list";
+import { MicronutrientList } from "@/components/progress/micronutrient-list";
 import { DailyWorkoutSummary } from "@/components/progress/daily-workout-summary";
 import { CoachFeedbackList } from "@/components/progress/coach-feedback-list";
 import { NextDayPlanCard } from "@/components/progress/next-day-plan-card";
@@ -195,6 +197,8 @@ export default async function ProgressDailyPage({
                 target={userContext.fiberTargetG}
                 avg={null}
               />
+              <MealBreakdownList meals={report.parsed_json.meal_breakdown ?? []} />
+              <MicronutrientList micronutrients={report.parsed_json.micronutrients} />
             </CardContent>
           </Card>
 
