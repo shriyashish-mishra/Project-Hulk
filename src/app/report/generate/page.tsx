@@ -51,7 +51,7 @@ export default async function GenerateReportPage({ searchParams }: GenerateRepor
       : null;
 
   // No automatic photo comparison — see runNightlyReportPipeline() for why.
-  // Attach photos directly in the Claude conversation this prompt gets
+  // Attach photos directly in whatever AI conversation this prompt gets
   // pasted into if you want AI feedback on them.
   const prompt = buildNightlyReportPrompt({
     date: loggedOn,
@@ -83,7 +83,7 @@ export default async function GenerateReportPage({ searchParams }: GenerateRepor
         href={`/report/import?date=${loggedOn}`}
         className="text-center text-sm text-primary underline-offset-4 hover:underline"
       >
-        Already have Claude&rsquo;s response? Import it →
+        Already have a response? Import it →
       </Link>
     </div>
   );

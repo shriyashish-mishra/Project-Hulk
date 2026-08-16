@@ -16,9 +16,11 @@ interface GenerateReportButtonProps {
 
 /**
  * Generates the report directly via Gemini (`generateReportNow`) instead of
- * sending the user off to copy a prompt into Claude — that manual path
- * stays reachable as a fallback link if the automatic call fails, and
- * separately via the "Import a response" buttons next to this one.
+ * sending the user off to copy a prompt into their own AI assistant —
+ * that manual path stays reachable as a fallback link if the automatic
+ * call fails, and separately via the "Import a response" buttons next to
+ * this one. Deliberately not tied to any one AI provider — see the
+ * "Manual AI fallback" decision on /story.
  */
 export function GenerateReportButton({ date, reportHref, label, variant, size }: GenerateReportButtonProps) {
   const router = useRouter();
@@ -46,7 +48,7 @@ export function GenerateReportButton({ date, reportHref, label, variant, size }:
         <p className="text-center text-xs text-destructive">
           {error}{" "}
           <Link href={`/report/generate?date=${date}`} className="underline underline-offset-4">
-            Copy the prompt into Claude instead →
+            Copy the prompt into your own AI instead →
           </Link>
         </p>
       )}

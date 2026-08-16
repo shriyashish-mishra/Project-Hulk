@@ -37,8 +37,8 @@ export default function TermsPage() {
               Privacy Policy
             </Link>{" "}
             for what&rsquo;s sent and why. Progress photos are never part of that automatic send. You can also
-            generate a report yourself for a given day by pasting a prompt into your own separate Claude (Anthropic)
-            conversation and importing the response back in, instead of the automatic run.
+            generate a report yourself for a given day by pasting a prompt into your own separate AI assistant of
+            choice and importing the response back in, instead of the automatic run.
           </p>
         </section>
 

@@ -26,7 +26,7 @@ export default function PrivacyPage() {
             <li>Optional data you choose to add: progress photos and menstrual cycle tracking.</li>
             <li>
               Generated content: nightly coach reports, generated automatically each night from that day&rsquo;s
-              logs (or manually via your own Claude conversation, if you use that path instead).
+              logs (or manually via your own AI assistant of choice, if you use that path instead).
             </li>
           </ul>
         </section>
@@ -59,14 +59,15 @@ export default function PrivacyPage() {
           </p>
           <p>
             Progress photos are never part of this automatic send — no photo bytes leave Project Hulk&rsquo;s
-            systems on their own. If you want AI feedback on a progress photo, attach it directly in your own Claude
+            systems on their own. If you want AI feedback on a progress photo, attach it directly in your own AI
             conversation, the same way you would for the manual report path below.
           </p>
           <p>
             You can also skip the automatic run for a given night entirely and generate a report yourself instead,
-            by copying a prompt into your own Claude conversation and importing the reply back in — that manual path
-            stays available from the report screen, and nothing sent that way passes through Project Hulk&rsquo;s
-            own systems.
+            by copying a prompt into your own AI assistant of choice and importing the reply back in — that manual
+            path stays available from the report screen, and nothing sent that way passes through Project
+            Hulk&rsquo;s own systems. Which AI you use for that is entirely up to you; the app doesn&rsquo;t require
+            or assume any one provider.
           </p>
         </section>
 
@@ -77,8 +78,8 @@ export default function PrivacyPage() {
             as your other logs — private to your account, never shared, and deletable at any time. You can turn
             cycle tracking off in your profile settings whenever you like. When it&rsquo;s on, a coarse phase
             estimate (e.g. &ldquo;day 12 of ~28, follicular phase&rdquo;) is included in the nightly report&rsquo;s
-            request to Gemini, the same way it would appear in a prompt you pasted into Claude yourself — never the
-            underlying dates you logged, just the derived phase.
+            request to Gemini, the same way it would appear in a prompt you pasted into your own AI yourself — never
+            the underlying dates you logged, just the derived phase.
           </p>
         </section>
 

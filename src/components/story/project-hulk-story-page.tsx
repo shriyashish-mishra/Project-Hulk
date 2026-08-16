@@ -339,31 +339,6 @@ function MockContextEngine() {
   );
 }
 
-function MockNativeApp() {
-  return (
-    <MockFrame>
-      <div
-        className="flex flex-col gap-2 rounded-2xl border p-2.5"
-        style={{ borderColor: "rgba(255,255,255,0.12)" }}
-      >
-        <span className="mx-auto h-1 w-8 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.2)" }} />
-        <div className="flex items-center justify-between">
-          <Footprints className="size-3.5" style={{ color: COLOR.mint }} />
-          <span className="text-[11px] font-bold" style={{ color: COLOR.textPrimary }}>
-            10,482
-          </span>
-        </div>
-        <div className="flex items-center justify-between">
-          <Dumbbell className="size-3.5" style={{ color: COLOR.mint }} />
-          <span className="text-[11px] font-bold" style={{ color: COLOR.textPrimary }}>
-            Logged
-          </span>
-        </div>
-      </div>
-    </MockFrame>
-  );
-}
-
 function MockHulkToday() {
   return (
     <MockFrame>
@@ -391,7 +366,6 @@ const TIMELINE = [
   { name: "Web App", sentence: "One journal instead of four separate apps.", Mock: MockWebApp },
   { name: "AI Reports", sentence: "A nightly coach, pasted in by hand at first.", Mock: MockAiReports },
   { name: "Context Engine", sentence: "Numbers that finally agreed with each other.", Mock: MockContextEngine },
-  { name: "Native App", sentence: "The same brain, in your pocket.", Mock: MockNativeApp },
   { name: "Hulk Today", sentence: "Log once. Understand the whole day.", Mock: MockHulkToday },
 ] as const;
 
@@ -528,7 +502,7 @@ function AIChaosSection() {
 const DECISIONS = [
   { title: "SQLite", body: "Personal data should work offline." },
   { title: "AI Context Engine", body: "Raw data isn't context." },
-  { title: "Manual AI fallback", body: "Don't let automation become a black box." },
+  { title: "Manual AI fallback", body: "Your call which AI. I trust Claude — but it's up to you." },
   { title: "Privacy", body: "Not everything needs to leave the device." },
   { title: "Verification", body: "If AI says it, I still check it." },
 ] as const;
@@ -553,7 +527,7 @@ function DecisionCard({ title, body }: { title: string; body: string }) {
         className="text-sm leading-6"
         style={{
           color: COLOR.mint,
-          maxHeight: open ? "80px" : "0px",
+          maxHeight: open ? "100px" : "0px",
           opacity: open ? 1 : 0,
           overflow: "hidden",
           transition: "all 300ms var(--ease-out-expo)",
@@ -700,6 +674,56 @@ function TodaySection() {
 }
 
 /* ---------------------------------------------------------------------- */
+/* The stack                                                                */
+/* ---------------------------------------------------------------------- */
+
+const STACK = [
+  { label: "Frontend", items: ["Next.js", "React", "TypeScript", "Tailwind"] },
+  { label: "Data", items: ["Supabase", "Postgres", "Row-level security"] },
+  { label: "AI", items: ["Gemini", "your own AI, manually"] },
+  { label: "Infra", items: ["Vercel"] },
+] as const;
+
+function StackSection() {
+  return (
+    <Section eyebrow="What it's built with">
+      <Reveal>
+        <h2 className="text-3xl font-black tracking-tight" style={{ color: COLOR.textPrimary }}>
+          The stack, honestly.
+        </h2>
+      </Reveal>
+      <div className="flex flex-col gap-4">
+        {STACK.map((group, index) => (
+          <Reveal
+            key={group.label}
+            delay={index * 70}
+            className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4"
+          >
+            <span
+              className="w-20 shrink-0 text-xs font-bold tracking-[0.14em] uppercase"
+              style={{ color: COLOR.textMuted }}
+            >
+              {group.label}
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {group.items.map((item) => (
+                <span
+                  key={item}
+                  className="rounded-full px-3 py-1.5 text-xs font-medium"
+                  style={{ backgroundColor: COLOR.card, color: COLOR.textSecondary, border: `1px solid ${COLOR.border}` }}
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+          </Reveal>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+/* ---------------------------------------------------------------------- */
 /* 8. Ending                                                               */
 /* ---------------------------------------------------------------------- */
 
@@ -763,6 +787,7 @@ export function ProjectHulkStoryPage() {
         <DecisionsSection />
         <GotWrongSection />
         <TodaySection />
+        <StackSection />
         <EndingSection />
         <Footer />
       </div>

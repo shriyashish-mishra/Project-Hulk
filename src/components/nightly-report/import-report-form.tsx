@@ -23,7 +23,7 @@ export function ImportReportForm({ initialDate }: ImportReportFormProps = {}) {
 
   function handleImport() {
     if (!rawResponse.trim()) {
-      setError("Paste the response from Claude first.");
+      setError("Paste the AI's response first.");
       return;
     }
     setError(null);
@@ -73,7 +73,7 @@ export function ImportReportForm({ initialDate }: ImportReportFormProps = {}) {
           Import AI Report
         </h1>
         <p className="text-sm text-muted-foreground">
-          Paste Claude&rsquo;s full reply below — the JSON block is extracted
+          Paste your AI&rsquo;s full reply below — the JSON block is extracted
           automatically.
         </p>
       </div>
@@ -100,7 +100,7 @@ export function ImportReportForm({ initialDate }: ImportReportFormProps = {}) {
         rows={14}
         value={rawResponse}
         onChange={(e) => setRawResponse(e.target.value)}
-        placeholder="Paste the full response from Claude here..."
+        placeholder="Paste the full AI response here..."
         className="min-h-72 resize-none font-mono text-xs"
       />
 
