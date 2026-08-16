@@ -5,7 +5,7 @@ import { getFoodLogsForDate } from "@/lib/food-logs/queries";
 import { getWorkoutLogForDate } from "@/lib/workout-logs/queries";
 import { getUserContextForCtx } from "@/lib/mcp/user-context";
 import { deriveMuscleMapModel } from "@/lib/profile/types";
-import { calculateBMR } from "@/lib/profile/targets";
+import { calculateBMR, calculateStepsCaloriesBurned } from "@/lib/profile/targets";
 import { generateNightlyReportText } from "@/lib/gemini/client";
 import { buildNightlyReportPrompt } from "./prompt";
 import { getRecoveryPromptContext } from "./context";
@@ -38,6 +38,24 @@ export async function runNightlyReportPipeline(date: string, ctx: AuthContext): 
     getRecentCalorieBalanceContext(date, ctx),
   ]);
 
+  const bmr = calculateBMR({
+    dateOfBirth: userContext.profile?.date_of_birth ?? null,
+    biologicalSex: userContext.profile?.biological_sex ?? null,
+    heightCm: userContext.profile?.height_cm ?? null,
+    latestWeightKg: userContext.latestWeightKg,
+  });
+  // Structured input (workout_logs.non_workout_steps), not AI-parsed text —
+  // see calculateStepsCaloriesBurned's doc.
+  const stepsCaloriesKcal = calculateStepsCaloriesBurned(
+    workoutLog?.non_workout_steps ?? null,
+    userContext.latestWeightKg,
+    userContext.profile?.height_cm ?? null,
+  );
+  const stepsInput =
+    stepsCaloriesKcal !== null && workoutLog?.non_workout_steps
+      ? { steps: workoutLog.non_workout_steps, caloriesBurned: stepsCaloriesKcal }
+      : null;
+
   // No automatic photo comparison here — Groq's vision free tier can't
   // reliably handle more than one view per day (its 8,000-tokens-per-minute
   // cap gets used up by a single comparison call), which broke on exactly
@@ -48,6 +66,7 @@ export async function runNightlyReportPipeline(date: string, ctx: AuthContext): 
     date,
     foodLogs,
     workoutLog,
+    stepsCaloriesBurned: stepsInput,
     ...recoveryContext,
     photoComparisonNote: null,
     userContext,
@@ -60,13 +79,7 @@ export async function runNightlyReportPipeline(date: string, ctx: AuthContext): 
   });
 
   const rawResponse = await generateNightlyReportText(promptMarkdown);
-  const bmr = calculateBMR({
-    dateOfBirth: userContext.profile?.date_of_birth ?? null,
-    biologicalSex: userContext.profile?.biological_sex ?? null,
-    heightCm: userContext.profile?.height_cm ?? null,
-    latestWeightKg: userContext.latestWeightKg,
-  });
-  const parsed = parseAiReportResponse(rawResponse, bmr);
+  const parsed = parseAiReportResponse(rawResponse, bmr, stepsInput);
 
   // What mattered, as of tonight — so a later goal change never silently
   // reinterprets this already-generated report (see importAiReport).

@@ -27,11 +27,11 @@ export function WorkoutCard({ loggedOn, initialLog, initialPresets, exercises }:
 
   const preview = log?.raw_text.split("\n").slice(0, 3).join("\n");
 
-  function handleSave(rawText: string) {
+  function handleSave(rawText: string, nonWorkoutSteps: number | null) {
     return new Promise<void>((resolve, reject) => {
       startTransition(async () => {
         try {
-          const saved = await saveWorkoutLog(rawText, loggedOn);
+          const saved = await saveWorkoutLog(rawText, loggedOn, nonWorkoutSteps);
           setLog(saved);
           resolve();
         } catch (err) {

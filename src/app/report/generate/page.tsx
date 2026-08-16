@@ -10,6 +10,7 @@ import { getWeekSoFarContext } from "@/lib/nightly-report/week-context";
 import { getRecentCalorieBalanceContext } from "@/lib/nightly-report/calorie-history";
 import { getUserContext } from "@/lib/profile/context";
 import { getCurrentUserTimeZone } from "@/lib/profile/queries";
+import { calculateStepsCaloriesBurned } from "@/lib/profile/targets";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -37,6 +38,18 @@ export default async function GenerateReportPage({ searchParams }: GenerateRepor
       getRecentCalorieBalanceContext(loggedOn),
     ]);
 
+  // Structured input (workout_logs.non_workout_steps), not AI-parsed text —
+  // see calculateStepsCaloriesBurned's doc.
+  const stepsCaloriesKcal = calculateStepsCaloriesBurned(
+    workoutLog?.non_workout_steps ?? null,
+    userContext.latestWeightKg,
+    userContext.profile?.height_cm ?? null,
+  );
+  const stepsCaloriesBurned =
+    stepsCaloriesKcal !== null && workoutLog?.non_workout_steps
+      ? { steps: workoutLog.non_workout_steps, caloriesBurned: stepsCaloriesKcal }
+      : null;
+
   // No automatic photo comparison — see runNightlyReportPipeline() for why.
   // Attach photos directly in the Claude conversation this prompt gets
   // pasted into if you want AI feedback on them.
@@ -44,6 +57,7 @@ export default async function GenerateReportPage({ searchParams }: GenerateRepor
     date: loggedOn,
     foodLogs,
     workoutLog,
+    stepsCaloriesBurned,
     ...recoveryContext,
     photoComparisonNote: null,
     userContext,

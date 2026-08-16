@@ -1,6 +1,8 @@
 import type { ActivityLevel, BiologicalSex, PrimaryGoal } from "./types";
 import { ACTIVITY_LEVEL_MULTIPLIER } from "./types";
 
+const SEDENTARY_MULTIPLIER = ACTIVITY_LEVEL_MULTIPLIER.sedentary;
+
 /**
  * All target calculations live here, deterministic and documented — the AI
  * is never asked to compute a number the app can compute reliably. Every
@@ -72,6 +74,28 @@ export function calculateBMR(input: BmrInput): number | null {
   const age = calculateAge(dateOfBirth);
   const sexOffset = biologicalSex === "male" ? 5 : -161;
   return Math.round(10 * latestWeightKg + 6.25 * heightCm - 5 * age + sexOffset);
+}
+
+/**
+ * BMR scaled by the flat "sedentary" multiplier (1.2 — "little or no
+ * exercise," see ACTIVITY_LEVEL_MULTIPLIER) rather than the user's own
+ * activity_level. This is the deficit baseline in nightly-report/parse.ts,
+ * added on top of that day's *specifically logged* workout_calories_burned
+ * (steps + exercises). Deliberately NOT the user's real activity_level:
+ * "active"/"very_active" already bake in an assumed weekly exercise
+ * pattern (see that map's own comments), which is exactly what
+ * workout_calories_burned already measures — more accurately, from the
+ * actual log — for this specific day. Using both would double-count
+ * exercise twice: once via the multiplier's baked-in assumption, once via
+ * the logged total. The flat sedentary multiplier instead represents only
+ * what raw BMR misses on any day, trained or not: TEF from digesting food,
+ * incidental movement, posture, fidgeting — living your day, not lying in
+ * bed. Returns null when bmr is null, same null-propagation as every other
+ * function here.
+ */
+export function calculateRestingExpenditureKcal(bmr: number | null): number | null {
+  if (bmr === null) return null;
+  return Math.round(bmr * SEDENTARY_MULTIPLIER);
 }
 
 /**
@@ -170,6 +194,28 @@ export function calculateKcalPer1000Steps(weightKg: number | null, heightCm: num
   const strideLengthM = (heightCm * STRIDE_LENGTH_RATIO) / 100;
   const kmPer1000Steps = (1000 * strideLengthM) / 1000;
   return Math.round(kmPer1000Steps * weightKg * WALKING_KCAL_PER_KG_PER_KM);
+}
+
+/**
+ * Calorie cost of a directly-entered non-workout step count — steps is now
+ * structured input (see workout_logs.non_workout_steps), not text the AI
+ * has to notice and itemize itself. Reuses the same per-1,000-steps rate
+ * as above, applied here deterministically instead of being handed to the
+ * AI as an instruction to follow: removes the model from this number's
+ * existence entirely, so it can't be dropped by an inattentive parse of
+ * the log (see 7222e15) or estimated from nothing. Returns null (never 0)
+ * when steps is unset/zero or weight/height aren't known, so callers can
+ * tell "no steps logged" apart from "logged, computed to 0."
+ */
+export function calculateStepsCaloriesBurned(
+  steps: number | null,
+  weightKg: number | null,
+  heightCm: number | null,
+): number | null {
+  if (!steps || steps <= 0) return null;
+  const kcalPer1000Steps = calculateKcalPer1000Steps(weightKg, heightCm);
+  if (kcalPer1000Steps === null) return null;
+  return Math.round((steps / 1000) * kcalPer1000Steps);
 }
 
 const ML_PER_KG_BY_SEX: Record<BiologicalSex, number> = {

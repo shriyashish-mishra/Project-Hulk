@@ -11,7 +11,7 @@ import { getWeekSoFarContext } from "./week-context";
 import { getRecentCalorieBalanceContext } from "./calorie-history";
 import { getUserContext } from "@/lib/profile/context";
 import { deriveMuscleMapModel } from "@/lib/profile/types";
-import { calculateBMR } from "@/lib/profile/targets";
+import { calculateBMR, calculateStepsCaloriesBurned } from "@/lib/profile/targets";
 import { parseAiReportResponse } from "./parse";
 import { runNightlyReportPipeline } from "./generate";
 import type { AiDailyReport, AiReportJson } from "./types";
@@ -64,7 +64,18 @@ export async function importAiReport(
     heightCm: userContext.profile?.height_cm ?? null,
     latestWeightKg: userContext.latestWeightKg,
   });
-  const parsed = parseAiReportResponse(rawResponse, bmr);
+  // Structured input (workout_logs.non_workout_steps), not AI-parsed text —
+  // see calculateStepsCaloriesBurned's doc.
+  const stepsCaloriesKcal = calculateStepsCaloriesBurned(
+    workoutLog?.non_workout_steps ?? null,
+    userContext.latestWeightKg,
+    userContext.profile?.height_cm ?? null,
+  );
+  const stepsInput =
+    stepsCaloriesKcal !== null && workoutLog?.non_workout_steps
+      ? { steps: workoutLog.non_workout_steps, caloriesBurned: stepsCaloriesKcal }
+      : null;
+  const parsed = parseAiReportResponse(rawResponse, bmr, stepsInput);
   // No automatic photo comparison — see runNightlyReportPipeline() for why.
   // If your pasted Claude response includes its own photo commentary
   // (because you attached photos directly in that chat), it just flows
@@ -74,6 +85,7 @@ export async function importAiReport(
     date: reportDate,
     foodLogs,
     workoutLog,
+    stepsCaloriesBurned: stepsInput,
     ...recoveryContext,
     photoComparisonNote: null,
     userContext,

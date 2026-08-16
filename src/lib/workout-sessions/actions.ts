@@ -192,7 +192,7 @@ export async function completeSession(sessionId: string): Promise<void> {
   await applyRecommendationsToTemplate(session, { supabase, user });
 
   const canonicalText = buildCanonicalWorkoutText(session.template_name_snapshot, session.exercises);
-  await saveWorkoutLog(canonicalText, session.logged_on, { supabase, user });
+  await saveWorkoutLog(canonicalText, session.logged_on, undefined, { supabase, user });
 
   revalidateSession(sessionId);
   revalidatePath("/workouts");
