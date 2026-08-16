@@ -496,70 +496,7 @@ function AIChaosSection() {
 }
 
 /* ---------------------------------------------------------------------- */
-/* 5. Decisions I Made                                                     */
-/* ---------------------------------------------------------------------- */
-
-const DECISIONS = [
-  { title: "SQLite", body: "Personal data should work offline." },
-  { title: "AI Context Engine", body: "Raw data isn't context." },
-  { title: "Manual AI fallback", body: "Your call which AI. I trust Claude — but it's up to you." },
-  { title: "Privacy", body: "Not everything needs to leave the device." },
-  { title: "Verification", body: "If AI says it, I still check it." },
-] as const;
-
-function DecisionCard({ title, body }: { title: string; body: string }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <button
-      type="button"
-      onClick={() => setOpen((prev) => !prev)}
-      aria-expanded={open}
-      className="flex flex-col gap-1.5 rounded-2xl border p-4 text-left transition-all duration-300 active:scale-[0.98]"
-      style={{
-        borderColor: open ? `${COLOR.mint}55` : COLOR.border,
-        backgroundColor: open ? COLOR.cardElevated : COLOR.card,
-      }}
-    >
-      <span className="text-sm font-bold" style={{ color: COLOR.textPrimary }}>
-        {title}
-      </span>
-      <p
-        className="text-sm leading-6"
-        style={{
-          color: COLOR.mint,
-          maxHeight: open ? "100px" : "0px",
-          opacity: open ? 1 : 0,
-          overflow: "hidden",
-          transition: "all 300ms var(--ease-out-expo)",
-        }}
-      >
-        {body}
-      </p>
-    </button>
-  );
-}
-
-function DecisionsSection() {
-  return (
-    <Section eyebrow="Decisions I made">
-      <Reveal>
-        <h2 className="text-3xl font-black tracking-tight" style={{ color: COLOR.textPrimary }}>
-          A few calls I&rsquo;m not walking back.
-        </h2>
-      </Reveal>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {DECISIONS.map((decision, index) => (
-          <Reveal key={decision.title} delay={index * 60}>
-            <DecisionCard {...decision} />
-          </Reveal>
-        ))}
-      </div>
-    </Section>
-  );
-}
-
-/* ---------------------------------------------------------------------- */
-/* 6. Things I Got Wrong                                                   */
+/* 5. Things I Got Wrong                                                   */
 /* ---------------------------------------------------------------------- */
 
 const GOT_WRONG = [
@@ -618,7 +555,7 @@ function GotWrongSection() {
 }
 
 /* ---------------------------------------------------------------------- */
-/* 7. Hulk Today                                                           */
+/* 6. Hulk Today                                                           */
 /* ---------------------------------------------------------------------- */
 
 const FLOW = ["LOG", "CONTEXT", "AI", "INSIGHT"] as const;
@@ -674,57 +611,7 @@ function TodaySection() {
 }
 
 /* ---------------------------------------------------------------------- */
-/* The stack                                                                */
-/* ---------------------------------------------------------------------- */
-
-const STACK = [
-  { label: "Frontend", items: ["Next.js", "React", "TypeScript", "Tailwind"] },
-  { label: "Data", items: ["Supabase", "Postgres", "Row-level security"] },
-  { label: "AI", items: ["Gemini", "your own AI, manually"] },
-  { label: "Infra", items: ["Vercel"] },
-] as const;
-
-function StackSection() {
-  return (
-    <Section eyebrow="What it's built with">
-      <Reveal>
-        <h2 className="text-3xl font-black tracking-tight" style={{ color: COLOR.textPrimary }}>
-          The stack, honestly.
-        </h2>
-      </Reveal>
-      <div className="flex flex-col gap-4">
-        {STACK.map((group, index) => (
-          <Reveal
-            key={group.label}
-            delay={index * 70}
-            className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4"
-          >
-            <span
-              className="w-20 shrink-0 text-xs font-bold tracking-[0.14em] uppercase"
-              style={{ color: COLOR.textMuted }}
-            >
-              {group.label}
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {group.items.map((item) => (
-                <span
-                  key={item}
-                  className="rounded-full px-3 py-1.5 text-xs font-medium"
-                  style={{ backgroundColor: COLOR.card, color: COLOR.textSecondary, border: `1px solid ${COLOR.border}` }}
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-          </Reveal>
-        ))}
-      </div>
-    </Section>
-  );
-}
-
-/* ---------------------------------------------------------------------- */
-/* 8. Ending                                                               */
+/* 7. Ending                                                               */
 /* ---------------------------------------------------------------------- */
 
 function EndingSection() {
@@ -784,10 +671,8 @@ export function ProjectHulkStoryPage() {
         <ProblemSection />
         <EvolutionSection />
         <AIChaosSection />
-        <DecisionsSection />
         <GotWrongSection />
         <TodaySection />
-        <StackSection />
         <EndingSection />
         <Footer />
       </div>
