@@ -11,6 +11,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PresetPickerDrawer } from "@/components/presets/preset-picker-drawer";
 import { ExerciseEntryDrawer, type ExerciseFieldValues } from "@/components/workout-templates/exercise-entry-drawer";
@@ -81,7 +82,7 @@ interface WorkoutFormDrawerProps {
   initialLog?: WorkoutLog | null;
   presets: WorkoutPreset[];
   exercises: ExerciseLibraryItem[];
-  onSubmit: (rawText: string) => Promise<void>;
+  onSubmit: (rawText: string, nonWorkoutSteps: number | null) => Promise<void>;
   onDelete?: () => Promise<void>;
   onCreatePreset: (rawText: string) => Promise<WorkoutPreset>;
   onUpdatePreset: (id: string, rawText: string) => Promise<WorkoutPreset>;
@@ -136,7 +137,7 @@ interface WorkoutFormBodyProps {
   initialLog?: WorkoutLog | null;
   presets: WorkoutPreset[];
   exercises: ExerciseLibraryItem[];
-  onSubmit: (rawText: string) => Promise<void>;
+  onSubmit: (rawText: string, nonWorkoutSteps: number | null) => Promise<void>;
   onDelete?: () => Promise<void>;
   onCreatePreset: (rawText: string) => Promise<WorkoutPreset>;
   onUpdatePreset: (id: string, rawText: string) => Promise<WorkoutPreset>;
@@ -156,6 +157,9 @@ function WorkoutFormBody({
   onDone,
 }: WorkoutFormBodyProps) {
   const [rawText, setRawText] = useState(initialLog?.raw_text ?? "");
+  const [stepsText, setStepsText] = useState(
+    initialLog?.non_workout_steps != null ? String(initialLog.non_workout_steps) : "",
+  );
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [enteringExercise, setEnteringExercise] = useState<ExerciseLibraryItem | null>(null);
@@ -185,10 +189,20 @@ function WorkoutFormBody({
       return;
     }
 
+    let nonWorkoutSteps: number | null = null;
+    if (stepsText.trim()) {
+      const parsedSteps = Number(stepsText);
+      if (!Number.isFinite(parsedSteps) || parsedSteps < 0) {
+        setError("Steps must be a positive number.");
+        return;
+      }
+      nonWorkoutSteps = Math.round(parsedSteps);
+    }
+
     setError(null);
     startTransition(async () => {
       try {
-        await onSubmit(rawText);
+        await onSubmit(rawText, nonWorkoutSteps);
 
         const trimmed = rawText.trim();
         const alreadyPreset = presets.some((preset) => preset.raw_text.trim() === trimmed);
@@ -312,6 +326,26 @@ function WorkoutFormBody({
           Use &ldquo;Add Exercise&rdquo; above for the same sets/reps/weight (or duration/incline for cardio) form
           Templates and Sessions use, or type/paste freely here.
         </p>
+
+        <div className="mt-2 flex items-center justify-between gap-3 border-t border-border pt-4">
+          <div className="min-w-0">
+            <label htmlFor="non-workout-steps" className="block text-sm font-semibold text-foreground">
+              Steps today
+            </label>
+            <p className="text-xs text-muted-foreground">Outside this workout — walking, errands, general movement.</p>
+          </div>
+          <Input
+            id="non-workout-steps"
+            type="number"
+            inputMode="numeric"
+            min={0}
+            step={1}
+            value={stepsText}
+            onChange={(e) => setStepsText(e.target.value)}
+            placeholder="10000"
+            className="w-28 shrink-0 text-right tabular-nums"
+          />
+        </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
       </div>
 

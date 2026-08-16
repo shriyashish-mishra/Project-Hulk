@@ -403,6 +403,7 @@ export type Database = {
           created_at: string
           id: string
           logged_on: string
+          non_workout_steps: number | null
           raw_text: string
           user_id: string
         }
@@ -410,6 +411,7 @@ export type Database = {
           created_at?: string
           id?: string
           logged_on: string
+          non_workout_steps?: number | null
           raw_text: string
           user_id: string
         }
@@ -417,6 +419,7 @@ export type Database = {
           created_at?: string
           id?: string
           logged_on?: string
+          non_workout_steps?: number | null
           raw_text?: string
           user_id?: string
         }

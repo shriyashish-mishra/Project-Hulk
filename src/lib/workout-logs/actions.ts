@@ -17,10 +17,17 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
  * Upserts the workout note for `loggedOn` — one entry per day. `ctx` lets
  * callers outside a browser request (the MCP server) inject an
  * already-authenticated `{ supabase, user }` instead of `requireUser()`.
+ *
+ * `nonWorkoutSteps` is a separate field from `rawText`, deliberately —
+ * see the migration's comment. `undefined` (the default, for every
+ * existing caller that doesn't pass it) omits the column from the upsert
+ * payload entirely, so it's left untouched on an existing row rather than
+ * being silently cleared; pass `null` explicitly to clear it.
  */
 export async function saveWorkoutLog(
   rawText: string,
   loggedOn: string,
+  nonWorkoutSteps?: number | null,
   ctx?: AuthContext,
 ): Promise<WorkoutLog> {
   if (!rawText.trim()) {
@@ -28,6 +35,9 @@ export async function saveWorkoutLog(
   }
   if (!DATE_PATTERN.test(loggedOn)) {
     throw new Error("Invalid date.");
+  }
+  if (nonWorkoutSteps != null && (!Number.isFinite(nonWorkoutSteps) || nonWorkoutSteps < 0)) {
+    throw new Error("Steps must be a positive number.");
   }
 
   const { supabase, user } = ctx ?? (await requireUser());
@@ -38,6 +48,7 @@ export async function saveWorkoutLog(
         user_id: user.id,
         raw_text: rawText.trim(),
         logged_on: loggedOn,
+        ...(nonWorkoutSteps !== undefined ? { non_workout_steps: nonWorkoutSteps } : {}),
       },
       { onConflict: "user_id,logged_on" },
     )

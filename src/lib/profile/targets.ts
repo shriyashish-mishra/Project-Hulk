@@ -196,6 +196,28 @@ export function calculateKcalPer1000Steps(weightKg: number | null, heightCm: num
   return Math.round(kmPer1000Steps * weightKg * WALKING_KCAL_PER_KG_PER_KM);
 }
 
+/**
+ * Calorie cost of a directly-entered non-workout step count — steps is now
+ * structured input (see workout_logs.non_workout_steps), not text the AI
+ * has to notice and itemize itself. Reuses the same per-1,000-steps rate
+ * as above, applied here deterministically instead of being handed to the
+ * AI as an instruction to follow: removes the model from this number's
+ * existence entirely, so it can't be dropped by an inattentive parse of
+ * the log (see 7222e15) or estimated from nothing. Returns null (never 0)
+ * when steps is unset/zero or weight/height aren't known, so callers can
+ * tell "no steps logged" apart from "logged, computed to 0."
+ */
+export function calculateStepsCaloriesBurned(
+  steps: number | null,
+  weightKg: number | null,
+  heightCm: number | null,
+): number | null {
+  if (!steps || steps <= 0) return null;
+  const kcalPer1000Steps = calculateKcalPer1000Steps(weightKg, heightCm);
+  if (kcalPer1000Steps === null) return null;
+  return Math.round((steps / 1000) * kcalPer1000Steps);
+}
+
 const ML_PER_KG_BY_SEX: Record<BiologicalSex, number> = {
   // Commonly cited sports-nutrition range is 30-35ml/kg; split by the
   // typical difference in body-water percentage between sexes rather than

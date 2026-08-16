@@ -235,6 +235,20 @@ function formatCalorieBalance(kcal: number): string {
 }
 
 /**
+ * Deterministic non-workout-steps calorie figure, computed by the caller
+ * (from structured `workout_logs.non_workout_steps` input, never AI-parsed
+ * text — see `calculateStepsCaloriesBurned`) and threaded through here so
+ * it can be folded into `workout_calories_burned` the same authoritative
+ * way regardless of what the AI's own response does or doesn't say about
+ * steps. `steps` is kept alongside `caloriesBurned` only for display
+ * (the synthesized workout_exercises entry's detail text).
+ */
+export interface StepsInput {
+  steps: number;
+  caloriesBurned: number;
+}
+
+/**
  * Extracts, validates, and normalizes the JSON block from a Claude/Gemini
  * response. `bmr` — when known — lets this override the AI's own stated
  * calorie_balance_kcal with a deterministic
@@ -253,8 +267,21 @@ function formatCalorieBalance(kcal: number): string {
  * flat sedentary multiplier is used instead of the user's own
  * activity_level. Skipped when bmr is unavailable (e.g. profile
  * incomplete) — falls back to the AI's own figure rather than guessing.
+ *
+ * `stepsInput` — when known — is the deterministic replacement for
+ * whatever the AI itself did with non-workout steps. Reports "for many
+ * days steps just weren't considered" even after the log explicitly
+ * mentioned them (a smaller/faster model reading the instruction
+ * literally and skipping anything without sets/reps) — structured input
+ * removes the model from this number's existence altogether: any
+ * AI-itemized "steps"-named entry is stripped and replaced with our own,
+ * so the figure can never again depend on the model noticing it.
  */
-export function parseAiReportResponse(rawResponse: string, bmr?: number | null): AiReportJson {
+export function parseAiReportResponse(
+  rawResponse: string,
+  bmr?: number | null,
+  stepsInput?: StepsInput | null,
+): AiReportJson {
   const jsonText = extractJsonBlock(rawResponse);
 
   let data: unknown;
@@ -275,8 +302,31 @@ export function parseAiReportResponse(rawResponse: string, bmr?: number | null):
   const schema_version =
     typeof schemaVersionRaw === "number" ? schemaVersionRaw : CURRENT_SCHEMA_VERSION;
 
-  const workout_exercises = optionalExercises(obj, "workout_exercises");
+  const aiWorkoutExercises = optionalExercises(obj, "workout_exercises");
   const aiWorkoutCaloriesBurned = optionalNumber(obj, "workout_calories_burned");
+
+  // A deterministic steps figure supersedes anything the AI itself did
+  // with non-workout steps — strip any entry it itemized under that name
+  // (old prompt versions, or a response pasted from outside the app) so
+  // it's never double-counted alongside our own authoritative entry
+  // below. Left untouched when stepsInput is unavailable (e.g. this day
+  // predates the feature) — the AI's own free-text inference is still
+  // better than nothing in that case.
+  const stepsExercise: WorkoutExercise | null =
+    stepsInput && stepsInput.caloriesBurned > 0
+      ? {
+          name: "Daily Steps (non-workout)",
+          detail: `${stepsInput.steps.toLocaleString()} steps`,
+          calories_burned: stepsInput.caloriesBurned,
+        }
+      : null;
+  const dedupedWorkoutExercises = stepsExercise
+    ? aiWorkoutExercises?.filter((exercise) => !/\bsteps?\b/i.test(exercise.name))
+    : aiWorkoutExercises;
+  const workout_exercises: WorkoutExercise[] | undefined = stepsExercise
+    ? [...(dedupedWorkoutExercises ?? []), stepsExercise]
+    : dedupedWorkoutExercises;
+
   // The AI's own top-line total is not trustworthy arithmetic — asking any
   // model to sum many independently-estimated numbers is exactly the kind
   // of task this codebase already doesn't leave to an LLM (see
@@ -287,7 +337,10 @@ export function parseAiReportResponse(rawResponse: string, bmr?: number | null):
   // least one usable estimate, the sum of those is what gets stored —
   // never the AI's separately-stated figure — so the total shown is
   // always exactly what adding up the visible breakdown would give,
-  // by construction, regardless of which model generated it.
+  // by construction, regardless of which model generated it. Since
+  // `workout_exercises` here already includes the deterministic steps
+  // entry when there is one, this sum can never omit it the way a
+  // purely AI-driven total could.
   const exerciseCaloriesSum = workout_exercises
     ?.map((exercise) => exercise.calories_burned)
     .filter((value): value is number => value !== undefined)

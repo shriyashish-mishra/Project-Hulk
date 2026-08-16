@@ -36,17 +36,22 @@ export const AI_REPORT_JSON_EXAMPLE = {
     "This is the third session in four days with only one rest day taken — accumulated fatigue from that pattern outweighs today's own decent sleep and hydration, so recovery is trending down even though nothing about today in isolation looks off.",
   muscles_trained: ["chest", "shoulders", "triceps"],
   workout_duration_min: 55,
-  workout_calories_burned: 245,
+  // Structured exercises only — non-workout steps are tracked separately
+  // and added to this total automatically, never itemized here (see the
+  // "Non-workout steps" instruction above). This total is exactly the
+  // sum of workout_exercises below (60+30+25=115), same discipline that
+  // applies to it once the app adds the steps figure on top.
+  workout_calories_burned: 115,
   workout_exercises: [
     { name: "Incline Dumbbell Press", detail: "4x10", calories_burned: 60 },
     { name: "Lateral Raises", detail: "4x12", calories_burned: 30 },
     { name: "Overhead Tricep Extension", detail: "3x12", calories_burned: 25 },
-    { name: "Daily Steps (non-workout)", detail: "9k extra steps beyond the session", calories_burned: 130 },
   ],
-  // Computed last, from BMR (given under About Me) + the workout_calories_burned
-  // just calculated above — not a flat carry-over from prior days.
-  calorie_balance: "-320 kcal (deficit)",
-  calorie_balance_kcal: -320,
+  // Computed last, from resting+living expenditure (given under About Me)
+  // + the workout_calories_burned just calculated above — not a flat
+  // carry-over from prior days.
+  calorie_balance: "-185 kcal (deficit)",
+  calorie_balance_kcal: -185,
   strengths: [
     "Protein cleared target from whole-food sources — eggs at breakfast, chicken at lunch, dal at dinner",
     "Full push session with progressive loading across all four exercises",
