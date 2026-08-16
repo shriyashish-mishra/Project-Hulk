@@ -1,26 +1,96 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
-  ArrowUpRight,
-  Bug,
-  Clock,
-  Cpu,
-  Database,
-  Gauge,
-  Layers,
-  MessageCircleWarning,
-  Microscope,
-  Rocket,
-  ShieldCheck,
-  Smartphone,
-  Sparkles,
-  Timer,
-  TrendingDown,
+  ArrowRight,
+  CheckCircle2,
+  ChevronDown,
+  CircleDashed,
+  Dumbbell,
+  Footprints,
+  Moon,
+  Scale,
+  Utensils,
+  Wand2,
+  XCircle,
 } from "lucide-react";
-import { COLOR, CARD_BASE, inter } from "@/components/welcome/marketing-theme";
+import { COLOR, inter } from "@/components/welcome/marketing-theme";
+
+/* ---------------------------------------------------------------------- */
+/* Scroll-reveal primitives — no animation library; a plain               */
+/* IntersectionObserver hook is enough for a page this size, and keeps    */
+/* the marketing bundle free of a new dependency.                        */
+/* ---------------------------------------------------------------------- */
+
+function useInView<T extends HTMLElement>(threshold = 0.15) {
+  const ref = useRef<T | null>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [threshold]);
+
+  return { ref, inView };
+}
+
+function Reveal({
+  children,
+  delay = 0,
+  className,
+}: {
+  children: ReactNode;
+  delay?: number;
+  className?: string;
+}) {
+  const { ref, inView } = useInView<HTMLDivElement>();
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: inView ? 1 : 0,
+        transform: inView ? "translateY(0)" : "translateY(28px)",
+        transition: `opacity 700ms var(--ease-out-expo) ${delay}ms, transform 700ms var(--ease-out-expo) ${delay}ms`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Subtle scroll-linked drift for background glows — deliberately small (0.15-0.25x) so it reads as depth, not a slide show. */
+function useParallax(speed: number) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    let raf = 0;
+    function onScroll() {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        if (ref.current) ref.current.style.transform = `translateY(${window.scrollY * speed}px)`;
+      });
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, [speed]);
+  return ref;
+}
 
 /* ---------------------------------------------------------------------- */
 /* Header                                                                  */
@@ -28,7 +98,7 @@ import { COLOR, CARD_BASE, inter } from "@/components/welcome/marketing-theme";
 
 function Header() {
   return (
-    <header className="flex h-16 items-center justify-between px-5">
+    <header className="flex h-16 items-center px-5">
       <Link
         href="/welcome"
         className="flex items-center gap-2 text-sm font-semibold"
@@ -37,385 +107,633 @@ function Header() {
         <ArrowLeft className="size-4" />
         Project Hulk
       </Link>
-      <Link
-        href="/signup"
-        className="rounded-full px-4 py-2 text-xs font-bold"
-        style={{ backgroundColor: COLOR.mint, color: COLOR.bg }}
-      >
-        Create free account
-      </Link>
     </header>
   );
 }
 
 /* ---------------------------------------------------------------------- */
-/* Hero                                                                    */
+/* 1. Hero                                                                 */
 /* ---------------------------------------------------------------------- */
 
 function Hero() {
+  const glowRef = useParallax(0.15);
   return (
-    <section className="animate-fade-up flex flex-col gap-5 px-5 pt-6">
-      <span
-        className="inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold tracking-[0.14em] uppercase"
-        style={{ borderColor: `${COLOR.mint}4D`, backgroundColor: COLOR.mintGlow, color: COLOR.mint }}
+    <section className="relative flex min-h-[88vh] flex-col justify-center overflow-hidden px-5">
+      <div
+        ref={glowRef}
+        className="pointer-events-none absolute top-[-20%] left-1/2 size-[520px] -translate-x-1/2 rounded-full"
+        style={{ background: `radial-gradient(circle, ${COLOR.mintGlow} 0%, transparent 70%)` }}
+      />
+      <div className="animate-fade-up relative flex flex-col gap-6">
+        <span
+          className="text-xs font-bold tracking-[0.32em] uppercase"
+          style={{ color: COLOR.textMuted }}
+        >
+          Project Hulk
+        </span>
+        <h1
+          className="text-[15vw] leading-[0.98] font-black tracking-tight text-balance sm:text-[64px]"
+          style={{ color: COLOR.textPrimary }}
+        >
+          I didn&rsquo;t set out to build a fitness app.
+        </h1>
+        <p className="text-lg" style={{ color: COLOR.textSecondary }}>
+          I wanted to understand my own body.
+        </p>
+      </div>
+      <div
+        className="absolute bottom-10 left-1/2 flex -translate-x-1/2 animate-bounce flex-col items-center gap-1"
+        style={{ color: COLOR.textMuted }}
       >
-        <Sparkles className="size-3" />
-        The story
-      </span>
-      <h1
-        className="text-[38px] leading-[1.02] font-black tracking-tight text-balance"
-        style={{ color: COLOR.textPrimary }}
-      >
-        I built a fitness app so I&rsquo;d stop lying to my spreadsheet.
-      </h1>
-      <p className="text-[15px] leading-7" style={{ color: COLOR.textSecondary }}>
-        I&rsquo;m Shriyashish. Then I spent a very long weekend arguing with three different AI models about
-        whether my calorie deficit was 600 or 130 &mdash; same day, same data. Here&rsquo;s that story, the
-        decisions I&rsquo;d defend at a dinner party, and the stack it&rsquo;s built with.
-      </p>
+        <ChevronDown className="size-5" />
+      </div>
     </section>
   );
 }
 
 /* ---------------------------------------------------------------------- */
-/* Section shell                                                           */
+/* Section shell — deliberately not a card: most of this page is          */
+/* typography directly on black, per the brief's "avoid rounded cards     */
+/* everywhere."                                                           */
 /* ---------------------------------------------------------------------- */
 
-function StorySection({
+function Section({
   eyebrow,
-  title,
-  delay = "0ms",
   children,
+  className,
 }: {
-  eyebrow: string;
-  title: string;
-  delay?: string;
+  eyebrow?: string;
   children: ReactNode;
+  className?: string;
 }) {
   return (
-    <section className="animate-fade-up flex flex-col gap-4 px-5 py-7" style={{ animationDelay: delay }}>
-      <div className="flex flex-col gap-1.5">
-        <span
-          className="text-xs font-bold tracking-[0.14em] uppercase"
-          style={{ color: COLOR.mint }}
-        >
-          {eyebrow}
-        </span>
-        <h2 className="text-2xl font-bold text-balance" style={{ color: COLOR.textPrimary }}>
-          {title}
-        </h2>
-      </div>
+    <section className={`flex flex-col gap-6 px-5 py-20 ${className ?? ""}`}>
+      {eyebrow && (
+        <Reveal>
+          <span className="text-xs font-bold tracking-[0.28em] uppercase" style={{ color: COLOR.mint }}>
+            {eyebrow}
+          </span>
+        </Reveal>
+      )}
       {children}
     </section>
   );
 }
 
 /* ---------------------------------------------------------------------- */
-/* Origin story                                                            */
+/* 2. The Problem                                                          */
 /* ---------------------------------------------------------------------- */
 
-function OriginSection() {
+const SCATTERED = [
+  { icon: Utensils, label: "Food", rotate: -6 },
+  { icon: Dumbbell, label: "Workouts", rotate: 4 },
+  { icon: Scale, label: "Weight", rotate: -3 },
+  { icon: Footprints, label: "Steps", rotate: 7 },
+  { icon: Moon, label: "Sleep", rotate: -8 },
+  { icon: Wand2, label: "AI", rotate: 5 },
+] as const;
+
+function ProblemSection() {
   return (
-    <StorySection eyebrow="How this started" title="Log once, stop thinking about it" delay="60ms">
-      <p className="text-sm leading-7" style={{ color: COLOR.textSecondary }}>
-        I was tired of opening four different apps to log a meal, a workout, my water, and my weight, then
-        reconciling it all myself to see if the day actually went well. So I built one journal instead &mdash; plus
-        a nightly coach report that started as the cheapest version of &ldquo;AI feedback&rdquo; I could ship: the
-        app built a prompt, I pasted it into my own Claude, I brought the reply back. Zero cost, zero ambiguity
-        about where my data went. It also meant four manual steps, every single night, between logging and
-        actually having a report. Eventually that friction won.
-      </p>
-    </StorySection>
+    <Section eyebrow="The problem">
+      <div className="flex flex-wrap gap-3">
+        {SCATTERED.map(({ icon: Icon, label, rotate }, index) => (
+          <Reveal key={label} delay={index * 60}>
+            <div
+              className="flex items-center gap-2 rounded-2xl border px-4 py-3"
+              style={{
+                borderColor: COLOR.border,
+                backgroundColor: COLOR.card,
+                transform: `rotate(${rotate}deg)`,
+              }}
+            >
+              <Icon className="size-4" style={{ color: COLOR.textMuted }} />
+              <span className="text-sm font-medium" style={{ color: COLOR.textSecondary }}>
+                {label}
+              </span>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+      <Reveal delay={200}>
+        <h2
+          className="mt-2 text-[40px] leading-[1.02] font-black tracking-tight text-balance sm:text-6xl"
+          style={{ color: COLOR.textPrimary }}
+        >
+          Too much data.
+          <br />
+          No context.
+        </h2>
+      </Reveal>
+      <Reveal delay={260}>
+        <p className="text-base" style={{ color: COLOR.textSecondary }}>
+          Everything was tracked. Nothing connected.
+        </p>
+      </Reveal>
+    </Section>
   );
 }
 
 /* ---------------------------------------------------------------------- */
-/* The bake-off — the fun, war-story-heavy centerpiece                     */
+/* Mini "screenshot" recreations — no real image assets exist for this    */
+/* app yet, so each stage gets a small, accurate recreation of its real   */
+/* UI instead of a placeholder box.                                       */
 /* ---------------------------------------------------------------------- */
 
-interface WarStoryProps {
-  icon: typeof Bug;
-  title: string;
-  body: string;
-  stat?: { label: string; value: string; sub?: string };
-}
-
-function WarStoryCard({ icon: Icon, title, body, stat }: WarStoryProps) {
+function MockFrame({ children }: { children: ReactNode }) {
   return (
-    <div className={CARD_BASE} style={{ backgroundColor: COLOR.cardElevated, borderColor: COLOR.border }}>
-      <div className="flex items-start gap-3">
-        <span
-          className="flex size-9 shrink-0 items-center justify-center rounded-full"
-          style={{ backgroundColor: COLOR.mintGlow, color: COLOR.mint }}
-        >
-          <Icon className="size-4" />
-        </span>
-        <div className="flex-1">
-          <h3 className="text-[15px] font-semibold" style={{ color: COLOR.textPrimary }}>
-            {title}
-          </h3>
-          <p className="mt-1 text-sm leading-6" style={{ color: COLOR.textSecondary }}>
-            {body}
-          </p>
-        </div>
-      </div>
-      {stat && (
-        <div
-          className="mt-3 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-          style={{ backgroundColor: "rgba(255,255,255,0.04)" }}
-        >
-          <span className="text-xs font-medium" style={{ color: COLOR.textMuted }}>
-            {stat.label}
-          </span>
-          <span className="text-right">
-            <span className="text-sm font-bold tabular-nums" style={{ color: COLOR.mint }}>
-              {stat.value}
-            </span>
-            {stat.sub && (
-              <span className="ml-1.5 text-xs" style={{ color: COLOR.textMuted }}>
-                {stat.sub}
-              </span>
-            )}
-          </span>
-        </div>
-      )}
+    <div
+      className="flex w-full max-w-[220px] flex-col gap-2.5 rounded-[22px] border p-3.5"
+      style={{ borderColor: COLOR.border, backgroundColor: "#050505" }}
+    >
+      {children}
     </div>
   );
 }
 
-const WAR_STORIES: WarStoryProps[] = [
-  {
-    icon: MessageCircleWarning,
-    title: "The AI thought I was superhuman",
-    body: "First automated report: the free model scored my recovery 90/100 on a day I'd trained three times with one rest day. The old manual report for that exact day said 58. Somewhere in between is the gap between \"listen to your body\" and \"you're always fine, actually.\"",
-    stat: { label: "Recovery score, same day", value: "58 → 90", sub: "not an improvement" },
-  },
-  {
-    icon: Bug,
-    title: "Resting was scored as failing",
-    body: "A rest day scored a flat 0 for workout effort, like recovering was a crime. The old reports had scored deliberate rest days 90 and 100. The prompt just never said what to do with a day that had no workout at all.",
-  },
-  {
-    icon: TrendingDown,
-    title: "My calorie deficit had main-character energy",
-    body: "Same nutrition log, three real runs, three deficits: -350, then -150, then -600. My goal deliberately never gets a calorie target, so every model was quietly inventing its own maintenance number from nothing. The fix: hand it my own recent history and tell it to stay consistent with itself.",
-    stat: { label: "Deficit spread, same data", value: "450 kcal", sub: "of pure vibes" },
-  },
-  {
-    icon: Timer,
-    title: "I optimized the wrong thing first",
-    body: "Reports were taking 30+ seconds, so I assumed the unused markdown report nobody reads was the bottleneck. Cut it. Response size dropped by half. Speed didn't move at all. The real fix was a lighter model, found only by timing things instead of guessing.",
-    stat: { label: "Report generation time", value: "31s → 5s", sub: "after actually measuring" },
-  },
-] as const;
-
-function BakeOffSection() {
+function MockIdea() {
   return (
-    <StorySection
-      eyebrow="The part with the bugs"
-      title="I tried to remove four manual steps. Found new problems instead."
-      delay="120ms"
-    >
-      <div className="flex flex-col gap-3">
-        {WAR_STORIES.map((story) => (
-          <WarStoryCard key={story.title} {...story} />
+    <MockFrame>
+      <div
+        className="flex flex-col gap-2 rounded-xl border border-dashed p-3"
+        style={{ borderColor: "rgba(255,255,255,0.15)" }}
+      >
+        <span className="text-[11px]" style={{ color: COLOR.textMuted }}>
+          notes.txt
+        </span>
+        <p className="text-xs leading-5" style={{ color: COLOR.textSecondary }}>
+          log food. log workout. see if the day actually went well?
+        </p>
+      </div>
+    </MockFrame>
+  );
+}
+
+function MockWebApp() {
+  return (
+    <MockFrame>
+      <span className="text-[10px] font-semibold tracking-wide uppercase" style={{ color: COLOR.textMuted }}>
+        Breakfast
+      </span>
+      <p className="text-xs leading-5" style={{ color: COLOR.textPrimary }}>
+        2 eggs, toast, black coffee
+      </p>
+      <div className="h-px w-full" style={{ backgroundColor: COLOR.border }} />
+      <span className="text-[10px] font-semibold tracking-wide uppercase" style={{ color: COLOR.textMuted }}>
+        Workout
+      </span>
+      <p className="text-xs leading-5" style={{ color: COLOR.textPrimary }}>
+        Push day — 4 exercises
+      </p>
+    </MockFrame>
+  );
+}
+
+function MockAiReports() {
+  return (
+    <MockFrame>
+      <div className="flex items-center gap-2.5">
+        <span
+          className="flex size-9 items-center justify-center rounded-full text-sm font-bold"
+          style={{ backgroundColor: COLOR.mintGlow, color: COLOR.mint }}
+        >
+          82
+        </span>
+        <span className="text-xs font-semibold" style={{ color: COLOR.textPrimary }}>
+          Overall score
+        </span>
+      </div>
+      <p className="text-[11px] leading-5 italic" style={{ color: COLOR.textSecondary }}>
+        &ldquo;Protein cleared target from whole-food sources.&rdquo;
+      </p>
+    </MockFrame>
+  );
+}
+
+function MockContextEngine() {
+  return (
+    <MockFrame>
+      <div className="flex items-baseline justify-between">
+        <span className="text-base font-bold" style={{ color: COLOR.textPrimary }}>
+          1650 <span className="text-[10px] font-normal" style={{ color: COLOR.textMuted }}>kcal</span>
+        </span>
+        <span className="text-[11px]" style={{ color: COLOR.mint }}>
+          −299 deficit
+        </span>
+      </div>
+      <div className="grid grid-cols-4 gap-1.5">
+        {["P", "C", "F", "Fb"].map((m) => (
+          <div key={m} className="rounded-lg py-1.5 text-center" style={{ backgroundColor: COLOR.cardElevated }}>
+            <span className="text-[9px]" style={{ color: COLOR.textMuted }}>
+              {m}
+            </span>
+          </div>
         ))}
       </div>
-      <p className="text-sm leading-7" style={{ color: COLOR.textSecondary }}>
-        (There was more &mdash; a smarter model that kept getting rate-limited into silence, and workout data that
-        was calculated correctly the whole time but never once rendered on screen.) Every fix here has the same
-        shape: notice a number that looks wrong, pull the real data, run it again, only then change anything.
+    </MockFrame>
+  );
+}
+
+function MockNativeApp() {
+  return (
+    <MockFrame>
+      <div
+        className="flex flex-col gap-2 rounded-2xl border p-2.5"
+        style={{ borderColor: "rgba(255,255,255,0.12)" }}
+      >
+        <span className="mx-auto h-1 w-8 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.2)" }} />
+        <div className="flex items-center justify-between">
+          <Footprints className="size-3.5" style={{ color: COLOR.mint }} />
+          <span className="text-[11px] font-bold" style={{ color: COLOR.textPrimary }}>
+            10,482
+          </span>
+        </div>
+        <div className="flex items-center justify-between">
+          <Dumbbell className="size-3.5" style={{ color: COLOR.mint }} />
+          <span className="text-[11px] font-bold" style={{ color: COLOR.textPrimary }}>
+            Logged
+          </span>
+        </div>
+      </div>
+    </MockFrame>
+  );
+}
+
+function MockHulkToday() {
+  return (
+    <MockFrame>
+      <div className="flex items-center justify-between">
+        <span
+          className="flex size-8 items-center justify-center rounded-full text-xs font-bold"
+          style={{ backgroundColor: COLOR.mintGlow, color: COLOR.mint }}
+        >
+          88
+        </span>
+        <span className="text-[11px]" style={{ color: COLOR.mint }}>
+          −299 kcal
+        </span>
+      </div>
+      <div className="h-px w-full" style={{ backgroundColor: COLOR.border }} />
+      <p className="text-[11px] leading-5" style={{ color: COLOR.textSecondary }}>
+        16,000 steps · 8 exercises · sleep on target
       </p>
-    </StorySection>
+    </MockFrame>
+  );
+}
+
+const TIMELINE = [
+  { name: "Idea", sentence: "A note that said “log everything in one place.”", Mock: MockIdea },
+  { name: "Web App", sentence: "One journal instead of four separate apps.", Mock: MockWebApp },
+  { name: "AI Reports", sentence: "A nightly coach, pasted in by hand at first.", Mock: MockAiReports },
+  { name: "Context Engine", sentence: "Numbers that finally agreed with each other.", Mock: MockContextEngine },
+  { name: "Native App", sentence: "The same brain, in your pocket.", Mock: MockNativeApp },
+  { name: "Hulk Today", sentence: "Log once. Understand the whole day.", Mock: MockHulkToday },
+] as const;
+
+/* ---------------------------------------------------------------------- */
+/* 3. The Evolution                                                        */
+/* ---------------------------------------------------------------------- */
+
+function EvolutionSection() {
+  return (
+    <Section eyebrow="The evolution">
+      <Reveal>
+        <h2
+          className="text-4xl leading-[1.05] font-black tracking-tight text-balance sm:text-5xl"
+          style={{ color: COLOR.textPrimary }}
+        >
+          Six versions. One question.
+        </h2>
+      </Reveal>
+      <div className="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2">
+        {TIMELINE.map(({ name, sentence, Mock }, index) => (
+          <Reveal key={name} delay={index * 80} className="flex shrink-0 snap-start flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold tabular-nums" style={{ color: COLOR.mint }}>
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <span className="text-sm font-bold" style={{ color: COLOR.textPrimary }}>
+                {name}
+              </span>
+            </div>
+            <Mock />
+            <p className="max-w-[220px] text-xs leading-5" style={{ color: COLOR.textSecondary }}>
+              {sentence}
+            </p>
+            {index < TIMELINE.length - 1 && (
+              <ArrowRight className="mt-1 size-4" style={{ color: COLOR.textMuted }} />
+            )}
+          </Reveal>
+        ))}
+      </div>
+    </Section>
   );
 }
 
 /* ---------------------------------------------------------------------- */
-/* Decisions                                                               */
+/* 4. "Then AI started doing weird things."                               */
+/* ---------------------------------------------------------------------- */
+
+function useCountUp(target: number, active: boolean, delayMs: number, durationMs = 900) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    let raf = 0;
+    const timeout = setTimeout(() => {
+      const start = performance.now();
+      function tick(now: number) {
+        const progress = Math.min(1, (now - start) / durationMs);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setValue(Math.round(target * eased));
+        if (progress < 1) raf = requestAnimationFrame(tick);
+      }
+      raf = requestAnimationFrame(tick);
+    }, delayMs);
+    return () => {
+      clearTimeout(timeout);
+      cancelAnimationFrame(raf);
+    };
+  }, [active, target, delayMs, durationMs]);
+  return value;
+}
+
+const DEFICITS = [-150, -350, -600] as const;
+
+function DeficitChips({ active }: { active: boolean }) {
+  // Three fixed hook calls, not a .map() over them — DEFICITS never changes
+  // length, but calling a hook from inside a loop callback is exactly the
+  // kind of thing worth just not doing.
+  const values = [
+    useCountUp(DEFICITS[0], active, 0),
+    useCountUp(DEFICITS[1], active, 500),
+    useCountUp(DEFICITS[2], active, 1000),
+  ];
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      {values.map((value, index) => (
+        <div key={DEFICITS[index]} className="flex items-center gap-3">
+          <span
+            className="rounded-2xl border px-4 py-2.5 text-2xl font-black tabular-nums sm:text-3xl"
+            style={{
+              borderColor: index === values.length - 1 ? COLOR.mint : COLOR.border,
+              color: index === values.length - 1 ? COLOR.mint : COLOR.textPrimary,
+              backgroundColor: COLOR.card,
+            }}
+          >
+            {value} kcal
+          </span>
+          {index < values.length - 1 && <ArrowRight className="size-4" style={{ color: COLOR.textMuted }} />}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AIChaosSection() {
+  const { ref, inView } = useInView<HTMLDivElement>(0.4);
+  return (
+    <Section eyebrow="Then AI started doing weird things">
+      <div ref={ref} className="flex flex-col gap-6">
+        <DeficitChips active={inView} />
+        <p className="text-lg font-semibold" style={{ color: COLOR.textPrimary }}>
+          Same day. Three answers.
+        </p>
+        <div
+          style={{
+            opacity: inView ? 1 : 0,
+            transition: "opacity 700ms var(--ease-out-expo) 2200ms",
+          }}
+        >
+          <p className="text-2xl leading-tight font-bold text-balance sm:text-3xl" style={{ color: COLOR.mint }}>
+            The problem wasn&rsquo;t always the AI.
+            <br />
+            Sometimes it was the context.
+          </p>
+        </div>
+      </div>
+    </Section>
+  );
+}
+
+/* ---------------------------------------------------------------------- */
+/* 5. Decisions I Made                                                     */
 /* ---------------------------------------------------------------------- */
 
 const DECISIONS = [
-  {
-    icon: ShieldCheck,
-    title: "The manual path never goes away",
-    body: "Automatic is the default now, but pasting into your own Claude is still one tap away on every report screen.",
-  },
-  {
-    icon: Rocket,
-    title: "Photos leave the app for no one, automatically",
-    body: "Every other data point can flow into the report on its own. Progress photos never do. Not once.",
-  },
-  {
-    icon: Sparkles,
-    title: "One mint, used sparingly",
-    body: "Near-black surfaces, one accent color. If a screen has more than one thing glowing, that's a bug.",
-  },
-  {
-    icon: Microscope,
-    title: "Nothing ships on vibes",
-    body: "Every AI-facing fix here was verified against real logged data before it shipped. No before/after number, no ship.",
-  },
+  { title: "SQLite", body: "Personal data should work offline." },
+  { title: "AI Context Engine", body: "Raw data isn't context." },
+  { title: "Manual AI fallback", body: "Don't let automation become a black box." },
+  { title: "Privacy", body: "Not everything needs to leave the device." },
+  { title: "Verification", body: "If AI says it, I still check it." },
 ] as const;
+
+function DecisionCard({ title, body }: { title: string; body: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => setOpen((prev) => !prev)}
+      aria-expanded={open}
+      className="flex flex-col gap-1.5 rounded-2xl border p-4 text-left transition-all duration-300 active:scale-[0.98]"
+      style={{
+        borderColor: open ? `${COLOR.mint}55` : COLOR.border,
+        backgroundColor: open ? COLOR.cardElevated : COLOR.card,
+      }}
+    >
+      <span className="text-sm font-bold" style={{ color: COLOR.textPrimary }}>
+        {title}
+      </span>
+      <p
+        className="text-sm leading-6"
+        style={{
+          color: COLOR.mint,
+          maxHeight: open ? "80px" : "0px",
+          opacity: open ? 1 : 0,
+          overflow: "hidden",
+          transition: "all 300ms var(--ease-out-expo)",
+        }}
+      >
+        {body}
+      </p>
+    </button>
+  );
+}
 
 function DecisionsSection() {
   return (
-    <StorySection eyebrow="Calls I'd defend" title="A few decisions I'm not walking back" delay="180ms">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {DECISIONS.map(({ icon: Icon, title, body }) => (
-          <div key={title} className={CARD_BASE} style={{ backgroundColor: COLOR.card, borderColor: "rgba(255,255,255,0.05)" }}>
-            <span
-              className="flex size-9 items-center justify-center rounded-full"
-              style={{ backgroundColor: COLOR.mintGlow, color: COLOR.mint }}
-            >
-              <Icon className="size-4" />
-            </span>
-            <h3 className="mt-3 text-[15px] font-semibold" style={{ color: COLOR.textPrimary }}>
-              {title}
-            </h3>
-            <p className="mt-1 text-sm leading-6" style={{ color: COLOR.textSecondary }}>
-              {body}
-            </p>
-          </div>
+    <Section eyebrow="Decisions I made">
+      <Reveal>
+        <h2 className="text-3xl font-black tracking-tight" style={{ color: COLOR.textPrimary }}>
+          A few calls I&rsquo;m not walking back.
+        </h2>
+      </Reveal>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {DECISIONS.map((decision, index) => (
+          <Reveal key={decision.title} delay={index * 60}>
+            <DecisionCard {...decision} />
+          </Reveal>
         ))}
       </div>
-    </StorySection>
+    </Section>
   );
 }
 
 /* ---------------------------------------------------------------------- */
-/* Stack                                                                    */
+/* 6. Things I Got Wrong                                                   */
 /* ---------------------------------------------------------------------- */
 
-const STACK_GROUPS = [
-  {
-    icon: Layers,
-    label: "Frontend",
-    items: ["Next.js 16 (App Router)", "React 19 + TypeScript", "Tailwind CSS v4", "Base UI + a custom shadcn-style kit"],
-  },
-  {
-    icon: Database,
-    label: "Backend & data",
-    items: ["Supabase — Postgres, Auth, Storage, RLS on every table"],
-  },
-  {
-    icon: Cpu,
-    label: "AI",
-    items: ["Gemini (gemini-3.5-flash-lite) for the nightly report", "Claude, manually, as the always-available fallback", "An MCP server so Claude.ai can log by chat"],
-  },
-  {
-    icon: Gauge,
-    label: "Infra",
-    items: ["Vercel — hosting + Cron for the nightly run"],
-  },
-  {
-    icon: Smartphone,
-    label: "Mobile",
-    items: ["A separate native app — Expo + React Native"],
-  },
+const GOT_WRONG = [
+  { verdict: "Blamed the AI.", detail: "Recovery score: 58 → 90. Same day.", wrong: true },
+  { verdict: "Blamed the prompt.", detail: "A rest day scored zero for effort.", wrong: true },
+  { verdict: "Blamed the model.", detail: "It was a rate limit.", wrong: true },
+  { verdict: "It was actually my rendering logic.", detail: "The data was correct the whole time.", wrong: false },
 ] as const;
 
-function StackSection() {
+function GotWrongSection() {
   return (
-    <StorySection eyebrow="What it's built with" title="The stack, honestly" delay="240ms">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {STACK_GROUPS.map(({ icon: Icon, label, items }) => (
-          <div key={label} className={CARD_BASE} style={{ backgroundColor: COLOR.card, borderColor: "rgba(255,255,255,0.05)" }}>
-            <div className="flex items-center gap-2">
-              <Icon className="size-4" style={{ color: COLOR.mint }} />
-              <span className="text-sm font-semibold" style={{ color: COLOR.textPrimary }}>
-                {label}
-              </span>
+    <Section eyebrow="Things I got wrong">
+      <Reveal>
+        <h2 className="text-3xl font-black tracking-tight" style={{ color: COLOR.textPrimary }}>
+          A very honest debug log.
+        </h2>
+      </Reveal>
+      <div className="flex flex-col gap-2 font-mono">
+        {GOT_WRONG.map((item, index) => (
+          <Reveal key={item.verdict} delay={index * 90}>
+            <div
+              className="flex items-center gap-3 rounded-xl border px-4 py-3"
+              style={{ borderColor: COLOR.border, backgroundColor: COLOR.card }}
+            >
+              {item.wrong ? (
+                <XCircle className="size-4 shrink-0" style={{ color: "#71717A" }} />
+              ) : (
+                <CheckCircle2 className="size-4 shrink-0" style={{ color: COLOR.mint }} />
+              )}
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-2.5">
+                <span
+                  className="text-sm font-semibold"
+                  style={{
+                    color: item.wrong ? COLOR.textSecondary : COLOR.mint,
+                    textDecoration: item.wrong ? "line-through" : "none",
+                    textDecorationColor: "rgba(161,161,170,0.5)",
+                  }}
+                >
+                  {item.verdict}
+                </span>
+                <span className="text-xs" style={{ color: COLOR.textMuted }}>
+                  {item.detail}
+                </span>
+              </div>
             </div>
-            <ul className="mt-2.5 flex flex-col gap-1.5">
-              {items.map((item) => (
-                <li key={item} className="flex items-start gap-2 text-sm leading-6" style={{ color: COLOR.textSecondary }}>
-                  <span className="mt-2 size-1 shrink-0 rounded-full" style={{ backgroundColor: COLOR.mint }} />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
+          </Reveal>
         ))}
       </div>
-    </StorySection>
+      <Reveal delay={GOT_WRONG.length * 90}>
+        <p className="text-sm font-semibold" style={{ color: COLOR.textMuted }}>
+          Classic.
+        </p>
+      </Reveal>
+    </Section>
   );
 }
 
 /* ---------------------------------------------------------------------- */
-/* Closing CTA                                                             */
+/* 7. Hulk Today                                                           */
 /* ---------------------------------------------------------------------- */
 
-function ClosingSection() {
+const FLOW = ["LOG", "CONTEXT", "AI", "INSIGHT"] as const;
+
+function TodaySection() {
+  const glowRef = useParallax(0.1);
   return (
-    <section className="px-5 py-6">
+    <Section eyebrow="Right now" className="relative overflow-hidden">
       <div
-        className="animate-fade-up relative overflow-hidden rounded-3xl border p-6"
-        style={{ borderColor: COLOR.border, backgroundColor: COLOR.card, animationDelay: "300ms" }}
-      >
-        <div
-          className="pointer-events-none absolute -top-20 -right-20 size-56 rounded-full"
-          style={{ background: `radial-gradient(circle, ${COLOR.mintGlow} 0%, transparent 70%)` }}
-        />
-        <div className="relative flex flex-col gap-3">
-          <span
-            className="flex size-11 items-center justify-center rounded-2xl"
-            style={{ backgroundColor: COLOR.mintGlow, color: COLOR.mint }}
-          >
-            <Clock className="size-5" />
-          </span>
-          <h2 className="text-2xl font-bold" style={{ color: COLOR.textPrimary }}>
-            Still being built, in public commits.
-          </h2>
-          <p className="text-sm leading-6" style={{ color: COLOR.textSecondary }}>
-            No roadmap deck, no launch date &mdash; just a personal tool getting measurably better one verified fix
-            at a time.
-          </p>
+        ref={glowRef}
+        className="pointer-events-none absolute top-10 right-[-15%] size-[420px] rounded-full"
+        style={{ background: `radial-gradient(circle, ${COLOR.mintGlow} 0%, transparent 70%)` }}
+      />
+      <div className="relative flex flex-col items-center gap-8 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4">
+          <Reveal>
+            <h2
+              className="text-5xl leading-[0.98] font-black tracking-tight sm:text-6xl"
+              style={{ color: COLOR.textPrimary }}
+            >
+              So this is Hulk.
+            </h2>
+          </Reveal>
+          <Reveal delay={80}>
+            <p className="max-w-sm text-base leading-7" style={{ color: COLOR.textSecondary }}>
+              A personal system for turning everyday health data into something I can actually understand.
+            </p>
+          </Reveal>
         </div>
-        <div className="relative mt-6 flex flex-col gap-2">
-          <Link
-            href="/signup"
-            className="flex h-14 items-center justify-center rounded-2xl text-base font-bold transition-all duration-200 hover:brightness-110 active:scale-[0.98]"
-            style={{ backgroundColor: COLOR.mint, color: COLOR.bg }}
-          >
-            Create free account
-          </Link>
-          <a
-            href="https://shriyashish.lovable.app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-1 inline-flex items-center justify-center gap-1.5 text-sm font-semibold"
-            style={{ color: COLOR.textSecondary }}
-          >
-            Or see what else I&rsquo;ve built
-            <ArrowUpRight className="size-3.5" />
-          </a>
-        </div>
+        <Reveal delay={160}>
+          <MockHulkToday />
+        </Reveal>
       </div>
+      <Reveal delay={240} className="flex flex-wrap items-center gap-2.5">
+        {FLOW.map((step, index) => (
+          <div key={step} className="flex items-center gap-2.5">
+            <span
+              className="rounded-full border px-4 py-2 text-xs font-bold tracking-[0.1em]"
+              style={{
+                borderColor: index === FLOW.length - 1 ? "transparent" : COLOR.border,
+                backgroundColor: index === FLOW.length - 1 ? COLOR.mint : "transparent",
+                color: index === FLOW.length - 1 ? COLOR.bg : COLOR.textSecondary,
+              }}
+            >
+              {step}
+            </span>
+            {index < FLOW.length - 1 && <ArrowRight className="size-3.5" style={{ color: COLOR.textMuted }} />}
+          </div>
+        ))}
+      </Reveal>
+    </Section>
+  );
+}
+
+/* ---------------------------------------------------------------------- */
+/* 8. Ending                                                               */
+/* ---------------------------------------------------------------------- */
+
+function EndingSection() {
+  return (
+    <section className="flex flex-col items-center gap-10 px-5 py-28 text-center">
+      <Reveal>
+        <CircleDashed className="size-6" style={{ color: COLOR.textMuted }} />
+      </Reveal>
+      <Reveal delay={80}>
+        <h2
+          className="max-w-lg text-3xl leading-tight font-black tracking-tight text-balance sm:text-4xl"
+          style={{ color: COLOR.textPrimary }}
+        >
+          Still building. Still breaking things. Still learning.
+        </h2>
+      </Reveal>
+      <Reveal delay={160}>
+        <span className="text-xs font-bold tracking-[0.28em]" style={{ color: COLOR.textMuted }}>
+          PROJECT HULK — 2026
+        </span>
+      </Reveal>
     </section>
   );
 }
 
-/* ---------------------------------------------------------------------- */
-/* Footer                                                                   */
-/* ---------------------------------------------------------------------- */
-
 function Footer() {
   return (
-    <footer className="flex flex-col gap-4 border-t px-5 py-8" style={{ borderColor: COLOR.border }}>
-      <div className="flex flex-wrap gap-4">
-        {[
-          { href: "/welcome", label: "Home" },
-          { href: "/privacy", label: "Privacy" },
-          { href: "/terms", label: "Terms" },
-        ].map((link) => (
-          <Link key={link.label} href={link.href} className="text-xs" style={{ color: COLOR.textMuted }}>
-            {link.label}
-          </Link>
-        ))}
-      </div>
-      <p className="text-xs" style={{ color: COLOR.textMuted }}>
-        &copy; {new Date().getFullYear()} Project Hulk. Recovery score not actually 90.
-      </p>
+    <footer className="flex flex-wrap justify-center gap-5 px-5 py-8" style={{ borderTop: `1px solid ${COLOR.border}` }}>
+      {[
+        { href: "/welcome", label: "Home" },
+        { href: "/privacy", label: "Privacy" },
+        { href: "/terms", label: "Terms" },
+        { href: "/signup", label: "Create free account" },
+      ].map((link) => (
+        <Link key={link.label} href={link.href} className="text-xs" style={{ color: COLOR.textMuted }}>
+          {link.label}
+        </Link>
+      ))}
     </footer>
   );
 }
@@ -431,14 +749,16 @@ export function ProjectHulkStoryPage() {
       className={`relative left-1/2 min-h-screen w-screen -translate-x-1/2 -mt-8 -mb-28 ${inter.className}`}
       style={{ backgroundColor: COLOR.bg }}
     >
-      <div className="mx-auto flex max-w-md flex-col md:max-w-2xl">
+      <div className="mx-auto flex max-w-md flex-col overflow-x-hidden md:max-w-2xl">
         <Header />
         <Hero />
-        <OriginSection />
-        <BakeOffSection />
+        <ProblemSection />
+        <EvolutionSection />
+        <AIChaosSection />
         <DecisionsSection />
-        <StackSection />
-        <ClosingSection />
+        <GotWrongSection />
+        <TodaySection />
+        <EndingSection />
         <Footer />
       </div>
     </div>
