@@ -65,6 +65,7 @@ export type Database = {
           created_at: string
           default_unit: string
           id: string
+          met_value: number | null
           name: string
           user_id: string
         }
@@ -73,6 +74,7 @@ export type Database = {
           created_at?: string
           default_unit?: string
           id?: string
+          met_value?: number | null
           name: string
           user_id: string
         }
@@ -81,6 +83,7 @@ export type Database = {
           created_at?: string
           default_unit?: string
           id?: string
+          met_value?: number | null
           name?: string
           user_id?: string
         }

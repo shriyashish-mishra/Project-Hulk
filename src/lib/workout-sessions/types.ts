@@ -32,6 +32,8 @@ export interface SessionExercise extends SessionExerciseInput {
   category: ExerciseCategory;
   position: number;
   sets_completed: number;
+  /** The exercise library's cached MET classification, joined in for the calorie estimate — see estimate.ts and exercise-library/met.ts. Null until classified. */
+  met_value: number | null;
 }
 
 export interface WorkoutSession {

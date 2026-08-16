@@ -29,6 +29,7 @@ export function mapSessionExerciseRow(row: SessionExerciseRow, exercise: Exercis
     incline_percent: row.incline_percent,
     speed_kph: row.speed_kph,
     notes: row.notes,
+    met_value: exercise.met_value,
   };
 }
 

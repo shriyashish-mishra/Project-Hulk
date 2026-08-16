@@ -6,6 +6,7 @@ import { getExerciseLibrary } from "@/lib/exercise-library/queries";
 import { getSessionWeightSuggestions } from "@/lib/workout-sessions/exercise-progress";
 import { getSessionWithExercises } from "@/lib/workout-sessions/queries";
 import { requireOnboardedUser } from "@/lib/supabase/auth";
+import { getUserContext } from "@/lib/profile/context";
 
 interface ActiveSessionPageProps {
   params: Promise<{ sessionId: string }>;
@@ -15,7 +16,11 @@ export default async function ActiveSessionPage({ params }: ActiveSessionPagePro
   await requireOnboardedUser();
   const { sessionId } = await params;
 
-  const [session, exercises] = await Promise.all([getSessionWithExercises(sessionId), getExerciseLibrary()]);
+  const [session, exercises, userContext] = await Promise.all([
+    getSessionWithExercises(sessionId),
+    getExerciseLibrary(),
+    getUserContext(),
+  ]);
   if (!session) notFound();
 
   // Only meaningful while the session is still in progress — once
@@ -31,7 +36,12 @@ export default async function ActiveSessionPage({ params }: ActiveSessionPagePro
       </div>
       <Card>
         <CardContent>
-          <ActiveSession initialSession={session} exercises={exercises} weightSuggestions={weightSuggestions} />
+          <ActiveSession
+            initialSession={session}
+            exercises={exercises}
+            weightSuggestions={weightSuggestions}
+            bodyweightKg={userContext.latestWeightKg}
+          />
         </CardContent>
       </Card>
     </div>

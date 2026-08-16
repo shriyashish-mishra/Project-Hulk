@@ -30,6 +30,7 @@ export function mapTemplateExerciseRow(row: TemplateExerciseRow, exercise: Exerc
     default_incline_percent: row.default_incline_percent,
     default_speed_kph: row.default_speed_kph,
     notes: row.notes,
+    met_value: exercise.met_value,
   };
 }
 

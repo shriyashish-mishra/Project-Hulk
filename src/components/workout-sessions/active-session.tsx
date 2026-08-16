@@ -9,6 +9,7 @@ import { ExerciseLibraryPickerDrawer } from "@/components/workout-templates/exer
 import type { ExerciseLibraryItem } from "@/lib/exercise-library/types";
 import {
   addSessionExercise,
+  applyExerciseAsTemplateDefault,
   completeSession,
   revertSuggestedWeight,
   toggleSessionSet,
@@ -51,10 +52,12 @@ interface ActiveSessionProps {
   exercises: ExerciseLibraryItem[];
   /** Keyed by session_exercise id — flags exercises whose pre-filled weight already reflects a Hulk-computed bump/ease from the last time this template was completed. */
   weightSuggestions?: Record<string, SessionWeightSuggestion>;
+  /** For the MET-based calorie estimate (estimate.ts) — null renders the flat per-set/per-minute fallback for every exercise instead. */
+  bodyweightKg: number | null;
 }
 
 /** Screen 3 — Active Workout Session. Also serves the "quick apply a template" case: nothing requires tapping through sets one by one before completing. */
-export function ActiveSession({ initialSession, exercises, weightSuggestions = {} }: ActiveSessionProps) {
+export function ActiveSession({ initialSession, exercises, weightSuggestions = {}, bodyweightKg }: ActiveSessionProps) {
   const router = useRouter();
   const [session, setSession] = useState(initialSession);
   const [elapsedMinutes, setElapsedMinutes] = useState(() => elapsedMinutesSince(initialSession.started_at));
@@ -63,6 +66,8 @@ export function ActiveSession({ initialSession, exercises, weightSuggestions = {
   const [completing, startCompleting] = useTransition();
   /** Exercises whose "Hulk suggests" badge has been dismissed this session — the badge itself is server-computed from history, so a lightweight local dismiss set is enough to hide it after reverting rather than needing it re-derived. */
   const [dismissedSuggestionIds, setDismissedSuggestionIds] = useState<Set<string>>(new Set());
+  /** session_exercise ids that were just successfully saved as a template default — a brief inline confirmation instead of a toast (this app has no toast infra), cleared the next time anything about that exercise changes. */
+  const [savedAsDefaultIds, setSavedAsDefaultIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (session.completed_at) return;
@@ -85,6 +90,12 @@ export function ActiveSession({ initialSession, exercises, weightSuggestions = {
   async function handleSaveEdit(exercise: SessionExercise, updates: Parameters<typeof updateSessionExercise>[2]) {
     const updated = await updateSessionExercise(exercise.id, exercise.session_id, updates);
     updateLocalExercise(updated);
+    setSavedAsDefaultIds((prev) => {
+      if (!prev.has(exercise.id)) return prev;
+      const next = new Set(prev);
+      next.delete(exercise.id);
+      return next;
+    });
   }
 
   async function handleRevertSuggestion(exercise: SessionExercise, previousWeight: number) {
@@ -111,6 +122,12 @@ export function ActiveSession({ initialSession, exercises, weightSuggestions = {
     if (libraryItem) setAddingExercise(libraryItem);
   }
 
+  /** On-demand "make this the template's default" — see applyExerciseAsTemplateDefault's own doc for why this never happens implicitly. */
+  async function handleSetDefault(exercise: SessionExercise) {
+    await applyExerciseAsTemplateDefault(exercise.id, session.id);
+    setSavedAsDefaultIds((prev) => new Set(prev).add(exercise.id));
+  }
+
   function handleComplete() {
     startCompleting(async () => {
       await completeSession(session.id);
@@ -127,7 +144,7 @@ export function ActiveSession({ initialSession, exercises, weightSuggestions = {
   const durationMinutes = isCompleted
     ? durationMinutesBetween(session.started_at, session.completed_at as string)
     : elapsedMinutes;
-  const estimatedCalories = estimateCalories(session.exercises);
+  const estimatedCalories = estimateCalories(session.exercises, bodyweightKg);
   const sortedExercises = [...session.exercises].sort((a, b) => a.position - b.position);
 
   // Groups rows sharing an exercise_id into one card — a drop set logged via
@@ -180,6 +197,8 @@ export function ActiveSession({ initialSession, exercises, weightSuggestions = {
             weightSuggestions={visibleWeightSuggestions}
             onRevertSuggestion={(entry, previousWeight) => handleRevertSuggestion(entry, previousWeight)}
             onAddEntry={() => handleLogAnotherEntry(entries[0])}
+            onSetDefault={!isCompleted && session.template_id ? () => handleSetDefault(entries[0]) : undefined}
+            isSavedAsDefault={savedAsDefaultIds.has(entries[0].id)}
           />
         ))}
       </div>

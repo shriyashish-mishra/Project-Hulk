@@ -8,5 +8,7 @@ export interface ExerciseLibraryItem {
   name: string;
   category: ExerciseCategory;
   default_unit: WeightUnit;
+  /** Cached MET (Metabolic Equivalent of Task) classification for the calorie estimate — null until first classified. See exercise-library/met.ts. */
+  met_value: number | null;
   created_at: string;
 }

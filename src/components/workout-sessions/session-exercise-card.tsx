@@ -1,4 +1,4 @@
-import { Check, Dumbbell, Plus, TrendingDown, TrendingUp, Waves } from "lucide-react";
+import { Check, Dumbbell, Plus, Star, TrendingDown, TrendingUp, Waves } from "lucide-react";
 import type { ExerciseCategory } from "@/lib/exercise-library/types";
 import { cn } from "@/lib/utils";
 import type { SessionWeightSuggestion } from "@/lib/workout-sessions/exercise-progress";
@@ -19,6 +19,10 @@ interface SessionExerciseCardProps {
   onRevertSuggestion?: (entry: SessionExercise, previousWeight: number) => void;
   /** Appends another weight/rep (or duration/incline/speed) variation for this same exercise — how a drop set or a second cardio interval gets logged. */
   onAddEntry?: () => void;
+  /** Pushes this exercise's current weight/reps (or, if it wasn't on the template at all, the whole entry) into the template's defaults — on-demand only, never implicit. Absent (not just disabled) when this session has no template to update, or is read-only. */
+  onSetDefault?: () => void;
+  /** True right after `onSetDefault` succeeds — swaps the button for a brief confirmation instead of a toast (no toast infra in this app). */
+  isSavedAsDefault?: boolean;
 }
 
 function FieldChip({ label, value, suffix }: { label: string; value: number | null; suffix?: string }) {
@@ -151,6 +155,8 @@ export function SessionExerciseCard({
   weightSuggestions = {},
   onRevertSuggestion,
   onAddEntry,
+  onSetDefault,
+  isSavedAsDefault = false,
 }: SessionExerciseCardProps) {
   const isCardio = category === "cardio";
   const totalPlanned = entries.reduce((sum, entry) => sum + (entry.sets_planned ?? 0), 0);
@@ -174,16 +180,31 @@ export function SessionExerciseCard({
           </span>
           <span className="min-w-0 flex-1 text-[15px] font-semibold break-words text-foreground">{exerciseName}</span>
         </div>
-        {!isCardio && (
-          <span
-            className={cn(
-              "shrink-0 rounded-full px-2.5 py-1 text-xs font-bold",
-              isDone ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
-            )}
-          >
-            {totalCompleted}/{totalPlanned}
-          </span>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {onSetDefault &&
+            (isSavedAsDefault ? (
+              <span className="text-[11px] font-semibold text-primary">Saved</span>
+            ) : (
+              <button
+                type="button"
+                onClick={onSetDefault}
+                aria-label="Set as template default"
+                className="text-muted-foreground active:opacity-60"
+              >
+                <Star className="size-4" />
+              </button>
+            ))}
+          {!isCardio && (
+            <span
+              className={cn(
+                "rounded-full px-2.5 py-1 text-xs font-bold",
+                isDone ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
+              )}
+            >
+              {totalCompleted}/{totalPlanned}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-4">

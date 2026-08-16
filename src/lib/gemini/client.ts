@@ -49,3 +49,22 @@ async function chatCompletion(promptMarkdown: string, maxTokens: number, tempera
 export async function generateNightlyReportText(promptMarkdown: string): Promise<string> {
   return chatCompletion(promptMarkdown, 10000, 0.4);
 }
+
+/**
+ * Classifies one exercise's MET (Metabolic Equivalent of Task) value —
+ * see `ensureExerciseMetValue` (exercise-library/met.ts) for why this is a
+ * single cached-forever call per exercise rather than a per-set estimate.
+ * Low temperature and a tiny token budget: this is a single number with a
+ * well-established reference answer (the Compendium of Physical
+ * Activities), not open-ended generation, so consistency matters more
+ * than creativity and there's nothing to spend extra tokens on.
+ */
+export async function classifyExerciseMetValue(name: string, category: "strength" | "cardio"): Promise<string> {
+  const prompt = `You are classifying the metabolic intensity of a single exercise for a calorie-estimate formula.
+
+Exercise: "${name}"
+Type: ${category} (strength = resistance/weight training, cardio = continuous aerobic activity)
+
+Return ONLY a single number: the exercise's MET (Metabolic Equivalent of Task) value, per the Compendium of Physical Activities, for a typical person performing this exercise at a normal training effort. No words, no units, no explanation — just the number (e.g. "5.0").`;
+  return chatCompletion(prompt, 10, 0.2);
+}

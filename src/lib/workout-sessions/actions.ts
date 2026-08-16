@@ -1,11 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { getExercisesByIds } from "@/lib/exercise-library/queries";
+import { ensureExerciseMetValue } from "@/lib/exercise-library/met";
 import { getTemplateWithExercises, touchTemplate } from "@/lib/workout-templates/queries";
 import { requireUser } from "@/lib/supabase/auth";
 import { getLocalDateString } from "@/lib/date";
 import { getCurrentUserTimeZone } from "@/lib/profile/queries";
+import { getUserContextForCtx } from "@/lib/mcp/user-context";
 import { saveWorkoutLog } from "@/lib/workout-logs/actions";
 import { buildCanonicalWorkoutText } from "./canonical-text";
 import { estimateCalories } from "./estimate";
@@ -59,6 +62,23 @@ export async function startSessionFromTemplate(templateId: string): Promise<Work
   const result = await getSessionWithExercises(session.id, { supabase, user });
   if (!result) throw new Error("Session missing immediately after creation.");
 
+  // Classify any of this template's exercises that have never been used in
+  // a session yet — deferred via `after()` so starting a workout isn't
+  // held up waiting on however many Gemini calls that is; this one
+  // session's estimate for those specific exercises just uses the flat
+  // fallback (see estimate.ts) until the value is cached, same as any
+  // exercise added mid-session before its classification resolves.
+  const unclassified = template.exercises.filter((exercise) => exercise.met_value === null);
+  if (unclassified.length > 0) {
+    after(async () => {
+      await Promise.all(
+        unclassified.map((exercise) =>
+          ensureExerciseMetValue(exercise.exercise_id, exercise.exercise_name, exercise.category, { supabase, user }),
+        ),
+      );
+    });
+  }
+
   revalidatePath("/workouts");
   return result;
 }
@@ -92,6 +112,18 @@ export async function addSessionExercise(
   const exercisesById = await getExercisesByIds([exerciseId], { supabase, user });
   const exercise = exercisesById.get(exerciseId);
   if (!exercise) throw new Error(`Exercise ${exerciseId} not found`);
+
+  // The one place this classification is awaited rather than deferred
+  // (see startSessionFromTemplate) — this is a single, deliberate,
+  // user-initiated "I just did this exercise" tap, not a batch, so a
+  // few seconds' wait for a genuinely new exercise's MET is acceptable
+  // and means the estimate is right immediately rather than after a
+  // reload. Every subsequent exercise reuses the cache and returns
+  // instantly.
+  if (exercise.met_value === null) {
+    const metValue = await ensureExerciseMetValue(exercise.id, exercise.name, exercise.category, { supabase, user });
+    exercise.met_value = metValue;
+  }
 
   revalidateSession(sessionId);
   return mapSessionExerciseRow(data, exercise);
@@ -161,6 +193,81 @@ export async function revertSuggestedWeight(
   return updated;
 }
 
+/**
+ * On-demand counterpart to `revertSuggestedWeight` above, for the opposite
+ * direction: pushes this exercise's CURRENT session values into the
+ * template's defaults, on request rather than automatically. Covers both
+ * cases the same way — an exercise the template already had (its
+ * `template_exercises` row is updated in place) and one added mid-session
+ * that wasn't on the template at all (a new row is appended, so it's part
+ * of the template from here on). Never called implicitly: this is the
+ * explicit "yes, make this the new default" action a user takes per
+ * exercise, exactly because a session deviating from its template
+ * shouldn't silently rewrite the template just by being logged.
+ */
+export async function applyExerciseAsTemplateDefault(sessionExerciseId: string, sessionId: string): Promise<void> {
+  const { supabase, user } = await requireUser();
+  const session = await getSessionWithExercises(sessionId, { supabase, user });
+  if (!session) throw new Error("Session not found.");
+  if (!session.template_id) throw new Error("This workout wasn't started from a template.");
+
+  const exercise = session.exercises.find((entry) => entry.id === sessionExerciseId);
+  if (!exercise) throw new Error("Exercise not found in this session.");
+
+  const defaults = {
+    default_sets: exercise.sets_planned,
+    default_reps: exercise.reps,
+    default_weight: exercise.weight,
+    default_weight_unit: exercise.weight_unit,
+    default_duration_minutes: exercise.duration_minutes,
+    default_incline_percent: exercise.incline_percent,
+    default_speed_kph: exercise.speed_kph,
+    notes: exercise.notes,
+  };
+
+  const { data: existing, error: findError } = await supabase
+    .from("template_exercises")
+    .select("id")
+    .eq("template_id", session.template_id)
+    .eq("exercise_id", exercise.exercise_id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (findError) throw new Error(findError.message);
+
+  if (existing) {
+    const { error: updateError } = await supabase
+      .from("template_exercises")
+      .update(defaults)
+      .eq("id", existing.id);
+    if (updateError) throw new Error(updateError.message);
+  } else {
+    const { data: maxRow, error: maxError } = await supabase
+      .from("template_exercises")
+      .select("position")
+      .eq("template_id", session.template_id)
+      .eq("user_id", user.id)
+      .order("position", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (maxError) throw new Error(maxError.message);
+    const nextPosition = maxRow ? maxRow.position + 1 : 0;
+
+    const { error: insertError } = await supabase.from("template_exercises").insert({
+      user_id: user.id,
+      template_id: session.template_id,
+      exercise_id: exercise.exercise_id,
+      position: nextPosition,
+      ...defaults,
+    });
+    if (insertError) throw new Error(insertError.message);
+  }
+
+  await touchTemplate(supabase, session.template_id, user.id);
+  revalidatePath("/workouts");
+  revalidatePath("/workouts/templates");
+  revalidateSession(sessionId);
+}
+
 /** Tapping a filled dot undoes back to it; tapping an empty one marks up through it — so finishing sets in order isn't required. */
 export async function toggleSessionSet(
   exercise: SessionExercise,
@@ -181,7 +288,8 @@ export async function completeSession(sessionId: string): Promise<void> {
   const session = await getSessionWithExercises(sessionId, { supabase, user });
   if (!session) throw new Error("Session not found.");
 
-  const totalCalories = estimateCalories(session.exercises);
+  const userContext = await getUserContextForCtx({ supabase, user });
+  const totalCalories = estimateCalories(session.exercises, userContext.latestWeightKg);
   const { error } = await supabase
     .from("workout_sessions")
     .update({ completed_at: new Date().toISOString(), total_calories: totalCalories })

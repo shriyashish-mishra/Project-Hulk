@@ -20,6 +20,8 @@ export interface TemplateExercise extends TemplateExerciseInput {
   exercise_name: string;
   category: ExerciseCategory;
   position: number;
+  /** The exercise library's cached MET classification, joined in for `startSessionFromTemplate`'s background classification pass — see exercise-library/met.ts. Null until classified. */
+  met_value: number | null;
 }
 
 export interface WorkoutTemplate {

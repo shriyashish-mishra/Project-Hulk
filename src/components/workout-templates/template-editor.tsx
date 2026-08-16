@@ -55,6 +55,7 @@ function toLibraryItem(exercise: TemplateExercise): ExerciseLibraryItem {
     name: exercise.exercise_name,
     category: exercise.category,
     default_unit: exercise.default_weight_unit ?? "kg",
+    met_value: exercise.met_value,
     created_at: "",
   };
 }
